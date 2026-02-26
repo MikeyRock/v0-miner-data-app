@@ -64,8 +64,7 @@ export function DashboardClient() {
       setError(null)
       setData(json)
 
-      // ---------- Alert engine (skip when on mock data) ----------
-      if (json.isMock) return
+      // ---------- Alert engine ----------
 
       // 1. ATH per worker
       json.workers.forEach((w) => {
@@ -170,7 +169,7 @@ export function DashboardClient() {
     return () => clearInterval(interval)
   }, [fetchData, pollMs])
 
-  const isConnected = !!data && !error && !data.isMock
+  const isConnected = !!data && !error
   const athWorkerIds = new Set(
     data?.workers
       .filter((w) => w.bestShareRaw === (data?.bestShareRaw ?? 0) && w.bestShareRaw > 0)
@@ -193,56 +192,84 @@ export function DashboardClient() {
 
       <main className="flex-1 p-4 md:p-6 max-w-screen-2xl mx-auto w-full">
 
-        {/* Mock data banner */}
-        {data?.isMock && (
-          <div className="mb-4 rounded-lg border border-[--warning]/30 bg-[--warning]/10 px-4 py-2.5 text-sm text-[--warning] flex items-center gap-2">
-            <span className="font-semibold">Preview mode</span>
-            <span className="text-[--warning]/70">—</span>
-            <span>
-              {data.mockReason
-                ? `Could not reach upstream API. ${data.mockReason}`
-                : 'Displaying mock data. Set your AxeBCH API URL in Settings to connect.'}
-            </span>
+        {/* Not connected — show empty state until real data arrives */}
+        {!data && (
+          <div className="flex flex-col items-center justify-center min-h-[60vh] gap-6 text-center">
+            <div className="flex h-16 w-16 items-center justify-center rounded-full border-2 border-border bg-card">
+              <span className="font-mono text-2xl font-bold text-primary">B</span>
+            </div>
+            <div className="space-y-2 max-w-sm">
+              <h2 className="text-base font-semibold text-foreground">
+                {error ? 'Cannot reach your node' : 'Waiting for connection...'}
+              </h2>
+              <p className="text-sm text-muted-foreground leading-relaxed">
+                {error
+                  ? error
+                  : 'Open Settings and enter your AxeBCH API URL. The dashboard will populate once a live connection is established.'}
+              </p>
+            </div>
+            <div className="flex gap-3">
+              <button
+                onClick={() => setSettingsOpen(true)}
+                className="rounded-md bg-primary px-4 py-2 text-xs font-semibold text-primary-foreground hover:opacity-90 transition-opacity"
+              >
+                Open Settings
+              </button>
+              {error && (
+                <button
+                  onClick={() => fetchData(true)}
+                  disabled={isRefreshing}
+                  className="rounded-md border border-border px-4 py-2 text-xs font-medium text-muted-foreground hover:text-foreground transition-colors disabled:opacity-50"
+                >
+                  {isRefreshing ? 'Retrying...' : 'Retry'}
+                </button>
+              )}
+            </div>
           </div>
         )}
 
-        {/* Hard error banner */}
-        {error && (
-          <div className="mb-4 rounded-lg border border-destructive/30 bg-destructive/10 px-4 py-2.5 text-sm text-red-400">
-            Connection error: {error}
-          </div>
+        {/* Live data — only rendered when real data is present */}
+        {data && (
+          <>
+            {/* Connection error banner (has stale data but fetch just failed) */}
+            {error && (
+              <div className="mb-4 rounded-lg border border-destructive/30 bg-destructive/10 px-4 py-2.5 text-sm text-red-400">
+                Connection error: {error} — showing last known data.
+              </div>
+            )}
+
+            {/* Top stats grid */}
+            <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6 mb-4">
+              <StatCard label="Block Height" value={data.height.toLocaleString()} />
+              <StatCard label="Block Diff" value={String(data.blockDiff)} unit={data.blockDiffUnit} />
+              <StatCard label="Pool Hashrate" value={String(data.poolHashrate)} unit={data.poolHashrateUnit} />
+              <StatCard label="Network HR" value={String(data.networkHashrate)} unit={data.networkHashrateUnit} />
+              <StatCard label="Best Share" value={String(data.bestShare)} unit={data.bestShareUnit} highlight />
+              <StatCard label="ATH Worker" value={data.athShareWorker || '—'} unit={`${data.athShare}${data.athShareUnit}`} highlight />
+            </div>
+
+            {/* Progress block */}
+            <div className="mb-4">
+              <ProgressBlock
+                percent={data.progressPercent}
+                etaDays={data.etaDays}
+                etaHours={data.etaHours}
+                height={data.height}
+                lastShareAgo={latestShareAgo === Infinity ? 0 : latestShareAgo}
+              />
+            </div>
+
+            {/* Workers + alerts side by side on large screens */}
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+              <div className="lg:col-span-2">
+                <WorkerTable workers={data.workers} athWorkerIds={athWorkerIds} />
+              </div>
+              <div>
+                <AlertLog events={alerts} />
+              </div>
+            </div>
+          </>
         )}
-
-        {/* Top stats grid */}
-        <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6 mb-4">
-          <StatCard label="Block Height" value={data ? data.height.toLocaleString() : '—'} />
-          <StatCard label="Block Diff" value={data ? String(data.blockDiff) : '—'} unit={data?.blockDiffUnit} />
-          <StatCard label="Pool Hashrate" value={data ? String(data.poolHashrate) : '—'} unit={data?.poolHashrateUnit} />
-          <StatCard label="Network HR" value={data ? String(data.networkHashrate) : '—'} unit={data?.networkHashrateUnit} />
-          <StatCard label="Best Share" value={data ? String(data.bestShare) : '—'} unit={data?.bestShareUnit} highlight />
-          <StatCard label="ATH Worker" value={data?.athShareWorker || '—'} unit={data ? `${data.athShare}${data.athShareUnit}` : undefined} highlight />
-        </div>
-
-        {/* Progress block */}
-        <div className="mb-4">
-          <ProgressBlock
-            percent={data?.progressPercent ?? 0}
-            etaDays={data?.etaDays ?? 0}
-            etaHours={data?.etaHours ?? 0}
-            height={data?.height ?? 0}
-            lastShareAgo={latestShareAgo === Infinity ? 0 : latestShareAgo}
-          />
-        </div>
-
-        {/* Workers + alerts side by side on large screens */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-          <div className="lg:col-span-2">
-            <WorkerTable workers={data?.workers ?? []} athWorkerIds={athWorkerIds} />
-          </div>
-          <div>
-            <AlertLog events={alerts} />
-          </div>
-        </div>
       </main>
 
       <SettingsDrawer

@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 
-const DEFAULT_URL = 'http://192.168.0.117:21212/api/node'
+const DEFAULT_URL = process.env.AXEBCH_API_URL ?? ''
 
 function formatHashrate(raw: number): { value: number; unit: string } {
   if (raw >= 1e12) return { value: parseFloat((raw / 1e12).toFixed(2)), unit: 'TH/s' }
@@ -19,92 +19,14 @@ function formatDiff(raw: number): { value: number; unit: string } {
   return { value: raw, unit: '' }
 }
 
-function buildMockResponse() {
-  const blockDiffRaw = 1.08e12 // 1.08T
-  const bestShareRaw = 560.04e9 // 560.04G
-  const progressPercent = parseFloat(((bestShareRaw / blockDiffRaw) * 100).toFixed(2))
-  const blockDiff = formatDiff(blockDiffRaw)
-  const bestShare = formatDiff(bestShareRaw)
-  const poolHashRaw = 850e6 // 850 GH/s
-  const poolHash = formatHashrate(poolHashRaw)
-  const networkHashRaw = 2.4e18
-  const networkHash = formatHashrate(networkHashRaw)
-  const etaSeconds = blockDiffRaw / poolHashRaw
-  const etaDays = Math.floor(etaSeconds / 86400)
-  const etaHours = Math.floor((etaSeconds % 86400) / 3600)
-
-  const workers = [
-    {
-      workerId: 'Smallerbirdy',
-      hashrate: 450,
-      hashrateUnit: 'GH/s',
-      bestShare: 560.04,
-      bestShareUnit: 'G',
-      bestShareRaw: 560.04e9,
-      sharesAccepted: 4821,
-      sharesRejected: 3,
-      lastShareAgo: 60,
-      isOnline: true,
-    },
-    {
-      workerId: 'NanoMiner1',
-      hashrate: 400,
-      hashrateUnit: 'GH/s',
-      bestShare: 212.5,
-      bestShareUnit: 'G',
-      bestShareRaw: 212.5e9,
-      sharesAccepted: 3215,
-      sharesRejected: 1,
-      lastShareAgo: 135,
-      isOnline: true,
-    },
-    {
-      workerId: 'BitAxe3',
-      hashrate: 0,
-      hashrateUnit: 'GH/s',
-      bestShare: 98.2,
-      bestShareUnit: 'G',
-      bestShareRaw: 98.2e9,
-      sharesAccepted: 842,
-      sharesRejected: 12,
-      lastShareAgo: 720,
-      isOnline: false,
-    },
-  ]
-
-  const athWorker = workers[0]
-  const athFmt = formatDiff(athWorker.bestShareRaw)
-
-  return {
-    height: 939995,
-    blockDiff: blockDiff.value,
-    blockDiffUnit: blockDiff.unit,
-    blockDiffRaw,
-    networkHashrate: networkHash.value,
-    networkHashrateUnit: networkHash.unit,
-    progressPercent,
-    etaDays,
-    etaHours,
-    poolHashrate: poolHash.value,
-    poolHashrateUnit: poolHash.unit,
-    bestShare: bestShare.value,
-    bestShareUnit: bestShare.unit,
-    bestShareRaw,
-    workers,
-    athShare: athFmt.value,
-    athShareUnit: athFmt.unit,
-    athShareWorker: athWorker.workerId,
-    timestamp: Date.now(),
-    isMock: true,
-  }
-}
-
 export async function GET(req: NextRequest) {
-  const url = req.nextUrl.searchParams.get('url') ?? process.env.AXEBCH_API_URL ?? DEFAULT_URL
-  const forceMock = req.nextUrl.searchParams.get('mock') === '1'
+  const url = req.nextUrl.searchParams.get('url') || DEFAULT_URL
 
-  if (forceMock) {
-    return NextResponse.json(buildMockResponse())
+  if (!url) {
+    return NextResponse.json(
+      { error: 'No API URL configured. Set AXEBCH_API_URL in your .env or enter it in Settings.' },
+      { status: 503 }
+    )
   }
 
   try {
@@ -192,16 +114,12 @@ export async function GET(req: NextRequest) {
       athShareUnit: athFmt.unit,
       athShareWorker: athWorker?.workerId ?? '',
       timestamp: Date.now(),
-      isMock: false,
     })
   } catch (err) {
-    // Can't reach upstream — return mock data so preview/UI still renders
     const message = err instanceof Error ? err.message : 'Unknown error'
-    const mock = buildMockResponse()
-    return NextResponse.json({
-      ...mock,
-      isMock: true,
-      mockReason: `Could not reach ${url}: ${message}`,
-    })
+    return NextResponse.json(
+      { error: `Could not reach ${url}: ${message}` },
+      { status: 502 }
+    )
   }
 }
