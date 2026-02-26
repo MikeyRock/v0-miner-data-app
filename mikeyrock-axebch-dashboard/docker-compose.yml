@@ -3,13 +3,14 @@ version: "3.7"
 services:
   app_proxy:
     environment:
-      APP_HOST: mikeyrock-axebch-dashboard_web_1
+      APP_HOST: mikeyrock-axebch-dashboard_server_1
       APP_PORT: 3000
 
-  web:
+  server:
     image: ghcr.io/mikeyrock/v0-miner-data-app:latest
-    container_name: mikeyrock-axebch-dashboard_web_1
-    restart: unless-stopped
+    restart: on-failure
+    stop_grace_period: 30s
+    init: true
     environment:
       - AXEBCH_API_URL=${APP_AXEBCH_API_URL:-http://192.168.0.117:21212/api/node}
       - DISCORD_WEBHOOK_URL=${APP_DISCORD_WEBHOOK_URL:-}
@@ -17,3 +18,9 @@ services:
       - NODE_ENV=production
     extra_hosts:
       - "host.docker.internal:host-gateway"
+
+networks:
+  default:
+    ipam:
+      config:
+        - subnet: 172.31.51.0/24
