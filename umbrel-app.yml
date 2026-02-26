@@ -1,0 +1,29 @@
+manifestVersion: 1
+id: axebch-dashboard
+category: bitcoin
+name: AxeBCH Mining Dashboard
+version: "1.0.0"
+tagline: Live solo mining monitor with Discord alerts
+description: >
+  A self-hosted dashboard for your AxeBCH solo Bitcoin Cash mining setup.
+  Displays real-time worker stats, best share (ATH) tracking, progress to
+  solving the next block, ETA, and node info — all pulled directly from your
+  local AxeBCH node with no Cloudflare proxy required.
+  Sends Discord webhook notifications when a worker hits a new ATH share,
+  when progress milestones are reached, when a block is found, or when a
+  worker goes offline.
+developer: Your Name
+website: https://github.com/your-repo/axebch-dashboard
+dependencies: []
+repo: https://github.com/your-repo/axebch-dashboard
+support: https://github.com/your-repo/axebch-dashboard/issues
+port: 3080
+gallery:
+  - 1.jpg
+path: ""
+defaultUsername: ""
+defaultPassword: ""
+torOnly: false
+releaseNotes: >
+  Initial release. Direct LAN access to AxeBCH node, no Cloudflare cookie
+  required. Configure via .env file.
