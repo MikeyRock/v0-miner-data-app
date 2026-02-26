@@ -1,20 +1,19 @@
 manifestVersion: 1
 id: mikeyrock-axebch-dashboard
-name: AxeBCH Dashboard
-tagline: Solo mining monitor for your AxeBCH node
 category: bitcoin
+name: AxeBCH Dashboard
 version: "1.0.0"
-port: 3080
-description: >-
-  Live dashboard for your AxeBCH Solo Mining Node. Shows worker stats,
-  hashrate across multiple time windows, network difficulty, best share,
-  block progress, ETA, and Discord alerts.
+tagline: Solo mining monitor for your AxeBCH node
+icon: https://raw.githubusercontent.com/MikeyRock/v0-miner-data-app/main/mikeyrock-axebch-dashboard/icon.png
+description: Live dashboard for your AxeBCH Solo Mining Node. Shows worker stats, hashrate across multiple time windows, network difficulty, best share, block progress, ETA, and Discord alerts.
 developer: MikeyRock
 website: https://github.com/MikeyRock/v0-miner-data-app
 dependencies: []
 repo: https://github.com/MikeyRock/v0-miner-data-app
 support: https://github.com/MikeyRock/v0-miner-data-app/issues
+port: 3080
 gallery: []
-releaseNotes: Initial release
-submitter: MikeyRock
-submission: https://github.com/MikeyRock/v0-miner-data-app
+path: ""
+defaultUsername: ""
+defaultPassword: ""
+torOnly: false
