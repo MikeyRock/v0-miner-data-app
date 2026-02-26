@@ -2,7 +2,7 @@ manifestVersion: 1
 id: mikeyrock-axebch-dashboard
 name: AxeBCH Dashboard
 tagline: Solo mining monitor for your AxeBCH node
-icon: https://raw.githubusercontent.com/MikeyRock/v0-miner-data-app/main/mikeyrock-axebch-dashboard/icon.svg
+icon: icon.png
 category: Mining
 version: "1.0.0"
 port: 3080
