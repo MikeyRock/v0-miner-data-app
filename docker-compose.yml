@@ -1,39 +1,25 @@
-version: "3.8"
-
 services:
   axebch-dashboard:
     build:
       context: .
       dockerfile: Dockerfile
-      args:
-        NEXT_PUBLIC_POLL_INTERVAL_MS: ${NEXT_PUBLIC_POLL_INTERVAL_MS:-15000}
-        NEXT_PUBLIC_OFFLINE_THRESHOLD_S: ${NEXT_PUBLIC_OFFLINE_THRESHOLD_S:-300}
-    image: ghcr.io/mikeyrock/v0-miner-data-app:latest
     container_name: axebch-dashboard
     restart: unless-stopped
     ports:
       - "${APP_PORT:-3080}:3000"
     environment:
-      # URL of your AxeBCH / solo node API — direct LAN access, no Cloudflare proxy needed
-      AXEBCH_API_URL: ${AXEBCH_API_URL:-http://192.168.0.117:21212/api/node}
-      # Optional: Discord webhook URL for alerts (leave blank to disable)
+      # Direct LAN URL to your AxeBCH node — no Cloudflare proxy needed
+      AXEBCH_API_URL: ${AXEBCH_API_URL:-}
+      # Optional: Discord webhook for alerts (leave blank to disable)
       DISCORD_WEBHOOK_URL: ${DISCORD_WEBHOOK_URL:-}
-      # How often the browser polls (ms)
-      NEXT_PUBLIC_POLL_INTERVAL_MS: ${NEXT_PUBLIC_POLL_INTERVAL_MS:-15000}
-      # Seconds without a share before a worker is considered offline
-      NEXT_PUBLIC_OFFLINE_THRESHOLD_S: ${NEXT_PUBLIC_OFFLINE_THRESHOLD_S:-300}
-    # Allow access to local LAN services (your AxeBCH node)
+    # Allows the container to reach LAN services like your AxeBCH node
     extra_hosts:
       - "host.docker.internal:host-gateway"
     healthcheck:
-      test: ["CMD", "wget", "-qO-", "http://localhost:3000/api/mining"]
+      # Healthcheck calls the API route; if AXEBCH_API_URL is set it will
+      # proxy the upstream, otherwise it just confirms Next.js is running.
+      test: ["CMD", "wget", "-qO-", "http://localhost:3000"]
       interval: 30s
       timeout: 10s
       retries: 3
-      start_period: 15s
-    networks:
-      - axebch-net
-
-networks:
-  axebch-net:
-    driver: bridge
+      start_period: 20s

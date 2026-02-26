@@ -27,13 +27,18 @@ async function sendDiscordAlert(payload: Record<string, unknown>) {
   }
 }
 
-export function DashboardClient() {
+interface DashboardClientProps {
+  initialApiUrl?: string
+  initialDiscordUrl?: string
+}
+
+export function DashboardClient({ initialApiUrl = '', initialDiscordUrl = '' }: DashboardClientProps) {
   const [data, setData]               = useState<NodeStats | null>(null)
   const [error, setError]             = useState<string | null>(null)
   const [isRefreshing, setIsRefreshing] = useState(false)
   const [alerts, setAlerts]           = useState<AlertEvent[]>([])
-  const [apiUrl, setApiUrl]           = useState('')
-  const [discordUrl, setDiscordUrl]   = useState('')
+  const [apiUrl, setApiUrl]           = useState(initialApiUrl)
+  const [discordUrl, setDiscordUrl]   = useState(initialDiscordUrl)
   const [pollMs, setPollMs]           = useState(DEFAULT_POLL_MS)
   const [settingsOpen, setSettingsOpen] = useState(false)
 

@@ -1,64 +1,105 @@
 # AxeBCH Mining Dashboard
 
-A self-hosted solo mining monitor for AxeBCH / Bitcoin Cash. Pulls live data directly from your node over LAN — no Cloudflare proxy cookie required.
+A self-hosted dashboard for your AxeBCH Solo Mining Node. Shows live worker stats, pool hashrate across multiple time windows, network difficulty, best share tracking, block progress, ETA, and sends Discord alerts for key events.
 
-## Features
+Runs on Umbrel (or any Docker host) with **direct LAN access** to your AxeBCH node — no Cloudflare proxy or cookie required.
 
-- Live worker stats: hashrate, best share, accepted/rejected, last share time
-- ATH (all-time high share) detection per worker with badge highlighting
-- Progress-to-block bar with 25 / 50 / 75 / 90% milestone markers
-- ETA countdown and block height tracking
-- Discord webhook alerts for:
-  - Worker offline
-  - Progress milestones
-  - Block found
-  - New worker ATH
-- Auto-polls every 15 seconds (configurable)
+---
 
-## Quick Start (Docker)
+## What It Displays
 
-```bash
-git clone https://github.com/MikeyRock/v0-miner-data-app
-cd v0-miner-data-app
+Data pulled directly from your AxeBCH `/api/node` endpoint:
 
-cp .env.example .env
-# Edit .env — set AXEBCH_API_URL and optionally DISCORD_WEBHOOK_URL
+- Active worker count and last share time (across all workers)
+- Pool hashrate for 1m / 5m / 15m / 1h / 6h / 24h / 7d windows
+- Network difficulty, algorithm, and block height
+- Best share since last block reset (with which worker holds it)
+- All-time best share record
+- Progress to next block (best share / network difficulty)
+- ETA to find a block (based on pool hashrate)
+- Per-worker: name, hashrate, record best share, last share time, odds, online/offline status
 
-docker compose up -d --build
-```
+---
 
-Dashboard opens at **http://localhost:3080**
+## Discord Alerts
 
-## Environment Variables
+Fires a rich embed to your Discord channel when:
+- A worker hits a new personal best share (ATH)
+- A worker goes offline (no share for 5+ minutes)
+- Progress milestones: 25%, 50%, 75%, 90%
+- A block is solved
 
-| Variable | Default | Description |
-|---|---|---|
-| `AXEBCH_API_URL` | `http://192.168.0.117:21212/api/node` | Your AxeBCH node API endpoint |
-| `DISCORD_WEBHOOK_URL` | _(blank)_ | Discord webhook for alerts — leave blank to disable |
-| `NEXT_PUBLIC_POLL_INTERVAL_MS` | `15000` | Browser poll interval in milliseconds |
-| `NEXT_PUBLIC_OFFLINE_THRESHOLD_S` | `300` | Seconds before a worker is flagged offline |
-| `APP_PORT` | `3080` | Host port to expose the dashboard on |
+---
 
 ## Install on Umbrel
 
-1. Clone the repo onto your Umbrel box:
-   ```bash
-   git clone https://github.com/MikeyRock/v0-miner-data-app ~/umbrel/apps/axebch-dashboard
-   ```
-2. Copy and edit the env file:
-   ```bash
-   cp .env.example .env
-   nano .env
-   ```
-3. Start the container:
-   ```bash
-   docker compose up -d --build
-   ```
-4. Access at **http://umbrel.local:3080**
+### Prerequisites
+- Docker and Docker Compose installed on your Umbrel machine
+- AxeBCH node running and reachable on your LAN
+
+### Steps
+
+```bash
+# 1. SSH into your Umbrel and clone the repo
+git clone https://github.com/MikeyRock/v0-miner-data-app.git
+cd v0-miner-data-app
+
+# 2. Create your .env file
+cp .env.example .env
+nano .env
+```
+
+Set at minimum:
+
+```env
+AXEBCH_API_URL=http://192.168.0.117:21212/api/node
+DISCORD_WEBHOOK_URL=https://discord.com/api/webhooks/YOUR_ID/YOUR_TOKEN
+APP_PORT=3080
+```
+
+```bash
+# 3. Build and start (first run takes a few minutes)
+docker compose up -d --build
+
+# 4. Open the dashboard
+# http://YOUR_UMBREL_IP:3080
+```
+
+The dashboard auto-connects using your `.env` — no manual Settings required.
+
+### Updating
+
+```bash
+git pull
+docker compose up -d --build
+```
+
+---
+
+## Configuration
+
+| Variable | Default | Description |
+|---|---|---|
+| `AXEBCH_API_URL` | *(required)* | Full URL to your AxeBCH `/api/node` endpoint |
+| `DISCORD_WEBHOOK_URL` | *(empty)* | Discord webhook URL — leave blank to disable alerts |
+| `APP_PORT` | `3080` | Host port to expose the dashboard on |
+
+---
 
 ## Discord Webhook Setup
 
 1. In your Discord server: **Server Settings → Integrations → Webhooks → New Webhook**
-2. Copy the webhook URL
-3. Paste it into your `.env` as `DISCORD_WEBHOOK_URL`
-4. Restart the container: `docker compose restart`
+2. Name it (e.g. "AxeBCH Alerts"), pick a channel, copy the URL
+3. Paste it into `.env` as `DISCORD_WEBHOOK_URL`
+4. Restart: `docker compose up -d --build`
+
+---
+
+## Run Without Docker (Development)
+
+```bash
+npm install
+cp .env.example .env.local   # fill in AXEBCH_API_URL
+npm run dev
+# Open http://localhost:3000
+```
