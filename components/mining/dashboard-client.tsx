@@ -6,10 +6,10 @@ import { StatCard } from './stat-card'
 import { ProgressBlock } from './progress-block'
 import { WorkerTable } from './worker-table'
 import { AlertLog } from './alert-log'
+import { SettingsDrawer } from './settings-drawer'
 import type { AlertEvent, NodeStats } from '@/lib/types'
 
-const POLL_INTERVAL_MS = parseInt(process.env.NEXT_PUBLIC_POLL_INTERVAL_MS ?? '15000', 10)
-const OFFLINE_THRESHOLD_S = parseInt(process.env.NEXT_PUBLIC_OFFLINE_THRESHOLD_S ?? '300', 10)
+const DEFAULT_POLL_MS = 15000
 const MILESTONES = [25, 50, 75, 90]
 
 function generateId() {
@@ -33,6 +33,10 @@ export function DashboardClient() {
   const [error, setError] = useState<string | null>(null)
   const [isRefreshing, setIsRefreshing] = useState(false)
   const [alerts, setAlerts] = useState<AlertEvent[]>([])
+  const [apiUrl, setApiUrl] = useState('http://192.168.0.117:21212/api/node')
+  const [discordUrl, setDiscordUrl] = useState('')
+  const [pollMs, setPollMs] = useState(DEFAULT_POLL_MS)
+  const [settingsOpen, setSettingsOpen] = useState(false)
 
   // Persistent state for alert deduplication
   const prevBestShareRef = useRef<Record<string, number>>({})
@@ -49,7 +53,8 @@ export function DashboardClient() {
   const fetchData = useCallback(async (showSpinner = false) => {
     if (showSpinner) setIsRefreshing(true)
     try {
-      const res = await fetch('/api/mining', { cache: 'no-store' })
+      const params = new URLSearchParams({ url: apiUrl })
+      const res = await fetch(`/api/mining?${params}`, { cache: 'no-store' })
       if (!res.ok) {
         const body = await res.json().catch(() => ({}))
         setError(body.error ?? `HTTP ${res.status}`)
@@ -59,7 +64,8 @@ export function DashboardClient() {
       setError(null)
       setData(json)
 
-      // ---------- Alert engine ----------
+      // ---------- Alert engine (skip when on mock data) ----------
+      if (json.isMock) return
 
       // 1. ATH per worker
       json.workers.forEach((w) => {
@@ -67,7 +73,7 @@ export function DashboardClient() {
         if (w.bestShareRaw > prev && prev > 0) {
           const alert = addAlert({
             type: 'ath',
-            message: `${w.workerId} just hit a new best share: ${w.bestShare}${w.bestShareUnit} (block diff: ${json.blockDiff}${json.blockDiffUnit})`,
+            message: `${w.workerId} hit a new best share: ${w.bestShare}${w.bestShareUnit} (block diff: ${json.blockDiff}${json.blockDiffUnit})`,
             workerName: w.workerId,
             timestamp: Date.now(),
             sent: false,
@@ -77,11 +83,10 @@ export function DashboardClient() {
             workerName: w.workerId,
             bestShare: `${w.bestShare}${w.bestShareUnit}`,
             blockDiff: `${json.blockDiff}${json.blockDiffUnit}`,
-          }).then(() => {
-            setAlerts((prev) =>
-              prev.map((a) => (a.id === alert.id ? { ...a, sent: true } : a))
-            )
-          })
+            discordWebhookUrl: discordUrl,
+          }).then(() =>
+            setAlerts((prev) => prev.map((a) => (a.id === alert.id ? { ...a, sent: true } : a)))
+          )
         }
         prevBestShareRef.current[w.workerId] = w.bestShareRaw
       })
@@ -92,7 +97,7 @@ export function DashboardClient() {
           offlineAlertedRef.current.add(w.workerId)
           const alert = addAlert({
             type: 'worker_offline',
-            message: `Worker ${w.workerId} has gone offline (no share for ${Math.floor(w.lastShareAgo / 60)}m)`,
+            message: `Worker ${w.workerId} offline — no share for ${Math.floor(w.lastShareAgo / 60)}m`,
             workerName: w.workerId,
             timestamp: Date.now(),
             sent: false,
@@ -101,13 +106,11 @@ export function DashboardClient() {
             type: 'worker_offline',
             workerName: w.workerId,
             lastShareAgo: w.lastShareAgo,
-          }).then(() => {
-            setAlerts((prev) =>
-              prev.map((a) => (a.id === alert.id ? { ...a, sent: true } : a))
-            )
-          })
+            discordWebhookUrl: discordUrl,
+          }).then(() =>
+            setAlerts((prev) => prev.map((a) => (a.id === alert.id ? { ...a, sent: true } : a)))
+          )
         }
-        // Re-arm when worker comes back online
         if (w.isOnline) offlineAlertedRef.current.delete(w.workerId)
       })
 
@@ -117,7 +120,7 @@ export function DashboardClient() {
           milestoneAlertedRef.current.add(m)
           const alert = addAlert({
             type: 'milestone',
-            message: `Progress milestone reached: ${m}% of the way to solving block #${json.height + 1}. ETA: ${json.etaDays}d ${json.etaHours}h`,
+            message: `Progress milestone: ${m}% towards block #${json.height + 1}. ETA: ${json.etaDays}d ${json.etaHours}h`,
             timestamp: Date.now(),
             sent: false,
           })
@@ -126,37 +129,31 @@ export function DashboardClient() {
             progressPercent: m,
             etaDays: json.etaDays,
             etaHours: json.etaHours,
-          }).then(() => {
-            setAlerts((prev) =>
-              prev.map((a) => (a.id === alert.id ? { ...a, sent: true } : a))
-            )
-          })
+            discordWebhookUrl: discordUrl,
+          }).then(() =>
+            setAlerts((prev) => prev.map((a) => (a.id === alert.id ? { ...a, sent: true } : a)))
+          )
         }
-        // Re-arm on new block (progress resets below milestone)
         if (json.progressPercent < m - 5) milestoneAlertedRef.current.delete(m)
       })
 
-      // 4. Block found (progress resets near 0 unexpectedly or we detect a height jump)
-      // We detect when progress drops drastically which implies a block was found
-      if (
-        json.progressPercent < 1 &&
-        json.height > 0 &&
-        !blockFoundAlertedRef.current.has(json.height)
-      ) {
+      // 4. Block found — progress resets near 0
+      if (json.progressPercent < 1 && json.height > 0 && !blockFoundAlertedRef.current.has(json.height)) {
         blockFoundAlertedRef.current.add(json.height)
         if (blockFoundAlertedRef.current.size > 1) {
-          // Only alert after the first poll (skip initial load)
           const alert = addAlert({
             type: 'block_found',
             message: `Block #${json.height} found! The pool solved a block.`,
             timestamp: Date.now(),
             sent: false,
           })
-          sendDiscordAlert({ type: 'block_found', height: json.height }).then(() => {
-            setAlerts((prev) =>
-              prev.map((a) => (a.id === alert.id ? { ...a, sent: true } : a))
-            )
-          })
+          sendDiscordAlert({
+            type: 'block_found',
+            height: json.height,
+            discordWebhookUrl: discordUrl,
+          }).then(() =>
+            setAlerts((prev) => prev.map((a) => (a.id === alert.id ? { ...a, sent: true } : a)))
+          )
         }
       }
     } catch (e) {
@@ -164,78 +161,66 @@ export function DashboardClient() {
     } finally {
       if (showSpinner) setIsRefreshing(false)
     }
-  }, [addAlert])
+  }, [addAlert, apiUrl, discordUrl])
 
   // Initial fetch + polling
   useEffect(() => {
     fetchData()
-    const interval = setInterval(() => fetchData(), POLL_INTERVAL_MS)
+    const interval = setInterval(() => fetchData(), pollMs)
     return () => clearInterval(interval)
-  }, [fetchData])
+  }, [fetchData, pollMs])
 
-  const isConnected = !!data && !error
+  const isConnected = !!data && !error && !data.isMock
   const athWorkerIds = new Set(
     data?.workers
       .filter((w) => w.bestShareRaw === (data?.bestShareRaw ?? 0) && w.bestShareRaw > 0)
       .map((w) => w.workerId) ?? []
   )
-
-  // Compute the latest lastShareAgo across all online workers
   const latestShareAgo =
     data?.workers
       .filter((w) => w.isOnline)
       .reduce((min, w) => Math.min(min, w.lastShareAgo), Infinity) ?? 0
 
   return (
-    <div className="flex min-h-screen flex-col bg-background font-sans">
+    <div className="flex min-h-screen flex-col bg-background font-mono">
       <Header
         isConnected={isConnected}
         lastUpdated={data?.timestamp ?? null}
         onRefresh={() => fetchData(true)}
         isRefreshing={isRefreshing}
+        onSettingsOpen={() => setSettingsOpen(true)}
       />
 
-      <main className="flex-1 p-4 md:p-6">
+      <main className="flex-1 p-4 md:p-6 max-w-screen-2xl mx-auto w-full">
+
+        {/* Mock data banner */}
+        {data?.isMock && (
+          <div className="mb-4 rounded-lg border border-[--warning]/30 bg-[--warning]/10 px-4 py-2.5 text-sm text-[--warning] flex items-center gap-2">
+            <span className="font-semibold">Preview mode</span>
+            <span className="text-[--warning]/70">—</span>
+            <span>
+              {data.mockReason
+                ? `Could not reach upstream API. ${data.mockReason}`
+                : 'Displaying mock data. Set your AxeBCH API URL in Settings to connect.'}
+            </span>
+          </div>
+        )}
+
+        {/* Hard error banner */}
         {error && (
-          <div className="mb-4 rounded-lg border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-400">
-            Connection error: {error} — check that <code className="font-mono">AXEBCH_API_URL</code> is reachable.
+          <div className="mb-4 rounded-lg border border-destructive/30 bg-destructive/10 px-4 py-2.5 text-sm text-red-400">
+            Connection error: {error}
           </div>
         )}
 
         {/* Top stats grid */}
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6 mb-4">
-          <StatCard
-            label="Block Height"
-            value={data ? data.height.toLocaleString() : '—'}
-            highlight={false}
-          />
-          <StatCard
-            label="Block Diff"
-            value={data ? data.blockDiff : '—'}
-            unit={data?.blockDiffUnit}
-          />
-          <StatCard
-            label="Pool Hashrate"
-            value={data ? data.poolHashrate : '—'}
-            unit={data?.poolHashrateUnit}
-          />
-          <StatCard
-            label="Network HR"
-            value={data ? data.networkHashrate : '—'}
-            unit={data?.networkHashrateUnit}
-          />
-          <StatCard
-            label="Best Share"
-            value={data ? data.bestShare : '—'}
-            unit={data?.bestShareUnit}
-            highlight={true}
-          />
-          <StatCard
-            label="ATH Worker"
-            value={data ? data.athShareWorker : '—'}
-            unit={data ? `${data.athShare}${data.athShareUnit}` : undefined}
-            highlight={true}
-          />
+          <StatCard label="Block Height" value={data ? data.height.toLocaleString() : '—'} />
+          <StatCard label="Block Diff" value={data ? String(data.blockDiff) : '—'} unit={data?.blockDiffUnit} />
+          <StatCard label="Pool Hashrate" value={data ? String(data.poolHashrate) : '—'} unit={data?.poolHashrateUnit} />
+          <StatCard label="Network HR" value={data ? String(data.networkHashrate) : '—'} unit={data?.networkHashrateUnit} />
+          <StatCard label="Best Share" value={data ? String(data.bestShare) : '—'} unit={data?.bestShareUnit} highlight />
+          <StatCard label="ATH Worker" value={data?.athShareWorker || '—'} unit={data ? `${data.athShare}${data.athShareUnit}` : undefined} highlight />
         </div>
 
         {/* Progress block */}
@@ -249,17 +234,31 @@ export function DashboardClient() {
           />
         </div>
 
-        {/* Workers table */}
-        <div className="mb-4">
-          <WorkerTable
-            workers={data?.workers ?? []}
-            athWorkerIds={athWorkerIds}
-          />
+        {/* Workers + alerts side by side on large screens */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+          <div className="lg:col-span-2">
+            <WorkerTable workers={data?.workers ?? []} athWorkerIds={athWorkerIds} />
+          </div>
+          <div>
+            <AlertLog events={alerts} />
+          </div>
         </div>
-
-        {/* Alert log */}
-        <AlertLog events={alerts} />
       </main>
+
+      <SettingsDrawer
+        open={settingsOpen}
+        onClose={() => setSettingsOpen(false)}
+        apiUrl={apiUrl}
+        discordUrl={discordUrl}
+        pollMs={pollMs}
+        onSave={(a, d, p) => {
+          setApiUrl(a)
+          setDiscordUrl(d)
+          setPollMs(p)
+          setSettingsOpen(false)
+          setTimeout(() => fetchData(true), 100)
+        }}
+      />
     </div>
   )
 }

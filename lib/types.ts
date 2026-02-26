@@ -32,6 +32,8 @@ export interface NodeStats {
   athShareUnit: string
   athShareWorker: string
   timestamp: number
+  isMock?: boolean
+  mockReason?: string
 }
 
 export interface AlertEvent {

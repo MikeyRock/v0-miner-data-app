@@ -12,6 +12,8 @@ interface AlertPayload {
   etaDays?: number
   etaHours?: number
   lastShareAgo?: number
+  // Can be passed from the client settings drawer, overrides env var
+  discordWebhookUrl?: string
 }
 
 function buildEmbed(payload: AlertPayload) {
@@ -80,14 +82,17 @@ function buildEmbed(payload: AlertPayload) {
 }
 
 export async function POST(req: NextRequest) {
-  if (!DISCORD_WEBHOOK_URL) {
-    return NextResponse.json({ error: 'DISCORD_WEBHOOK_URL not configured' }, { status: 503 })
+  const payload: AlertPayload = await req.json()
+  // Accept webhook URL from the request body (set via Settings drawer) or fall back to env var
+  const webhookUrl = payload.discordWebhookUrl || DISCORD_WEBHOOK_URL
+
+  if (!webhookUrl) {
+    return NextResponse.json({ error: 'No Discord webhook URL configured' }, { status: 503 })
   }
 
-  const payload: AlertPayload = await req.json()
   const body = buildEmbed(payload)
 
-  const res = await fetch(DISCORD_WEBHOOK_URL, {
+  const res = await fetch(webhookUrl, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(body),
