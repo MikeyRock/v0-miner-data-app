@@ -2,7 +2,6 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { Header } from './header'
-import { StatCard } from './stat-card'
 import { ProgressBlock } from './progress-block'
 import { WorkerTable } from './worker-table'
 import { AlertLog } from './alert-log'
@@ -29,50 +28,50 @@ async function sendDiscordAlert(payload: Record<string, unknown>) {
 }
 
 export function DashboardClient() {
-  const [data, setData] = useState<NodeStats | null>(null)
-  const [error, setError] = useState<string | null>(null)
+  const [data, setData]               = useState<NodeStats | null>(null)
+  const [error, setError]             = useState<string | null>(null)
   const [isRefreshing, setIsRefreshing] = useState(false)
-  const [alerts, setAlerts] = useState<AlertEvent[]>([])
-  const [apiUrl, setApiUrl] = useState('http://192.168.0.117:21212/api/node')
-  const [discordUrl, setDiscordUrl] = useState('')
-  const [pollMs, setPollMs] = useState(DEFAULT_POLL_MS)
+  const [alerts, setAlerts]           = useState<AlertEvent[]>([])
+  const [apiUrl, setApiUrl]           = useState('')
+  const [discordUrl, setDiscordUrl]   = useState('')
+  const [pollMs, setPollMs]           = useState(DEFAULT_POLL_MS)
   const [settingsOpen, setSettingsOpen] = useState(false)
 
-  // Persistent state for alert deduplication
-  const prevBestShareRef = useRef<Record<string, number>>({})
-  const offlineAlertedRef = useRef<Set<string>>(new Set())
-  const milestoneAlertedRef = useRef<Set<number>>(new Set())
-  const blockFoundAlertedRef = useRef<Set<number>>(new Set())
+  // Deduplication refs
+  const prevBestShareRef      = useRef<Record<string, number>>({})
+  const offlineAlertedRef     = useRef<Set<string>>(new Set())
+  const milestoneAlertedRef   = useRef<Set<number>>(new Set())
+  const blockFoundAlertedRef  = useRef<Set<number>>(new Set())
 
-  const addAlert = useCallback((event: Omit<AlertEvent, 'id'>) => {
+  const addAlert = useCallback((event: Omit<AlertEvent, 'id'>): AlertEvent => {
     const full: AlertEvent = { ...event, id: generateId() }
     setAlerts((prev) => [...prev.slice(-99), full])
     return full
   }, [])
 
   const fetchData = useCallback(async (showSpinner = false) => {
+    if (!apiUrl) return
     if (showSpinner) setIsRefreshing(true)
     try {
-      const params = new URLSearchParams({ url: apiUrl })
-      const res = await fetch(`/api/mining?${params}`, { cache: 'no-store' })
+      const res = await fetch(`/api/mining?url=${encodeURIComponent(apiUrl)}`, { cache: 'no-store' })
+      const body = await res.json()
       if (!res.ok) {
-        const body = await res.json().catch(() => ({}))
         setError(body.error ?? `HTTP ${res.status}`)
         return
       }
-      const json: NodeStats = await res.json()
+      const json: NodeStats = body
       setError(null)
       setData(json)
 
-      // ---------- Alert engine ----------
+      // ---- Alert engine ------------------------------------------------
 
-      // 1. ATH per worker
+      // 1. Worker ATH (per-worker best share improved)
       json.workers.forEach((w) => {
         const prev = prevBestShareRef.current[w.workerId] ?? 0
         if (w.bestShareRaw > prev && prev > 0) {
           const alert = addAlert({
             type: 'ath',
-            message: `${w.workerId} hit a new best share: ${w.bestShare}${w.bestShareUnit} (block diff: ${json.blockDiff}${json.blockDiffUnit})`,
+            message: `${w.workerId} hit a new best share: ${w.bestShare}${w.bestShareUnit} (diff: ${json.networkDifficulty}${json.networkDifficultyUnit})`,
             workerName: w.workerId,
             timestamp: Date.now(),
             sent: false,
@@ -81,10 +80,10 @@ export function DashboardClient() {
             type: 'ath',
             workerName: w.workerId,
             bestShare: `${w.bestShare}${w.bestShareUnit}`,
-            blockDiff: `${json.blockDiff}${json.blockDiffUnit}`,
+            blockDiff: `${json.networkDifficulty}${json.networkDifficultyUnit}`,
             discordWebhookUrl: discordUrl,
           }).then(() =>
-            setAlerts((prev) => prev.map((a) => (a.id === alert.id ? { ...a, sent: true } : a)))
+            setAlerts((prev) => prev.map((a) => a.id === alert.id ? { ...a, sent: true } : a))
           )
         }
         prevBestShareRef.current[w.workerId] = w.bestShareRaw
@@ -96,7 +95,7 @@ export function DashboardClient() {
           offlineAlertedRef.current.add(w.workerId)
           const alert = addAlert({
             type: 'worker_offline',
-            message: `Worker ${w.workerId} offline — no share for ${Math.floor(w.lastShareAgo / 60)}m`,
+            message: `${w.workerId} offline — no share for ${Math.floor(w.lastShareAgo / 60)}m`,
             workerName: w.workerId,
             timestamp: Date.now(),
             sent: false,
@@ -107,7 +106,7 @@ export function DashboardClient() {
             lastShareAgo: w.lastShareAgo,
             discordWebhookUrl: discordUrl,
           }).then(() =>
-            setAlerts((prev) => prev.map((a) => (a.id === alert.id ? { ...a, sent: true } : a)))
+            setAlerts((prev) => prev.map((a) => a.id === alert.id ? { ...a, sent: true } : a))
           )
         }
         if (w.isOnline) offlineAlertedRef.current.delete(w.workerId)
@@ -119,7 +118,7 @@ export function DashboardClient() {
           milestoneAlertedRef.current.add(m)
           const alert = addAlert({
             type: 'milestone',
-            message: `Progress milestone: ${m}% towards block #${json.height + 1}. ETA: ${json.etaDays}d ${json.etaHours}h`,
+            message: `${m}% towards block #${json.blockHeight + 1}. ETA: ${json.etaDays}d ${json.etaHours}h`,
             timestamp: Date.now(),
             sent: false,
           })
@@ -130,31 +129,36 @@ export function DashboardClient() {
             etaHours: json.etaHours,
             discordWebhookUrl: discordUrl,
           }).then(() =>
-            setAlerts((prev) => prev.map((a) => (a.id === alert.id ? { ...a, sent: true } : a)))
+            setAlerts((prev) => prev.map((a) => a.id === alert.id ? { ...a, sent: true } : a))
           )
         }
         if (json.progressPercent < m - 5) milestoneAlertedRef.current.delete(m)
       })
 
-      // 4. Block found — progress resets near 0
-      if (json.progressPercent < 1 && json.height > 0 && !blockFoundAlertedRef.current.has(json.height)) {
-        blockFoundAlertedRef.current.add(json.height)
+      // 4. Block found — best share resets near 0 and height advances
+      if (
+        json.progressPercent < 1 &&
+        json.blockHeight > 0 &&
+        !blockFoundAlertedRef.current.has(json.blockHeight)
+      ) {
+        blockFoundAlertedRef.current.add(json.blockHeight)
         if (blockFoundAlertedRef.current.size > 1) {
           const alert = addAlert({
             type: 'block_found',
-            message: `Block #${json.height} found! The pool solved a block.`,
+            message: `Block #${json.blockHeight} found! Pool solved a block.`,
             timestamp: Date.now(),
             sent: false,
           })
           sendDiscordAlert({
             type: 'block_found',
-            height: json.height,
+            height: json.blockHeight,
             discordWebhookUrl: discordUrl,
           }).then(() =>
-            setAlerts((prev) => prev.map((a) => (a.id === alert.id ? { ...a, sent: true } : a)))
+            setAlerts((prev) => prev.map((a) => a.id === alert.id ? { ...a, sent: true } : a))
           )
         }
       }
+
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Fetch failed')
     } finally {
@@ -162,23 +166,21 @@ export function DashboardClient() {
     }
   }, [addAlert, apiUrl, discordUrl])
 
-  // Initial fetch + polling
+  // Polling
   useEffect(() => {
     fetchData()
-    const interval = setInterval(() => fetchData(), pollMs)
-    return () => clearInterval(interval)
+    const id = setInterval(() => fetchData(), pollMs)
+    return () => clearInterval(id)
   }, [fetchData, pollMs])
 
   const isConnected = !!data && !error
-  const athWorkerIds = new Set(
+
+  // ATH worker set = workers whose record matches the best-since-block
+  const athWorkerIds = new Set<string>(
     data?.workers
-      .filter((w) => w.bestShareRaw === (data?.bestShareRaw ?? 0) && w.bestShareRaw > 0)
+      .filter((w) => w.bestShareRaw === (data.workers.reduce((mx, x) => Math.max(mx, x.bestShareRaw), 0)))
       .map((w) => w.workerId) ?? []
   )
-  const latestShareAgo =
-    data?.workers
-      .filter((w) => w.isOnline)
-      .reduce((min, w) => Math.min(min, w.lastShareAgo), Infinity) ?? 0
 
   return (
     <div className="flex min-h-screen flex-col bg-background font-mono">
@@ -190,19 +192,19 @@ export function DashboardClient() {
         onSettingsOpen={() => setSettingsOpen(true)}
       />
 
-      <main className="flex-1 p-4 md:p-6 max-w-screen-2xl mx-auto w-full">
+      <main className="flex-1 p-4 md:p-6 max-w-screen-xl mx-auto w-full">
 
-        {/* Not connected — show empty state until real data arrives */}
+        {/* Empty state — no data until connected */}
         {!data && (
           <div className="flex flex-col items-center justify-center min-h-[60vh] gap-6 text-center">
             <div className="flex h-16 w-16 items-center justify-center rounded-full border-2 border-border bg-card">
               <span className="font-mono text-2xl font-bold text-primary">B</span>
             </div>
-            <div className="space-y-2 max-w-sm">
+            <div className="max-w-sm space-y-2">
               <h2 className="text-base font-semibold text-foreground">
-                {error ? 'Cannot reach your node' : 'Waiting for connection...'}
+                {error ? 'Cannot reach your node' : 'Not connected'}
               </h2>
-              <p className="text-sm text-muted-foreground leading-relaxed">
+              <p className="text-sm leading-relaxed text-muted-foreground">
                 {error
                   ? error
                   : 'Open Settings and enter your AxeBCH API URL. The dashboard will populate once a live connection is established.'}
@@ -228,39 +230,37 @@ export function DashboardClient() {
           </div>
         )}
 
-        {/* Live data — only rendered when real data is present */}
+        {/* Live data */}
         {data && (
-          <>
-            {/* Connection error banner (has stale data but fetch just failed) */}
+          <div className="flex flex-col gap-4">
             {error && (
-              <div className="mb-4 rounded-lg border border-destructive/30 bg-destructive/10 px-4 py-2.5 text-sm text-red-400">
+              <div className="rounded-lg border border-destructive/30 bg-destructive/10 px-4 py-2.5 text-sm text-red-400">
                 Connection error: {error} — showing last known data.
               </div>
             )}
 
-            {/* Top stats grid */}
-            <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6 mb-4">
-              <StatCard label="Block Height" value={data.height.toLocaleString()} />
-              <StatCard label="Block Diff" value={String(data.blockDiff)} unit={data.blockDiffUnit} />
-              <StatCard label="Pool Hashrate" value={String(data.poolHashrate)} unit={data.poolHashrateUnit} />
-              <StatCard label="Network HR" value={String(data.networkHashrate)} unit={data.networkHashrateUnit} />
-              <StatCard label="Best Share" value={String(data.bestShare)} unit={data.bestShareUnit} highlight />
-              <StatCard label="ATH Worker" value={data.athShareWorker || '—'} unit={`${data.athShare}${data.athShareUnit}`} highlight />
-            </div>
+            {/* Main info block */}
+            <ProgressBlock
+              percent={data.progressPercent}
+              etaDays={data.etaDays}
+              etaHours={data.etaHours}
+              blockHeight={data.blockHeight}
+              lastShareAgo={data.lastShareAgo}
+              workerCount={data.workerCount}
+              hashrateWindows={data.hashrateWindows}
+              bestShareSinceBlock={data.bestShareSinceBlock}
+              bestShareSinceBlockUnit={data.bestShareSinceBlockUnit}
+              bestShareSinceBlockWorker={data.bestShareSinceBlockWorker}
+              allTimeBest={data.allTimeBest}
+              allTimeBestUnit={data.allTimeBestUnit}
+              allTimeBestWorker={data.allTimeBestWorker}
+              networkDifficulty={data.networkDifficulty}
+              networkDifficultyUnit={data.networkDifficultyUnit}
+              algo={data.algo}
+            />
 
-            {/* Progress block */}
-            <div className="mb-4">
-              <ProgressBlock
-                percent={data.progressPercent}
-                etaDays={data.etaDays}
-                etaHours={data.etaHours}
-                height={data.height}
-                lastShareAgo={latestShareAgo === Infinity ? 0 : latestShareAgo}
-              />
-            </div>
-
-            {/* Workers + alerts side by side on large screens */}
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+            {/* Workers + alert log */}
+            <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
               <div className="lg:col-span-2">
                 <WorkerTable workers={data.workers} athWorkerIds={athWorkerIds} />
               </div>
@@ -268,7 +268,7 @@ export function DashboardClient() {
                 <AlertLog events={alerts} />
               </div>
             </div>
-          </>
+          </div>
         )}
       </main>
 
