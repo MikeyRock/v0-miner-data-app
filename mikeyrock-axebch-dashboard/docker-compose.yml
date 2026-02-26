@@ -1,0 +1,31 @@
+version: "3.7"
+
+services:
+
+  app_proxy:
+    environment:
+      APP_HOST: mikeyrock-axebch-dashboard_web_1
+      APP_PORT: 3000
+
+  web:
+    image: ghcr.io/mikeyrock/v0-miner-data-app:latest
+    container_name: mikeyrock-axebch-dashboard_web_1
+    restart: on-failure
+    stop_grace_period: 30s
+    init: true
+    environment:
+      - AXEBCH_API_URL=${APP_AXEBCH_API_URL:-http://willitmod-dev-bch_app_1:3000/api/pool}
+      - DISCORD_WEBHOOK_URL=${APP_DISCORD_WEBHOOK_URL:-}
+      - PORT=3000
+      - NODE_ENV=production
+    networks:
+      - default
+      - umbrel_main_network
+
+networks:
+  default:
+    ipam:
+      config:
+        - subnet: 172.31.51.0/24
+  umbrel_main_network:
+    external: true
