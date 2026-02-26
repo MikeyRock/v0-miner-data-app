@@ -1,14 +1,12 @@
 # syntax=docker/dockerfile:1
 FROM node:20-alpine AS base
 
-# Install pnpm
-RUN corepack enable && corepack prepare pnpm@latest --activate
-
 # ---- deps stage ----
 FROM base AS deps
 WORKDIR /app
-COPY package.json pnpm-lock.yaml* ./
-RUN pnpm install --frozen-lockfile
+COPY package.json package-lock.json* ./
+# Use npm ci when lockfile exists, otherwise npm install
+RUN if [ -f package-lock.json ]; then npm ci; else npm install; fi
 
 # ---- builder stage ----
 FROM base AS builder
@@ -16,19 +14,17 @@ WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 
-# Build args become env vars at build time for Next.js public vars
-ARG NEXT_PUBLIC_POLL_INTERVAL_MS=15000
-ARG NEXT_PUBLIC_OFFLINE_THRESHOLD_S=300
-ENV NEXT_PUBLIC_POLL_INTERVAL_MS=$NEXT_PUBLIC_POLL_INTERVAL_MS
-ENV NEXT_PUBLIC_OFFLINE_THRESHOLD_S=$NEXT_PUBLIC_OFFLINE_THRESHOLD_S
+ENV NEXT_TELEMETRY_DISABLED=1
+ENV NODE_ENV=production
 
-RUN pnpm build
+RUN npm run build
 
 # ---- runner stage ----
 FROM base AS runner
 WORKDIR /app
 
 ENV NODE_ENV=production
+ENV NEXT_TELEMETRY_DISABLED=1
 ENV PORT=3000
 ENV HOSTNAME=0.0.0.0
 

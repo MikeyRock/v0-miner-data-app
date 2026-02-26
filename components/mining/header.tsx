@@ -1,5 +1,6 @@
 'use client'
 
+import { RefreshCw, Settings } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
 interface HeaderProps {
@@ -7,58 +8,70 @@ interface HeaderProps {
   lastUpdated: number | null
   onRefresh: () => void
   isRefreshing: boolean
+  onSettingsOpen: () => void
 }
 
-export function Header({ isConnected, lastUpdated, onRefresh, isRefreshing }: HeaderProps) {
-  function formatTime(ts: number): string {
-    return new Date(ts).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })
-  }
+function formatTimeAgo(ts: number) {
+  const s = Math.floor((Date.now() - ts) / 1000)
+  if (s < 5) return 'just now'
+  if (s < 60) return `${s}s ago`
+  return `${Math.floor(s / 60)}m ago`
+}
 
+export function Header({ isConnected, lastUpdated, onRefresh, isRefreshing, onSettingsOpen }: HeaderProps) {
   return (
-    <header className="flex items-center justify-between border-b border-border bg-card px-6 py-4">
-      <div className="flex items-center gap-3">
-        {/* Bitcoin B logo */}
-        <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary font-mono text-sm font-bold text-primary-foreground">
-          B
-        </div>
-        <div className="flex flex-col">
-          <span className="text-sm font-semibold text-foreground">AxeBCH Mining Dashboard</span>
-          <span className="text-xs text-muted-foreground">Solo Node Monitor</span>
-        </div>
-      </div>
+    <header className="sticky top-0 z-30 border-b border-border bg-card/80 backdrop-blur-md">
+      <div className="max-w-screen-2xl mx-auto flex items-center justify-between gap-4 px-4 py-3 md:px-6">
 
-      <div className="flex items-center gap-4">
-        {/* Connection status */}
-        <div className="flex items-center gap-1.5">
-          <span
-            className={cn(
-              'h-2 w-2 rounded-full',
-              isConnected ? 'bg-green-400' : 'bg-red-400'
+        {/* Brand */}
+        <div className="flex items-center gap-3">
+          <div className="flex h-8 w-8 items-center justify-center rounded-md bg-primary font-mono text-sm font-bold text-primary-foreground select-none">
+            B
+          </div>
+          <div>
+            <h1 className="text-sm font-bold tracking-tight text-foreground leading-none">AxeBCH Dashboard</h1>
+            <p className="text-[10px] text-muted-foreground mt-0.5 leading-none">Solo Mining Monitor</p>
+          </div>
+        </div>
+
+        {/* Right side */}
+        <div className="flex items-center gap-3">
+          {/* Status pill */}
+          <div className="hidden sm:flex items-center gap-1.5 text-xs text-muted-foreground">
+            <span
+              className="h-2 w-2 rounded-full"
+              style={{ background: isConnected ? 'var(--online)' : 'var(--offline)' }}
+            />
+            <span>{isConnected ? 'Live' : 'Preview'}</span>
+            {lastUpdated && (
+              <span className="text-muted-foreground/50">· {formatTimeAgo(lastUpdated)}</span>
             )}
-          />
-          <span className="text-xs text-muted-foreground">
-            {isConnected ? 'Connected' : 'Disconnected'}
-          </span>
+          </div>
+
+          {/* Refresh */}
+          <button
+            onClick={onRefresh}
+            disabled={isRefreshing}
+            aria-label="Refresh data"
+            className={cn(
+              'flex items-center gap-1.5 rounded-md border border-border px-2.5 py-1.5 text-xs text-muted-foreground',
+              'hover:text-foreground hover:border-foreground/30 transition-colors disabled:opacity-50'
+            )}
+          >
+            <RefreshCw size={12} className={isRefreshing ? 'animate-spin' : ''} />
+            <span className="hidden sm:inline">Refresh</span>
+          </button>
+
+          {/* Settings */}
+          <button
+            onClick={onSettingsOpen}
+            aria-label="Open settings"
+            className="flex items-center gap-1.5 rounded-md border border-border px-2.5 py-1.5 text-xs text-muted-foreground hover:text-foreground hover:border-foreground/30 transition-colors"
+          >
+            <Settings size={12} />
+            <span className="hidden sm:inline">Settings</span>
+          </button>
         </div>
-
-        {lastUpdated && (
-          <span className="hidden text-xs text-muted-foreground sm:block">
-            Updated {formatTime(lastUpdated)}
-          </span>
-        )}
-
-        <button
-          onClick={onRefresh}
-          disabled={isRefreshing}
-          className={cn(
-            'rounded-md border border-border bg-secondary px-3 py-1.5 text-xs font-medium text-foreground',
-            'transition-all hover:border-primary/50 hover:text-primary',
-            'disabled:cursor-not-allowed disabled:opacity-50',
-            isRefreshing && 'animate-pulse'
-          )}
-        >
-          {isRefreshing ? 'Refreshing...' : 'Refresh'}
-        </button>
       </div>
     </header>
   )

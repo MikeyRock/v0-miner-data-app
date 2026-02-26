@@ -12,11 +12,11 @@ description: >
   Sends Discord webhook notifications when a worker hits a new ATH share,
   when progress milestones are reached, when a block is found, or when a
   worker goes offline.
-developer: Your Name
-website: https://github.com/your-repo/axebch-dashboard
+developer: MikeyRock
+website: https://github.com/MikeyRock/v0-miner-data-app
 dependencies: []
-repo: https://github.com/your-repo/axebch-dashboard
-support: https://github.com/your-repo/axebch-dashboard/issues
+repo: https://github.com/MikeyRock/v0-miner-data-app
+support: https://github.com/MikeyRock/v0-miner-data-app/issues
 port: 3080
 gallery:
   - 1.jpg
