@@ -20,7 +20,7 @@ export function WorkerTable({ workers, athWorkerIds, workerCount = 0 }: WorkerTa
   const online  = workers.filter((w) => w.isOnline).length
   const offline = workers.filter((w) => !w.isOnline).length
 
-  // Count-only mode — /api/pool returns a number, not per-worker breakdown
+  // Count-only mode — WillItMod /api/workers does not exist, only a count is available
   if (!workers || workers.length === 0) {
     return (
       <div className="overflow-hidden rounded-lg border border-border bg-card">
@@ -31,21 +31,27 @@ export function WorkerTable({ workers, athWorkerIds, workerCount = 0 }: WorkerTa
             {workerCount} online
           </span>
         </div>
-        <div className="flex flex-wrap gap-3 p-4">
-          {workerCount > 0
-            ? Array.from({ length: workerCount }).map((_, i) => (
-                <div
-                  key={i}
-                  className="flex items-center gap-2 rounded-md border border-border bg-secondary px-3 py-2"
-                >
-                  <span className="h-2 w-2 rounded-full bg-[color:var(--online)]" />
-                  <span className="font-mono text-sm text-foreground">Worker {i + 1}</span>
-                </div>
-              ))
-            : (
-              <span className="text-sm text-muted-foreground">No workers connected</span>
-            )
-          }
+        <div className="p-4">
+          {workerCount > 0 ? (
+            <>
+              <p className="mb-3 text-xs text-muted-foreground">
+                {workerCount} rig{workerCount !== 1 ? 's' : ''} connected. Per-rig names are not available from the WillItMod API — worker names appear below when a new best share is submitted.
+              </p>
+              <div className="flex flex-wrap gap-3">
+                {Array.from({ length: workerCount }).map((_, i) => (
+                  <div
+                    key={i}
+                    className="flex items-center gap-2 rounded-md border border-border bg-secondary px-3 py-2"
+                  >
+                    <span className="h-2 w-2 rounded-full bg-[color:var(--online)]" />
+                    <span className="font-mono text-sm text-foreground">Rig {i + 1}</span>
+                  </div>
+                ))}
+              </div>
+            </>
+          ) : (
+            <span className="text-sm text-muted-foreground">No workers connected</span>
+          )}
         </div>
       </div>
     )
