@@ -34,6 +34,7 @@ export interface NodeStats {
   // Best share tracking
   bestShareSinceBlock: number
   bestShareSinceBlockUnit: string
+  bestShareSinceBlockRaw: number
   bestShareSinceBlockWorker: string
   allTimeBest: number
   allTimeBestUnit: string

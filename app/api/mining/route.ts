@@ -29,6 +29,11 @@ function fmtHrWindow(label: string, raw: number): HashrateWindow {
 
 // ---- Route ------------------------------------------------------------
 
+function getBaseUrl(url: string): string {
+  // Strip /api/pool or /api/workers suffix to get base URL
+  return url.replace(/\/api\/(pool|workers|node)\/?$/, '')
+}
+
 export async function GET(req: NextRequest) {
   const url = req.nextUrl.searchParams.get('url') || DEFAULT_URL
 
@@ -39,9 +44,15 @@ export async function GET(req: NextRequest) {
     )
   }
 
+  const base = getBaseUrl(url)
+  const poolUrl    = `${base}/api/pool`
+  const workersUrl = `${base}/api/workers`
+
   let raw: Record<string, unknown>
+  let rawWorkerList: Record<string, unknown>[] = []
+
   try {
-    const res = await fetch(url, {
+    const res = await fetch(poolUrl, {
       cache: 'no-store',
       signal: AbortSignal.timeout(8000),
     })
@@ -54,7 +65,29 @@ export async function GET(req: NextRequest) {
     raw = await res.json()
   } catch (err) {
     const msg = err instanceof Error ? err.message : 'Unknown error'
-    return NextResponse.json({ error: `Could not reach ${url}: ${msg}` }, { status: 502 })
+    return NextResponse.json({ error: `Could not reach ${poolUrl}: ${msg}` }, { status: 502 })
+  }
+
+  // Fetch per-worker data — best effort, don't fail if unavailable
+  try {
+    const wRes = await fetch(workersUrl, {
+      cache: 'no-store',
+      signal: AbortSignal.timeout(5000),
+    })
+    if (wRes.ok) {
+      const wJson = await wRes.json()
+      // WillItMod returns either an array or an object keyed by worker name
+      if (Array.isArray(wJson)) {
+        rawWorkerList = wJson as Record<string, unknown>[]
+      } else if (typeof wJson === 'object' && wJson !== null) {
+        rawWorkerList = Object.entries(wJson as Record<string, unknown>).map(([name, data]) => ({
+          name,
+          ...(typeof data === 'object' && data !== null ? data as object : {}),
+        }))
+      }
+    }
+  } catch {
+    // Silently ignore — workers list is optional
   }
 
   // ---- Pool-level fields (WillItMod /api/pool field names) -------------
@@ -117,8 +150,33 @@ export async function GET(req: NextRequest) {
     : 0
 
   // ---- Workers ---------------------------------------------------------
-  // /api/pool returns worker count only, no per-worker breakdown
-  const workers: WorkerStats[] = []
+  // Build worker list from /api/workers if available, fallback to count-only
+  const workers: WorkerStats[] = rawWorkerList.map((w) => {
+    const name = (w.name as string) ?? (w.workerId as string) ?? (w.worker as string) ?? 'unknown'
+    const hrRaw = typeof w.hashrate_ths === 'number'
+      ? (w.hashrate_ths as number) * 1e12
+      : typeof w.hashrate === 'number' ? (w.hashrate as number) : 0
+    const hr = fmtHashrate(hrRaw)
+    const bsRaw = (w.best_share as number) ?? (w.bestShare as number) ?? (w.record as number) ?? 0
+    const bs = fmtDiff(bsRaw)
+    const lastUpdate = (w.lastupdate as number) ?? (w.last_share as number) ?? 0
+    const lsa = lastUpdate > 0
+      ? Math.max(0, Math.floor(Date.now() / 1000) - lastUpdate)
+      : 0
+
+    return {
+      workerId: name,
+      hashrate: hr.value,
+      hashrateUnit: hr.unit,
+      hashrateRaw: hrRaw,
+      bestShare: bs.value,
+      bestShareUnit: bs.unit,
+      bestShareRaw: bsRaw,
+      odds: (w.odds as string) ?? '',
+      lastShareAgo: lsa,
+      isOnline: lsa < 600,
+    }
+  })
 
   const result: NodeStats = {
     workerCount,
@@ -133,6 +191,7 @@ export async function GET(req: NextRequest) {
     algo,
     bestShareSinceBlock: bsBlock.value,
     bestShareSinceBlockUnit: bsBlock.unit,
+    bestShareSinceBlockRaw: bsBlockRaw,
     bestShareSinceBlockWorker: bsBlockWorker,
     allTimeBest: bsAllTime.value,
     allTimeBestUnit: bsAllTime.unit,

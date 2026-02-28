@@ -43,10 +43,12 @@ export function DashboardClient({ initialApiUrl = '', initialDiscordUrl = '' }: 
   const [settingsOpen, setSettingsOpen] = useState(false)
 
   // Deduplication refs
-  const prevBestShareRef      = useRef<Record<string, number>>({})
-  const offlineAlertedRef     = useRef<Set<string>>(new Set())
-  const milestoneAlertedRef   = useRef<Set<number>>(new Set())
-  const blockFoundAlertedRef  = useRef<Set<number>>(new Set())
+  const prevBestShareRef         = useRef<Record<string, number>>({})
+  const prevBestSinceBlockRef    = useRef<number>(0)
+  const netDiffCrossedAlertedRef = useRef<boolean>(false)
+  const offlineAlertedRef        = useRef<Set<string>>(new Set())
+  const milestoneAlertedRef      = useRef<Set<number>>(new Set())
+  const blockFoundAlertedRef     = useRef<Set<number>>(new Set())
 
   const addAlert = useCallback((event: Omit<AlertEvent, 'id'>): AlertEvent => {
     const full: AlertEvent = { ...event, id: generateId() }
@@ -70,13 +72,69 @@ export function DashboardClient({ initialApiUrl = '', initialDiscordUrl = '' }: 
 
       // ---- Alert engine ------------------------------------------------
 
-      // 1. Worker ATH (per-worker best share improved)
+      // 1. New best share since block (pool-level, with worker name from API)
+      const bsBlockRaw = json.bestShareSinceBlockRaw ?? 0
+      const prevBsBlock = prevBestSinceBlockRef.current
+      if (bsBlockRaw > 0 && bsBlockRaw > prevBsBlock && prevBsBlock > 0) {
+        const workerName = json.bestShareSinceBlockWorker || 'Unknown'
+        const alert = addAlert({
+          type: 'ath',
+          message: `New best share by ${workerName}: ${json.bestShareSinceBlock}${json.bestShareSinceBlockUnit} (network diff: ${json.networkDifficulty}${json.networkDifficultyUnit})`,
+          workerName,
+          timestamp: Date.now(),
+          sent: false,
+        })
+        sendDiscordAlert({
+          type: 'ath',
+          workerName,
+          bestShare: `${json.bestShareSinceBlock}${json.bestShareSinceBlockUnit}`,
+          blockDiff: `${json.networkDifficulty}${json.networkDifficultyUnit}`,
+          discordWebhookUrl: discordUrl,
+        }).then(() =>
+          setAlerts((prev) => prev.map((a) => a.id === alert.id ? { ...a, sent: true } : a))
+        )
+      }
+      prevBestSinceBlockRef.current = bsBlockRaw
+
+      // 2. Best share meets or exceeds network difficulty — BLOCK CANDIDATE
+      if (
+        bsBlockRaw > 0 &&
+        json.networkDifficultyRaw > 0 &&
+        bsBlockRaw >= json.networkDifficultyRaw &&
+        !netDiffCrossedAlertedRef.current
+      ) {
+        netDiffCrossedAlertedRef.current = true
+        const workerName = json.bestShareSinceBlockWorker || 'Unknown'
+        const alert = addAlert({
+          type: 'block_found',
+          message: `BLOCK CANDIDATE! ${workerName} submitted a share >= network difficulty (${json.bestShareSinceBlock}${json.bestShareSinceBlockUnit} >= ${json.networkDifficulty}${json.networkDifficultyUnit})`,
+          workerName,
+          timestamp: Date.now(),
+          sent: false,
+        })
+        sendDiscordAlert({
+          type: 'block_found',
+          workerName,
+          height: json.blockHeight,
+          bestShare: `${json.bestShareSinceBlock}${json.bestShareSinceBlockUnit}`,
+          blockDiff: `${json.networkDifficulty}${json.networkDifficultyUnit}`,
+          discordWebhookUrl: discordUrl,
+        }).then(() =>
+          setAlerts((prev) => prev.map((a) => a.id === alert.id ? { ...a, sent: true } : a))
+        )
+      }
+      // Reset when best share drops back (new block)
+      if (bsBlockRaw < json.networkDifficultyRaw * 0.1) {
+        netDiffCrossedAlertedRef.current = false
+      }
+
+      // 3. Per-worker ATH (only when per-worker data is available)
       json.workers.forEach((w) => {
         const prev = prevBestShareRef.current[w.workerId] ?? 0
         if (w.bestShareRaw > prev && prev > 0) {
           const alert = addAlert({
             type: 'ath',
-            message: `${w.workerId} hit a new best share: ${w.bestShare}${w.bestShareUnit} (diff: ${json.networkDifficulty}${json.networkDifficultyUnit})`,
+            message: `${w.workerId} hit a new personal best: ${w.bestShare}${w.bestShareUnit}`,
             workerName: w.workerId,
             timestamp: Date.now(),
             sent: false,
