@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { X, Settings } from 'lucide-react'
+import { X, Settings, Send, CheckCircle, AlertCircle } from 'lucide-react'
 
 interface Props {
   open: boolean
@@ -16,6 +16,8 @@ export function SettingsDrawer({ open, onClose, apiUrl, discordUrl, pollMs, onSa
   const [localApi, setLocalApi] = useState(apiUrl)
   const [localDiscord, setLocalDiscord] = useState(discordUrl)
   const [localPoll, setLocalPoll] = useState(String(pollMs / 1000))
+  const [testStatus, setTestStatus] = useState<'idle' | 'sending' | 'ok' | 'error'>('idle')
+  const [testError, setTestError] = useState('')
 
   useEffect(() => {
     setLocalApi(apiUrl)
@@ -26,6 +28,37 @@ export function SettingsDrawer({ open, onClose, apiUrl, discordUrl, pollMs, onSa
   function handleSave() {
     const secs = Math.max(5, parseInt(localPoll, 10) || 15)
     onSave(localApi.trim(), localDiscord.trim(), secs * 1000)
+  }
+
+  async function handleTestDiscord() {
+    if (!localDiscord.trim()) return
+    setTestStatus('sending')
+    setTestError('')
+    try {
+      const res = await fetch('/api/alerts', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          type: 'milestone',
+          progressPercent: 0,
+          etaDays: 0,
+          etaHours: 0,
+          discordWebhookUrl: localDiscord.trim(),
+          _test: true,
+        }),
+      })
+      const body = await res.json()
+      if (res.ok) {
+        setTestStatus('ok')
+        setTimeout(() => setTestStatus('idle'), 3000)
+      } else {
+        setTestStatus('error')
+        setTestError(body.error ?? `HTTP ${res.status}`)
+      }
+    } catch (e) {
+      setTestStatus('error')
+      setTestError(e instanceof Error ? e.message : 'Request failed')
+    }
   }
 
   if (!open) return null
@@ -84,14 +117,35 @@ export function SettingsDrawer({ open, onClose, apiUrl, discordUrl, pollMs, onSa
             hint="Leave empty to disable Discord notifications."
             id="discord-url"
           >
-            <input
-              id="discord-url"
-              type="url"
-              value={localDiscord}
-              onChange={(e) => setLocalDiscord(e.target.value)}
-              placeholder="https://discord.com/api/webhooks/..."
-              className="w-full rounded-md border border-border bg-input px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-ring font-mono"
-            />
+            <div className="flex gap-2">
+              <input
+                id="discord-url"
+                type="url"
+                value={localDiscord}
+                onChange={(e) => { setLocalDiscord(e.target.value); setTestStatus('idle') }}
+                placeholder="https://discord.com/api/webhooks/..."
+                className="flex-1 rounded-md border border-border bg-input px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-ring font-mono"
+              />
+              <button
+                onClick={handleTestDiscord}
+                disabled={!localDiscord.trim() || testStatus === 'sending'}
+                title="Send a test alert to Discord"
+                className="flex items-center gap-1.5 rounded-md border border-border px-3 py-2 text-sm font-medium transition-colors disabled:opacity-40
+                  hover:border-primary hover:text-primary
+                  data-[status=ok]:border-[color:var(--online)] data-[status=ok]:text-[color:var(--online)]
+                  data-[status=error]:border-destructive data-[status=error]:text-destructive"
+                data-status={testStatus}
+              >
+                {testStatus === 'sending' && <span className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-current border-t-transparent" />}
+                {testStatus === 'ok' && <CheckCircle size={14} />}
+                {testStatus === 'error' && <AlertCircle size={14} />}
+                {testStatus === 'idle' && <Send size={14} />}
+                <span>{testStatus === 'sending' ? 'Sending...' : testStatus === 'ok' ? 'Sent!' : 'Test'}</span>
+              </button>
+            </div>
+            {testStatus === 'error' && testError && (
+              <p className="mt-1 text-xs text-destructive">{testError}</p>
+            )}
           </Field>
 
           <Field
