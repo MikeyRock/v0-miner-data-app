@@ -56,18 +56,18 @@ export function ProgressBlock({
 
       {/* Top row: worker count + last share */}
       <div className="flex items-center justify-between">
-        <div className="flex items-center gap-4 text-sm">
+        <div className="flex items-center gap-4">
           <span className="font-mono text-foreground">
-            <span className="text-2xl font-bold text-primary">{workerCount}</span>
-            <span className="ml-1.5 text-xs uppercase tracking-widest text-muted-foreground">Workers</span>
+            <span className="text-4xl font-bold text-primary">{workerCount}</span>
+            <span className="ml-2 text-sm uppercase tracking-widest text-muted-foreground">Workers</span>
           </span>
         </div>
         <div className="flex flex-col items-end gap-0.5">
-          <span className="text-[10px] uppercase tracking-widest text-muted-foreground">Last Share</span>
-          <span className="font-mono text-sm font-medium text-foreground">
+          <span className="text-xs uppercase tracking-widest text-muted-foreground">Last Share</span>
+          <span className="font-mono text-base font-medium text-foreground">
             {fmtAgo(lastShareAgo)}
           </span>
-          <span className="text-[10px] text-muted-foreground">across all workers</span>
+          <span className="text-xs text-muted-foreground">across all workers</span>
         </div>
       </div>
 
@@ -79,9 +79,9 @@ export function ProgressBlock({
               key={w.label}
               className="flex flex-col items-center rounded-md border border-border bg-secondary px-3 py-1.5 min-w-[56px]"
             >
-              <span className="text-[10px] uppercase tracking-widest text-muted-foreground">{w.label}</span>
-              <span className="font-mono text-sm font-semibold text-foreground">{w.value}</span>
-              <span className="text-[10px] text-muted-foreground">{w.unit}</span>
+              <span className="text-xs uppercase tracking-widest text-muted-foreground">{w.label}</span>
+              <span className="font-mono text-base font-semibold text-foreground">{w.value}</span>
+              <span className="text-xs text-muted-foreground">{w.unit}</span>
             </div>
           ))}
         </div>
@@ -90,39 +90,39 @@ export function ProgressBlock({
       {/* Network difficulty + height */}
       <div className="flex items-center justify-between rounded-md bg-secondary px-3 py-2">
         <div className="flex flex-col gap-0.5">
-          <span className="text-[10px] uppercase tracking-widest text-muted-foreground">Network Difficulty</span>
-          <span className="font-mono text-base font-semibold text-foreground">
+          <span className="text-xs uppercase tracking-widest text-muted-foreground">Network Difficulty</span>
+          <span className="font-mono text-xl font-semibold text-foreground">
             {networkDifficulty}<span className="ml-1 text-sm text-muted-foreground">{networkDifficultyUnit}</span>
           </span>
-          <span className="text-[10px] text-muted-foreground">{algo} · Height {blockHeight.toLocaleString()}</span>
+          <span className="text-xs text-muted-foreground">{algo} · Height {blockHeight.toLocaleString()}</span>
         </div>
         <div className="flex flex-col items-end gap-0.5">
-          <span className="text-[10px] uppercase tracking-widest text-muted-foreground">ETA to Block</span>
-          <span className="font-mono text-base font-semibold text-foreground">
+          <span className="text-xs uppercase tracking-widest text-muted-foreground">ETA to Block</span>
+          <span className="font-mono text-xl font-semibold text-foreground">
             {etaDays > 0 ? `${etaDays}d ` : ''}{etaHours}h
           </span>
-          <span className="text-[10px] text-muted-foreground">based on pool hashrate</span>
+          <span className="text-xs text-muted-foreground">based on pool hashrate</span>
         </div>
       </div>
 
       {/* Best share cards */}
       <div className="grid grid-cols-2 gap-3">
         <div className="flex flex-col gap-1 rounded-md border border-border bg-secondary px-3 py-2">
-          <span className="text-[10px] uppercase tracking-widest text-muted-foreground">Best Share Since Block</span>
-          <span className="font-mono text-lg font-bold text-primary">
-            {bestShareSinceBlock}<span className="ml-1 text-sm font-medium text-muted-foreground">{bestShareSinceBlockUnit}</span>
+          <span className="text-xs uppercase tracking-widest text-muted-foreground">Best Share Since Block</span>
+          <span className="font-mono text-2xl font-bold text-primary">
+            {bestShareSinceBlock}<span className="ml-1 text-base font-medium text-muted-foreground">{bestShareSinceBlockUnit}</span>
           </span>
           {bestShareSinceBlockWorker && (
-            <span className="text-xs text-muted-foreground">by {bestShareSinceBlockWorker}</span>
+            <span className="text-sm text-muted-foreground">by {bestShareSinceBlockWorker}</span>
           )}
         </div>
         <div className="flex flex-col gap-1 rounded-md border border-border bg-secondary px-3 py-2">
-          <span className="text-[10px] uppercase tracking-widest text-muted-foreground">All-Time Best</span>
-          <span className="font-mono text-lg font-bold text-foreground">
-            {allTimeBest}<span className="ml-1 text-sm font-medium text-muted-foreground">{allTimeBestUnit}</span>
+          <span className="text-xs uppercase tracking-widest text-muted-foreground">All-Time Best</span>
+          <span className="font-mono text-2xl font-bold text-foreground">
+            {allTimeBest}<span className="ml-1 text-base font-medium text-muted-foreground">{allTimeBestUnit}</span>
           </span>
           {allTimeBestWorker && (
-            <span className="text-xs text-muted-foreground">by {allTimeBestWorker}</span>
+            <span className="text-sm text-muted-foreground">by {allTimeBestWorker}</span>
           )}
         </div>
       </div>
@@ -130,9 +130,9 @@ export function ProgressBlock({
       {/* Progress bar */}
       <div className="flex flex-col gap-2">
         <div className="flex items-center justify-between">
-          <span className="text-xs uppercase tracking-widest text-muted-foreground">Progress to Block</span>
+          <span className="text-sm uppercase tracking-widest text-muted-foreground">Progress to Block</span>
           <span className={cn(
-            'font-mono text-sm font-bold',
+            'font-mono text-lg font-bold',
             clamped >= 75 ? 'text-primary' : 'text-foreground'
           )}>
             {clamped.toFixed(2)}%

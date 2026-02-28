@@ -6,6 +6,7 @@ import type { WorkerStats } from '@/lib/types'
 interface WorkerTableProps {
   workers: WorkerStats[]
   athWorkerIds: Set<string>
+  workerCount?: number
 }
 
 function fmtAgo(seconds: number): string {
@@ -15,14 +16,37 @@ function fmtAgo(seconds: number): string {
   return `${Math.floor(seconds / 3600)}h ${Math.floor((seconds % 3600) / 60)}m`
 }
 
-export function WorkerTable({ workers, athWorkerIds }: WorkerTableProps) {
+export function WorkerTable({ workers, athWorkerIds, workerCount = 0 }: WorkerTableProps) {
   const online  = workers.filter((w) => w.isOnline).length
   const offline = workers.filter((w) => !w.isOnline).length
 
+  // Count-only mode — /api/pool returns a number, not per-worker breakdown
   if (!workers || workers.length === 0) {
     return (
-      <div className="flex items-center justify-center rounded-lg border border-border bg-card p-8">
-        <span className="text-sm text-muted-foreground">No workers connected</span>
+      <div className="overflow-hidden rounded-lg border border-border bg-card">
+        <div className="flex items-center justify-between border-b border-border px-4 py-3">
+          <span className="text-sm font-medium uppercase tracking-widest text-muted-foreground">Workers</span>
+          <span className="flex items-center gap-1.5 text-sm text-[color:var(--online)]">
+            <span className="h-2 w-2 rounded-full bg-[color:var(--online)]" />
+            {workerCount} online
+          </span>
+        </div>
+        <div className="flex flex-wrap gap-3 p-4">
+          {workerCount > 0
+            ? Array.from({ length: workerCount }).map((_, i) => (
+                <div
+                  key={i}
+                  className="flex items-center gap-2 rounded-md border border-border bg-secondary px-3 py-2"
+                >
+                  <span className="h-2 w-2 rounded-full bg-[color:var(--online)]" />
+                  <span className="font-mono text-sm text-foreground">Worker {i + 1}</span>
+                </div>
+              ))
+            : (
+              <span className="text-sm text-muted-foreground">No workers connected</span>
+            )
+          }
+        </div>
       </div>
     )
   }

@@ -25,21 +25,21 @@ export function Header({ isConnected, lastUpdated, onRefresh, isRefreshing, onSe
 
         {/* Brand */}
         <div className="flex items-center gap-3">
-          <div className="flex h-8 w-8 items-center justify-center rounded-md bg-primary font-mono text-sm font-bold text-primary-foreground select-none">
+          <div className="flex h-10 w-10 items-center justify-center rounded-md bg-primary font-mono text-base font-bold text-primary-foreground select-none">
             B
           </div>
           <div>
-            <h1 className="text-sm font-bold tracking-tight text-foreground leading-none">AxeBCH Dashboard</h1>
-            <p className="text-[10px] text-muted-foreground mt-0.5 leading-none">Solo Mining Monitor</p>
+            <h1 className="text-base font-bold tracking-tight text-foreground leading-none">AxeBCH Dashboard</h1>
+            <p className="text-xs text-muted-foreground mt-0.5 leading-none">Solo Mining Monitor</p>
           </div>
         </div>
 
         {/* Right side */}
         <div className="flex items-center gap-3">
           {/* Status pill */}
-          <div className="hidden sm:flex items-center gap-1.5 text-xs text-muted-foreground">
+          <div className="hidden sm:flex items-center gap-1.5 text-sm text-muted-foreground">
             <span
-              className="h-2 w-2 rounded-full"
+              className="h-2.5 w-2.5 rounded-full"
               style={{ background: isConnected ? 'var(--online)' : 'var(--offline)' }}
             />
             <span>{isConnected ? 'Live' : 'Preview'}</span>
@@ -54,11 +54,11 @@ export function Header({ isConnected, lastUpdated, onRefresh, isRefreshing, onSe
             disabled={isRefreshing}
             aria-label="Refresh data"
             className={cn(
-              'flex items-center gap-1.5 rounded-md border border-border px-2.5 py-1.5 text-xs text-muted-foreground',
+              'flex items-center gap-1.5 rounded-md border border-border px-3 py-2 text-sm text-muted-foreground',
               'hover:text-foreground hover:border-foreground/30 transition-colors disabled:opacity-50'
             )}
           >
-            <RefreshCw size={12} className={isRefreshing ? 'animate-spin' : ''} />
+            <RefreshCw size={14} className={isRefreshing ? 'animate-spin' : ''} />
             <span className="hidden sm:inline">Refresh</span>
           </button>
 
@@ -66,9 +66,9 @@ export function Header({ isConnected, lastUpdated, onRefresh, isRefreshing, onSe
           <button
             onClick={onSettingsOpen}
             aria-label="Open settings"
-            className="flex items-center gap-1.5 rounded-md border border-border px-2.5 py-1.5 text-xs text-muted-foreground hover:text-foreground hover:border-foreground/30 transition-colors"
+            className="flex items-center gap-1.5 rounded-md border border-border px-3 py-2 text-sm text-muted-foreground hover:text-foreground hover:border-foreground/30 transition-colors"
           >
-            <Settings size={12} />
+            <Settings size={14} />
             <span className="hidden sm:inline">Settings</span>
           </button>
         </div>

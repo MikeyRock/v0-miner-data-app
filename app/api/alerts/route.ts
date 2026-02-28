@@ -12,12 +12,26 @@ interface AlertPayload {
   etaDays?: number
   etaHours?: number
   lastShareAgo?: number
-  // Can be passed from the client settings drawer, overrides env var
   discordWebhookUrl?: string
+  _test?: boolean
 }
 
 function buildEmbed(payload: AlertPayload) {
   const ts = Math.floor(Date.now() / 1000)
+
+  if (payload._test) {
+    return {
+      embeds: [
+        {
+          title: 'AxeBCH Dashboard — Test Alert',
+          description: 'Your Discord webhook is working correctly. You will receive mining alerts here.',
+          color: 0xf7931a,
+          footer: { text: 'AxeBCH Solo Node • Test Message' },
+          timestamp: new Date().toISOString(),
+        },
+      ],
+    }
+  }
 
   switch (payload.type) {
     case 'ath':
