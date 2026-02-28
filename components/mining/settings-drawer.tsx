@@ -74,7 +74,7 @@ export function SettingsDrawer({ open, onClose, apiUrl, discordUrl, pollMs, onSa
               type="url"
               value={localApi}
               onChange={(e) => setLocalApi(e.target.value)}
-              placeholder="http://192.168.0.117:21212/api/node"
+              placeholder="http://willitmod-dev-bch_app_1:3000/api/pool"
               className="w-full rounded-md border border-border bg-input px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-ring font-mono"
             />
           </Field>
@@ -112,8 +112,9 @@ export function SettingsDrawer({ open, onClose, apiUrl, discordUrl, pollMs, onSa
 
           <div className="rounded-md border border-border/50 bg-muted/40 px-4 py-3 text-xs text-muted-foreground leading-relaxed space-y-1">
             <p className="font-semibold text-foreground/60 uppercase tracking-wider text-[10px]">On Umbrel</p>
-            <p>Set <code className="text-primary">AXEBCH_API_URL</code> in your <code className="text-primary">.env</code> file instead and it will be pre-filled automatically.</p>
-            <p>The app runs entirely on your LAN — no Cloudflare proxy or cookie required.</p>
+            <p>If you have the <strong className="text-foreground/70">WillItMod AxeBCH</strong> app installed, use:</p>
+            <p><code className="text-primary select-all">http://willitmod-dev-bch_app_1:3000/api/pool</code></p>
+            <p className="pt-1">No proxy, no .env file needed — just paste the URL above and hit Save.</p>
           </div>
         </div>
 
