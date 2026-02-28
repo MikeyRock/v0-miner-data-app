@@ -57,117 +57,68 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: `Could not reach ${url}: ${msg}` }, { status: 502 })
   }
 
-  // ---- Pool-level fields -----------------------------------------------
-  // AxeBCH exposes these at the top level — field names may vary by version.
-  // We try multiple possible keys so it stays robust.
+  // ---- Pool-level fields (WillItMod /api/pool field names) -------------
 
-  const workerCount: number =
-    (raw.connectedMiners as number) ??
-    (raw.workerCount as number) ??
-    ((raw.workers as unknown[])?.length ?? 0)
+  const workerCount: number = typeof raw.workers === 'number' ? (raw.workers as number) : 0
 
-  const lastShareAgo: number =
-    (raw.lastShareTime as number) ?? (raw.timeSinceLastShare as number) ?? 0
+  const lastShareAgo: number = typeof raw.lastupdate === 'number'
+    ? Math.max(0, Math.floor(Date.now() / 1000) - (raw.lastupdate as number))
+    : 0
 
-  // Current / best-effort hashrate
-  const poolHashRaw: number =
-    (raw.poolHashrate as number) ??
-    (raw.hashrate as number) ??
-    (raw.currentHashrate as number) ?? 0
+  // hashrate_ths is in TH/s — convert to H/s for formatter
+  const poolHashRaw: number = typeof raw.hashrate_ths === 'number'
+    ? (raw.hashrate_ths as number) * 1e12
+    : 0
   const poolHash = fmtHashrate(poolHashRaw)
 
-  // Hashrate windows (AxeBCH typically exposes hashrateHistory or hashrate1m etc.)
+  // hashrates_ths: { "1m": 4410, "5m": 4670, ... }
   const windows: HashrateWindow[] = []
+  const wMap = (raw.hashrates_ths ?? {}) as Record<string, number>
   const wKeys: [string, string][] = [
-    ['hashrate1m', '1m'], ['hashrate5m', '5m'], ['hashrate15m', '15m'],
-    ['hashrate1h', '1h'], ['hashrate6h', '6h'], ['hashrate1d', '24h'], ['hashrate7d', '7d'],
+    ['1m','1m'],['5m','5m'],['15m','15m'],['1h','1h'],['6h','6h'],['1d','24h'],['7d','7d'],
   ]
   for (const [key, label] of wKeys) {
-    if (typeof raw[key] === 'number') {
-      windows.push(fmtHrWindow(label, raw[key] as number))
+    if (typeof wMap[key] === 'number') {
+      windows.push(fmtHrWindow(label, wMap[key] * 1e12))
     }
   }
-  // Fallback: use current for "1m" window if nothing found
   if (windows.length === 0 && poolHashRaw > 0) {
     windows.push(fmtHrWindow('now', poolHashRaw))
   }
 
   // Network difficulty
-  const netDiffRaw: number =
-    (raw.networkDifficulty as number) ??
-    (raw.difficulty as number) ??
-    (raw.blockDiff as number) ?? 0
+  const netDiffRaw: number = (raw.network_difficulty as number) ?? 0
   const netDiff = fmtDiff(netDiffRaw)
 
-  const blockHeight: number =
-    (raw.blockHeight as number) ??
-    (raw.height as number) ??
-    (raw.chainHeight as number) ?? 0
+  const blockHeight: number = (raw.network_height as number) ?? 0
 
-  const algo: string = (raw.algo as string) ?? 'SHA256D'
+  const algo: string = typeof raw.network_algo === 'string'
+    ? (raw.network_algo as string).toUpperCase()
+    : 'SHA256D'
 
   // Best share since last block reset
-  const bsBlockRaw: number =
-    (raw.bestShareSinceBlock as number) ??
-    (raw.bestShare as number) ??
-    (raw.bestDiff as number) ?? 0
+  const bsBlockRaw: number = (raw.best_share_since_block as number) ?? 0
   const bsBlock = fmtDiff(bsBlockRaw)
-  const bsBlockWorker: string =
-    (raw.bestShareSinceBlockWorker as string) ??
-    (raw.bestShareWorker as string) ?? ''
+  const bsBlockWorker: string = (raw.best_share_since_block_worker as string) ?? ''
 
   // All-time best share
-  const bsAllTimeRaw: number =
-    (raw.allTimeBest as number) ??
-    (raw.allTimeBestShare as number) ??
-    bsBlockRaw  // fall back to since-block if no separate ATH
+  const bsAllTimeRaw: number = (raw.best_share_all_time as number) ?? bsBlockRaw
   const bsAllTime = fmtDiff(bsAllTimeRaw)
-  const bsAllTimeWorker: string =
-    (raw.allTimeBestWorker as string) ??
-    (raw.allTimeBestShareWorker as string) ?? ''
+  const bsAllTimeWorker: string = ''
 
-  // ETA
-  const etaSeconds: number =
-    (raw.estimatedTimeToBlock as number) ??
-    (raw.eta as number) ??
-    (poolHashRaw > 0 ? netDiffRaw / poolHashRaw : 0)
+  // ETA — already provided in seconds
+  const etaSeconds: number = (raw.eta_seconds as number) ?? 0
   const etaDays  = Math.floor(etaSeconds / 86400)
   const etaHours = Math.floor((etaSeconds % 86400) / 3600)
 
   // Progress = best share since block / network diff (capped at 100%)
-  const progressPercent =
-    netDiffRaw > 0
-      ? Math.min(100, +( (bsBlockRaw / netDiffRaw) * 100 ).toFixed(2))
-      : 0
+  const progressPercent = netDiffRaw > 0
+    ? Math.min(100, +((bsBlockRaw / netDiffRaw) * 100).toFixed(2))
+    : 0
 
   // ---- Workers ---------------------------------------------------------
-  const rawWorkers: Record<string, unknown>[] = Array.isArray(raw.workers)
-    ? (raw.workers as Record<string, unknown>[])
-    : Object.entries((raw.workers as Record<string, unknown>) ?? {}).map(
-        ([id, w]) => ({ workerId: id, ...(w as object) })
-      )
-
-  const workers: WorkerStats[] = rawWorkers.map((w) => {
-    const hrRaw = (w.hashrate as number) ?? (w.currentHashrate as number) ?? 0
-    const hr = fmtHashrate(hrRaw)
-    const bsRaw = (w.bestShare as number) ?? (w.bestDiff as number) ?? (w.record as number) ?? 0
-    const bs = fmtDiff(bsRaw)
-    const lsa = (w.lastShareTime as number) ?? (w.lastShare as number) ?? 0
-    const odds = (w.odds as string) ?? (w.oddsString as string) ?? ''
-
-    return {
-      workerId: (w.workerId as string) ?? (w.name as string) ?? (w.id as string) ?? 'unknown',
-      hashrate: hr.value,
-      hashrateUnit: hr.unit,
-      hashrateRaw: hrRaw,
-      bestShare: bs.value,
-      bestShareUnit: bs.unit,
-      bestShareRaw: bsRaw,
-      odds,
-      lastShareAgo: lsa,
-      isOnline: lsa < 300,
-    }
-  })
+  // /api/pool returns worker count only, no per-worker breakdown
+  const workers: WorkerStats[] = []
 
   const result: NodeStats = {
     workerCount,
