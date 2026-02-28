@@ -182,13 +182,16 @@ export async function GET() {
     }
   }
 
-  // Reset block height (new block detected)
+  // New block detected — reset round state (do NOT fire block_found alert here)
+  // block_found only fires when bestShare >= networkDifficulty (section 2 above)
   if (blockHeight > state.prevBlockHeight && state.prevBlockHeight > 0) {
     state.netDiffCrossedAlerted = false
     state.milestoneAlerted      = []
     state.prevBestSinceBlock    = 0
+    state.prevBlockHeight       = blockHeight
+  } else {
+    state.prevBlockHeight = blockHeight
   }
-  state.prevBlockHeight = blockHeight
 
   saveState(state)
   return NextResponse.json({ ok: true, alerts, progressPercent: progressPercent.toFixed(2) })

@@ -63,7 +63,7 @@ export function DashboardClient({ initialApiUrl = '', initialDiscordUrl = '' }: 
   const netDiffCrossedAlertedRef = useRef<boolean>(false)
   const offlineAlertedRef        = useRef<Set<string>>(new Set())
   const milestoneAlertedRef      = useRef<Set<number>>(new Set())
-  const blockFoundAlertedRef     = useRef<Set<number>>(new Set())
+
 
   const addAlert = useCallback((event: Omit<AlertEvent, 'id'>): AlertEvent => {
     const full: AlertEvent = { ...event, id: generateId() }
@@ -213,29 +213,7 @@ export function DashboardClient({ initialApiUrl = '', initialDiscordUrl = '' }: 
         if (json.progressPercent < m - 5) milestoneAlertedRef.current.delete(m)
       })
 
-      // 4. Block found — best share resets near 0 and height advances
-      if (
-        json.progressPercent < 1 &&
-        json.blockHeight > 0 &&
-        !blockFoundAlertedRef.current.has(json.blockHeight)
-      ) {
-        blockFoundAlertedRef.current.add(json.blockHeight)
-        if (blockFoundAlertedRef.current.size > 1) {
-          const alert = addAlert({
-            type: 'block_found',
-            message: `Block #${json.blockHeight} found! Pool solved a block.`,
-            timestamp: Date.now(),
-            sent: false,
-          })
-          sendDiscordAlert({
-            type: 'block_found',
-            height: json.blockHeight,
-            discordWebhookUrl: discordUrl,
-          }).then(() =>
-            setAlerts((prev) => prev.map((a) => a.id === alert.id ? { ...a, sent: true } : a))
-          )
-        }
-      }
+
 
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Fetch failed')
