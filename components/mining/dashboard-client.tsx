@@ -41,6 +41,21 @@ export function DashboardClient({ initialApiUrl = '', initialDiscordUrl = '' }: 
   const [discordUrl, setDiscordUrl]   = useState(initialDiscordUrl)
   const [pollMs, setPollMs]           = useState(DEFAULT_POLL_MS)
   const [settingsOpen, setSettingsOpen] = useState(false)
+  const [settingsLoaded, setSettingsLoaded] = useState(false)
+
+  // Load persisted settings from server on mount
+  useEffect(() => {
+    fetch('/api/settings')
+      .then((r) => r.json())
+      .then((s: { apiUrl?: string; discordUrl?: string; pollMs?: number }) => {
+        if (s.apiUrl)     setApiUrl(s.apiUrl)
+        if (s.discordUrl) setDiscordUrl(s.discordUrl)
+        if (s.pollMs)     setPollMs(s.pollMs)
+        setSettingsLoaded(true)
+      })
+      .catch(() => setSettingsLoaded(true))
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   // Deduplication refs
   const prevBestShareRef         = useRef<Record<string, number>>({})
@@ -229,12 +244,18 @@ export function DashboardClient({ initialApiUrl = '', initialDiscordUrl = '' }: 
     }
   }, [addAlert, apiUrl, discordUrl])
 
-  // Polling
+  // Polling — only start after settings are loaded from server
   useEffect(() => {
+    if (!settingsLoaded) return
     fetchData()
-    const id = setInterval(() => fetchData(), pollMs)
+    // Also kick the server-side background poll for Discord alerts
+    fetch('/api/poll').catch(() => {})
+    const id = setInterval(() => {
+      fetchData()
+      fetch('/api/poll').catch(() => {})
+    }, pollMs)
     return () => clearInterval(id)
-  }, [fetchData, pollMs])
+  }, [fetchData, pollMs, settingsLoaded])
 
   const isConnected = !!data && !error
 
@@ -346,6 +367,12 @@ export function DashboardClient({ initialApiUrl = '', initialDiscordUrl = '' }: 
           setDiscordUrl(d)
           setPollMs(p)
           setSettingsOpen(false)
+          // Persist to server so settings survive restarts
+          fetch('/api/settings', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ apiUrl: a, discordUrl: d, pollMs: p }),
+          }).catch(() => {})
           setTimeout(() => fetchData(true), 100)
         }}
       />
