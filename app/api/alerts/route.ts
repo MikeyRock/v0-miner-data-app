@@ -14,6 +14,7 @@ interface AlertPayload {
   lastShareAgo?: number
   discordWebhookUrl?: string
   _test?: boolean
+  isBlockCandidate?: boolean
 }
 
 function buildEmbed(payload: AlertPayload) {
@@ -55,9 +56,19 @@ function buildEmbed(payload: AlertPayload) {
       return {
         embeds: [
           {
-            title: 'BLOCK FOUND!',
-            description: `Block **#${payload.height}** solved!`,
+            title: payload.workerName
+              ? `BLOCK CANDIDATE! Share >= Network Difficulty`
+              : 'BLOCK FOUND!',
+            description: payload.workerName
+              ? `**${payload.workerName}** submitted a share that meets or exceeds the network difficulty!\nThis could be a solved block.`
+              : `Block **#${payload.height}** solved!`,
             color: 0x22c55e,
+            fields: [
+              ...(payload.workerName ? [{ name: 'Worker', value: payload.workerName, inline: true }] : []),
+              ...(payload.bestShare ? [{ name: 'Share Difficulty', value: payload.bestShare, inline: true }] : []),
+              ...(payload.blockDiff ? [{ name: 'Network Difficulty', value: payload.blockDiff, inline: true }] : []),
+              ...(payload.height ? [{ name: 'Block Height', value: `#${payload.height}`, inline: true }] : []),
+            ],
             footer: { text: 'AxeBCH Solo Node' },
             timestamp: new Date().toISOString(),
           },

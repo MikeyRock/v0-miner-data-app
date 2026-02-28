@@ -16,8 +16,11 @@ services:
     environment:
       - AXEBCH_API_URL=${APP_AXEBCH_API_URL:-http://willitmod-dev-bch_app_1:3000/api/pool}
       - DISCORD_WEBHOOK_URL=${APP_DISCORD_WEBHOOK_URL:-}
+      - SETTINGS_DIR=/data
       - PORT=3000
       - NODE_ENV=production
+    volumes:
+      - ${APP_DATA_DIR}/data:/data
     networks:
       - default
       - umbrel_main_network
