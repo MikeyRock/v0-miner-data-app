@@ -343,15 +343,8 @@ export function DashboardClient({ initialApiUrl = '', initialDiscordUrl = '' }: 
               algo={data.algo}
             />
 
-            {/* Workers + alert log */}
-            <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
-              <div className="lg:col-span-2">
-                <WorkerTable workers={data.workers} athWorkerIds={athWorkerIds} workerCount={data.workerCount} />
-              </div>
-              <div>
-                <AlertLog events={alerts} />
-              </div>
-            </div>
+            {/* Alert log */}
+            <AlertLog events={alerts} />
           </div>
         )}
       </main>

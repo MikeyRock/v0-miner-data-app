@@ -59,7 +59,7 @@ export function ProgressBlock({
         <div className="flex items-center gap-4">
           <span className="font-mono text-foreground">
             <span className="text-4xl font-bold text-primary">{workerCount}</span>
-            <span className="ml-2 text-sm uppercase tracking-widest text-muted-foreground">Workers</span>
+            <span className="ml-2 text-sm uppercase tracking-widest text-muted-foreground">Online</span>
           </span>
         </div>
         <div className="flex flex-col items-end gap-0.5">
