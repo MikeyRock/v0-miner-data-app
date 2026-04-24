@@ -18,6 +18,9 @@ interface ProgressBlockProps {
   allTimeBest: number
   allTimeBestUnit: string
   allTimeBestWorker: string
+  // Total hashrate
+  totalHashrate: number
+  totalHashrateUnit: string
   // Network
   networkDifficulty: number
   networkDifficultyUnit: string
@@ -47,6 +50,8 @@ export function ProgressBlock({
   allTimeBest,
   allTimeBestUnit,
   allTimeBestWorker,
+  totalHashrate,
+  totalHashrateUnit,
   networkDifficulty,
   networkDifficultyUnit,
   algo,
@@ -60,9 +65,9 @@ export function ProgressBlock({
   return (
     <div className="flex flex-col gap-4 rounded-lg border border-border bg-card p-4">
 
-      {/* Top row: worker count + last share */}
+      {/* Top row: worker count + total hashrate + last share */}
       <div className="flex items-center justify-between">
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-6">
           <span className="font-mono text-foreground">
             <span className="text-4xl font-bold" style={accentStyle}>{workerCount}</span>
             <span className="ml-2 text-sm uppercase tracking-widest text-muted-foreground">Online</span>
@@ -77,7 +82,7 @@ export function ProgressBlock({
         </div>
       </div>
 
-      {/* Hashrate windows strip */}
+      {/* Hashrate windows strip + total hashrate */}
       {hashrateWindows.length > 0 && (
         <div className="flex flex-wrap gap-2">
           {hashrateWindows.map((w) => (
@@ -90,6 +95,16 @@ export function ProgressBlock({
               <span className="text-xs text-muted-foreground">{w.unit}</span>
             </div>
           ))}
+          {totalHashrate > 0 && (
+            <div
+              className="flex flex-col items-center rounded-md border px-4 py-1.5 min-w-[72px]"
+              style={{ borderColor: accent, background: `${accent}18` }}
+            >
+              <span className="text-xs uppercase tracking-widest" style={accentStyle}>Total</span>
+              <span className="font-mono text-base font-bold" style={accentStyle}>{totalHashrate}</span>
+              <span className="text-xs text-muted-foreground">{totalHashrateUnit}</span>
+            </div>
+          )}
         </div>
       )}
 
