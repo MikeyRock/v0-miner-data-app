@@ -15,6 +15,7 @@ services:
     init: true
     environment:
       - AXEBCH_API_URL=${APP_AXEBCH_API_URL:-http://willitmod-dev-bch_app_1:3000/api/pool}
+      - AXEBTC_API_URL=${APP_AXEBTC_API_URL:-http://willitmod-btc_app_1:3000/api/pool}
       - DISCORD_WEBHOOK_URL=${APP_DISCORD_WEBHOOK_URL:-}
       - SETTINGS_DIR=/data
       - PORT=3000
