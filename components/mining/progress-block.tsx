@@ -72,15 +72,6 @@ export function ProgressBlock({
             <span className="text-4xl font-bold" style={accentStyle}>{workerCount}</span>
             <span className="ml-2 text-sm uppercase tracking-widest text-muted-foreground">Online</span>
           </span>
-          {totalHashrate > 0 && (
-            <div className="flex flex-col gap-0.5">
-              <span className="text-xs uppercase tracking-widest text-muted-foreground">Total Hashrate</span>
-              <span className="font-mono text-2xl font-bold text-foreground">
-                {totalHashrate}
-                <span className="ml-1 text-sm font-medium text-muted-foreground">{totalHashrateUnit}</span>
-              </span>
-            </div>
-          )}
         </div>
         <div className="flex flex-col items-end gap-0.5">
           <span className="text-xs uppercase tracking-widest text-muted-foreground">Last Share</span>
@@ -91,7 +82,7 @@ export function ProgressBlock({
         </div>
       </div>
 
-      {/* Hashrate windows strip */}
+      {/* Hashrate windows strip + total hashrate */}
       {hashrateWindows.length > 0 && (
         <div className="flex flex-wrap gap-2">
           {hashrateWindows.map((w) => (
@@ -104,6 +95,16 @@ export function ProgressBlock({
               <span className="text-xs text-muted-foreground">{w.unit}</span>
             </div>
           ))}
+          {totalHashrate > 0 && (
+            <div
+              className="flex flex-col items-center rounded-md border px-4 py-1.5 min-w-[72px]"
+              style={{ borderColor: accent, background: `${accent}18` }}
+            >
+              <span className="text-xs uppercase tracking-widest" style={accentStyle}>Total</span>
+              <span className="font-mono text-base font-bold" style={accentStyle}>{totalHashrate}</span>
+              <span className="text-xs text-muted-foreground">{totalHashrateUnit}</span>
+            </div>
+          )}
         </div>
       )}
 
