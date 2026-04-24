@@ -4,6 +4,7 @@ const DISCORD_WEBHOOK_URL = process.env.DISCORD_WEBHOOK_URL ?? ''
 
 interface AlertPayload {
   type: 'block_found' | 'worker_offline' | 'milestone' | 'ath'
+  coin?: 'BCH' | 'BTC'
   workerName?: string
   bestShare?: string
   blockDiff?: string
@@ -18,16 +19,18 @@ interface AlertPayload {
 }
 
 function buildEmbed(payload: AlertPayload) {
-  const ts = Math.floor(Date.now() / 1000)
+  const ts       = Math.floor(Date.now() / 1000)
+  const coinTag  = payload.coin ? `[${payload.coin}] ` : ''
+  const coinNode = payload.coin ? `Axe${payload.coin} Solo Node` : 'Axe Mining Dashboard'
 
   if (payload._test) {
     return {
       embeds: [
         {
-          title: 'AxeBCH Dashboard — Test Alert',
+          title: 'AXE Dashboard — Test Alert',
           description: 'Your Discord webhook is working correctly. You will receive mining alerts here.',
           color: 0xf7931a,
-          footer: { text: 'AxeBCH Solo Node • Test Message' },
+          footer: { text: `${coinNode} • Test Message` },
           timestamp: new Date().toISOString(),
         },
       ],
@@ -39,14 +42,15 @@ function buildEmbed(payload: AlertPayload) {
       return {
         embeds: [
           {
-            title: 'NEW WORKER ATH',
-            color: 0xf7931a, // Bitcoin orange
+            title: `${coinTag}NEW WORKER ATH`,
+            color: 0xf7931a,
             fields: [
-              { name: 'Worker', value: payload.workerName ?? 'Unknown', inline: true },
+              { name: 'Coin',       value: payload.coin ?? 'Unknown', inline: true },
+              { name: 'Worker',     value: payload.workerName ?? 'Unknown', inline: true },
               { name: 'Best Share', value: payload.bestShare ?? '?', inline: true },
               { name: 'Block Diff', value: payload.blockDiff ?? '?', inline: true },
             ],
-            footer: { text: 'AxeBCH Solo Node' },
+            footer: { text: coinNode },
             timestamp: new Date().toISOString(),
           },
         ],
@@ -57,19 +61,20 @@ function buildEmbed(payload: AlertPayload) {
         embeds: [
           {
             title: payload.workerName
-              ? `BLOCK CANDIDATE! Share >= Network Difficulty`
-              : 'BLOCK FOUND!',
+              ? `${coinTag}BLOCK CANDIDATE — Share >= Network Difficulty`
+              : `${coinTag}BLOCK FOUND!`,
             description: payload.workerName
               ? `**${payload.workerName}** submitted a share that meets or exceeds the network difficulty!\nThis could be a solved block.`
               : `Block **#${payload.height}** solved!`,
             color: 0x22c55e,
             fields: [
+              { name: 'Coin', value: payload.coin ?? 'Unknown', inline: true },
               ...(payload.workerName ? [{ name: 'Worker', value: payload.workerName, inline: true }] : []),
               ...(payload.bestShare ? [{ name: 'Share Difficulty', value: payload.bestShare, inline: true }] : []),
               ...(payload.blockDiff ? [{ name: 'Network Difficulty', value: payload.blockDiff, inline: true }] : []),
               ...(payload.height ? [{ name: 'Block Height', value: `#${payload.height}`, inline: true }] : []),
             ],
-            footer: { text: 'AxeBCH Solo Node' },
+            footer: { text: coinNode },
             timestamp: new Date().toISOString(),
           },
         ],
@@ -79,10 +84,10 @@ function buildEmbed(payload: AlertPayload) {
       return {
         embeds: [
           {
-            title: `Progress Milestone: ${payload.progressPercent}%`,
+            title: `${coinTag}Progress Milestone: ${payload.progressPercent}%`,
             description: `Pool is ${payload.progressPercent}% of the way to solving the next block.\nETA: ${payload.etaDays}d ${payload.etaHours}h`,
             color: 0xeab308,
-            footer: { text: 'AxeBCH Solo Node' },
+            footer: { text: coinNode },
             timestamp: new Date().toISOString(),
           },
         ],
@@ -92,10 +97,10 @@ function buildEmbed(payload: AlertPayload) {
       return {
         embeds: [
           {
-            title: 'Worker Offline',
+            title: `${coinTag}Worker Offline`,
             description: `Worker **${payload.workerName}** has not submitted a share in ${Math.floor((payload.lastShareAgo ?? 0) / 60)} minutes.`,
             color: 0xef4444,
-            footer: { text: 'AxeBCH Solo Node' },
+            footer: { text: coinNode },
             timestamp: new Date().toISOString(),
           },
         ],
