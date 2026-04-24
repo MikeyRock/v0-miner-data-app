@@ -16,6 +16,8 @@ interface CoinState {
   prevBlockHeight:       number
   netDiffCrossedAlerted: boolean
   milestoneAlerted:      number[]
+  milestoneBlock:        number   // block height when milestones were last reset
+  offlineAlerted:        string[] // worker IDs already alerted as offline
 }
 
 interface PollState {
@@ -29,6 +31,8 @@ function emptyCoin(): CoinState {
     prevBlockHeight:       0,
     netDiffCrossedAlerted: false,
     milestoneAlerted:      [],
+    milestoneBlock:        0,
+    offlineAlerted:        [],
   }
 }
 
@@ -118,6 +122,23 @@ function milestoneEmbed(coin: string, pct: number, etaDays: number, etaHours: nu
   }
 }
 
+function workerOfflineEmbed(coin: string, workerName: string, minutesAgo: number) {
+  return {
+    embeds: [{
+      title: `[${coin}] Worker Offline`,
+      description: `**${workerName}** has not submitted a share in ${minutesAgo} minutes.`,
+      color: 0xef4444,
+      fields: [
+        { name: 'Coin',   value: coin,        inline: true },
+        { name: 'Worker', value: workerName,  inline: true },
+        { name: 'Silent for', value: `${minutesAgo}m`, inline: true },
+      ],
+      footer: { text: 'Axe Mining Dashboard' },
+      timestamp: new Date().toISOString(),
+    }],
+  }
+}
+
 function fmtDiff(raw: number): string {
   if (raw >= 1e12) return `${(raw / 1e12).toFixed(2)} T`
   if (raw >= 1e9)  return `${(raw / 1e9).toFixed(2)} G`
@@ -167,6 +188,21 @@ async function pollCoin(
   const etaHours     = Math.floor((etaSeconds % 86400) / 3600)
   const progressPct  = netDiffRaw > 0 ? Math.min(100, (bsBlockRaw / netDiffRaw) * 100) : 0
 
+  // Detect new block — reset round state FIRST before any alert checks
+  if (blockHeight > 0 && state.prevBlockHeight > 0 && blockHeight !== state.prevBlockHeight) {
+    state.netDiffCrossedAlerted = false
+    state.milestoneAlerted      = []
+    state.milestoneBlock        = blockHeight
+    state.prevBestSinceBlock    = 0
+  }
+  state.prevBlockHeight = blockHeight
+
+  // If block height changed since milestones were last reset, clear them
+  if (state.milestoneBlock !== blockHeight) {
+    state.milestoneAlerted = []
+    state.milestoneBlock   = blockHeight
+  }
+
   // 1. New best share
   if (bsBlockRaw > 0 && bsBlockRaw > state.prevBestSinceBlock && state.prevBestSinceBlock > 0) {
     alerts.push(`[${coin}] new_best:${workerName}:${bestShareFmt}`)
@@ -184,25 +220,43 @@ async function pollCoin(
     state.netDiffCrossedAlerted = false
   }
 
-  // 3. Milestones
+  // 3. Milestones — keyed to current block height to prevent re-firing
   for (const m of MILESTONES) {
     if (progressPct >= m && !state.milestoneAlerted.includes(m)) {
       state.milestoneAlerted.push(m)
       alerts.push(`[${coin}] milestone:${m}%`)
       await sendDiscord(discord, milestoneEmbed(coin, m, etaDays, etaHours, blockHeight))
     }
-    if (progressPct < m - 5) {
-      state.milestoneAlerted = state.milestoneAlerted.filter((x) => x !== m)
-    }
   }
 
-  // New block — reset round state
-  if (blockHeight > state.prevBlockHeight && state.prevBlockHeight > 0) {
-    state.netDiffCrossedAlerted = false
-    state.milestoneAlerted      = []
-    state.prevBestSinceBlock    = 0
+  // 4. Worker offline — uses workers_api.workers_details if available (BTC)
+  const workersApi = pool.workers_api as Record<string, unknown> | undefined
+  const workerDetails = workersApi && Array.isArray(workersApi.workers_details)
+    ? workersApi.workers_details as Record<string, unknown>[]
+    : []
+
+  const now = Math.floor(Date.now() / 1000)
+  for (const w of workerDetails) {
+    const rawName = (w.workername as string) ?? (w.name as string) ?? ''
+    const workerName = rawName.includes('.') ? rawName.split('.').pop()! : rawName
+    if (!workerName) continue
+
+    const lastShareAgoS = typeof w.lastshare_ago_s === 'number'
+      ? (w.lastshare_ago_s as number)
+      : (typeof w.lastupdate === 'number' ? Math.max(0, now - (w.lastupdate as number)) : 0)
+
+    const isOffline = lastShareAgoS > 600 // 10 minutes
+
+    if (isOffline && !state.offlineAlerted.includes(workerName)) {
+      state.offlineAlerted.push(workerName)
+      const minutesAgo = Math.floor(lastShareAgoS / 60)
+      alerts.push(`[${coin}] offline:${workerName}:${minutesAgo}m`)
+      await sendDiscord(discord, workerOfflineEmbed(coin, workerName, minutesAgo))
+    }
+    if (!isOffline) {
+      state.offlineAlerted = state.offlineAlerted.filter((id) => id !== workerName)
+    }
   }
-  state.prevBlockHeight = blockHeight
 }
 
 export async function GET() {
