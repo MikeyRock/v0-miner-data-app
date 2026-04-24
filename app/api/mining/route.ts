@@ -144,16 +144,21 @@ export async function GET(req: NextRequest) {
     (raw.best_share as number) ?? 0
   const bsBlock = fmtDiff(bsBlockRaw)
   // BTC: `best_share_worker`, BCH: `best_share_since_block_worker`
-  const bsBlockWorker: string =
+  // Strip wallet address prefix — e.g. "37EiB...MT.S9" → "S9"
+  function stripAddr(name: string): string {
+    return name.includes('.') ? name.split('.').pop()! : name
+  }
+  const bsBlockWorkerRaw: string =
     (raw.best_share_since_block_worker as string) ??
     (raw.best_share_worker as string) ?? ''
+  const bsBlockWorker = bsBlockWorkerRaw ? stripAddr(bsBlockWorkerRaw) : ''
 
   // All-time best share
   const bsAllTimeRaw: number = (raw.best_share_all_time as number) ?? bsBlockRaw
   const bsAllTime = fmtDiff(bsAllTimeRaw)
   // BTC: `best_share_worker_all_time`
-  const bsAllTimeWorker: string =
-    (raw.best_share_worker_all_time as string) ?? ''
+  const bsAllTimeWorkerRaw: string = (raw.best_share_worker_all_time as string) ?? ''
+  const bsAllTimeWorker = bsAllTimeWorkerRaw ? stripAddr(bsAllTimeWorkerRaw) : ''
 
   // ETA — already provided in seconds
   const etaSeconds: number = (raw.eta_seconds as number) ?? 0
