@@ -68,26 +68,34 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: `Could not reach ${poolUrl}: ${msg}` }, { status: 502 })
   }
 
-  // Fetch per-worker data — best effort, don't fail if unavailable
-  try {
-    const wRes = await fetch(workersUrl, {
-      cache: 'no-store',
-      signal: AbortSignal.timeout(5000),
-    })
-    if (wRes.ok) {
-      const wJson = await wRes.json()
-      // WillItMod returns either an array or an object keyed by worker name
-      if (Array.isArray(wJson)) {
-        rawWorkerList = wJson as Record<string, unknown>[]
-      } else if (typeof wJson === 'object' && wJson !== null) {
-        rawWorkerList = Object.entries(wJson as Record<string, unknown>).map(([name, data]) => ({
-          name,
-          ...(typeof data === 'object' && data !== null ? data as object : {}),
-        }))
+  // Check if /api/pool already contains workers_api.workers_details (BTC node)
+  // This avoids a second HTTP request for BTC
+  const embeddedWorkers = (raw.workers_api as Record<string, unknown> | undefined)
+  if (embeddedWorkers && Array.isArray(embeddedWorkers.workers_details)) {
+    rawWorkerList = embeddedWorkers.workers_details as Record<string, unknown>[]
+  }
+
+  // Fetch per-worker data from /api/workers if not already embedded — best effort
+  if (rawWorkerList.length === 0) {
+    try {
+      const wRes = await fetch(workersUrl, {
+        cache: 'no-store',
+        signal: AbortSignal.timeout(5000),
+      })
+      if (wRes.ok) {
+        const wJson = await wRes.json()
+        if (Array.isArray(wJson)) {
+          rawWorkerList = wJson as Record<string, unknown>[]
+        } else if (typeof wJson === 'object' && wJson !== null) {
+          rawWorkerList = Object.entries(wJson as Record<string, unknown>).map(([name, data]) => ({
+            name,
+            ...(typeof data === 'object' && data !== null ? data as object : {}),
+          }))
+        }
       }
+    } catch {
+      // Silently ignore — workers list is optional
     }
-  } catch {
-    // Silently ignore — workers list is optional
   }
 
   // ---- Pool-level fields (WillItMod /api/pool field names) -------------
@@ -130,14 +138,22 @@ export async function GET(req: NextRequest) {
     : 'SHA256D'
 
   // Best share since last block reset
-  const bsBlockRaw: number = (raw.best_share_since_block as number) ?? 0
+  // BTC: `best_share` at pool level, BCH: `best_share_since_block`
+  const bsBlockRaw: number =
+    (raw.best_share_since_block as number) ??
+    (raw.best_share as number) ?? 0
   const bsBlock = fmtDiff(bsBlockRaw)
-  const bsBlockWorker: string = (raw.best_share_since_block_worker as string) ?? ''
+  // BTC: `best_share_worker`, BCH: `best_share_since_block_worker`
+  const bsBlockWorker: string =
+    (raw.best_share_since_block_worker as string) ??
+    (raw.best_share_worker as string) ?? ''
 
   // All-time best share
   const bsAllTimeRaw: number = (raw.best_share_all_time as number) ?? bsBlockRaw
   const bsAllTime = fmtDiff(bsAllTimeRaw)
-  const bsAllTimeWorker: string = ''
+  // BTC: `best_share_worker_all_time`
+  const bsAllTimeWorker: string =
+    (raw.best_share_worker_all_time as string) ?? ''
 
   // ETA — already provided in seconds
   const etaSeconds: number = (raw.eta_seconds as number) ?? 0
@@ -150,19 +166,31 @@ export async function GET(req: NextRequest) {
     : 0
 
   // ---- Workers ---------------------------------------------------------
-  // Build worker list from /api/workers if available, fallback to count-only
+  // BTC: workers_api.workers_details uses `workername`, `hashrate_ths`, `lastshare_ago_s`, `bestshare`
+  // BCH fallback: `name`/`workerId`, `hashrate_ths`, `lastupdate`
   const workers: WorkerStats[] = rawWorkerList.map((w) => {
-    const name = (w.name as string) ?? (w.workerId as string) ?? (w.worker as string) ?? 'unknown'
+    // Worker name — BTC uses `workername`, strip address prefix (everything before the last dot)
+    const rawName = (w.workername as string) ?? (w.name as string) ?? (w.workerId as string) ?? 'unknown'
+    // If name contains a dot, show only the part after the last dot (e.g. "addr.S9" → "S9")
+    const name = rawName.includes('.') ? rawName.split('.').pop()! : rawName
+
     const hrRaw = typeof w.hashrate_ths === 'number'
       ? (w.hashrate_ths as number) * 1e12
       : typeof w.hashrate === 'number' ? (w.hashrate as number) : 0
     const hr = fmtHashrate(hrRaw)
-    const bsRaw = (w.best_share as number) ?? (w.bestShare as number) ?? (w.record as number) ?? 0
+
+    // BTC uses `bestshare`, BCH uses `best_share`
+    const bsRaw = (w.bestshare as number) ?? (w.best_share as number) ?? (w.bestShare as number) ?? 0
     const bs = fmtDiff(bsRaw)
-    const lastUpdate = (w.lastupdate as number) ?? (w.last_share as number) ?? 0
-    const lsa = lastUpdate > 0
-      ? Math.max(0, Math.floor(Date.now() / 1000) - lastUpdate)
-      : 0
+
+    // BTC gives `lastshare_ago_s` directly, BCH uses `lastupdate` timestamp
+    let lsa = 0
+    if (typeof w.lastshare_ago_s === 'number') {
+      lsa = w.lastshare_ago_s as number
+    } else {
+      const lastUpdate = (w.lastupdate as number) ?? (w.last_share as number) ?? 0
+      lsa = lastUpdate > 0 ? Math.max(0, Math.floor(Date.now() / 1000) - lastUpdate) : 0
+    }
 
     return {
       workerId: name,
