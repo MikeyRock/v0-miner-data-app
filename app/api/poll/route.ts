@@ -153,9 +153,13 @@ async function pollCoin(
   const bsBlockRaw  = (pool.best_share_since_block as number) ?? (pool.best_share as number) ?? 0
   const netDiffRaw  = (pool.network_difficulty     as number) ?? 0
   const blockHeight = (pool.network_height         as number) ?? 0
-  const workerName  =
+  const rawWorkerName =
     (pool.best_share_since_block_worker as string) ??
     (pool.best_share_worker            as string) ?? 'Unknown'
+  // Strip wallet address prefix — e.g. "37EiB...MT.S9" → "S9"
+  const workerName = rawWorkerName.includes('.')
+    ? rawWorkerName.split('.').pop()!
+    : rawWorkerName
   const bestShareFmt = fmtDiff(bsBlockRaw)
   const netDiffFmt   = fmtDiff(netDiffRaw)
   const etaSeconds   = (pool.eta_seconds as number) ?? 0
