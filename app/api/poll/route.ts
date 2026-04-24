@@ -16,6 +16,7 @@ interface CoinState {
   prevBlockHeight:       number
   netDiffCrossedAlerted: boolean
   milestoneAlerted:      number[]
+  milestoneBlock:        number   // block height when milestones were last reset
 }
 
 interface PollState {
@@ -29,6 +30,7 @@ function emptyCoin(): CoinState {
     prevBlockHeight:       0,
     netDiffCrossedAlerted: false,
     milestoneAlerted:      [],
+    milestoneBlock:        0,
   }
 }
 
@@ -167,6 +169,21 @@ async function pollCoin(
   const etaHours     = Math.floor((etaSeconds % 86400) / 3600)
   const progressPct  = netDiffRaw > 0 ? Math.min(100, (bsBlockRaw / netDiffRaw) * 100) : 0
 
+  // Detect new block — reset round state FIRST before any alert checks
+  if (blockHeight > 0 && state.prevBlockHeight > 0 && blockHeight !== state.prevBlockHeight) {
+    state.netDiffCrossedAlerted = false
+    state.milestoneAlerted      = []
+    state.milestoneBlock        = blockHeight
+    state.prevBestSinceBlock    = 0
+  }
+  state.prevBlockHeight = blockHeight
+
+  // If block height changed since milestones were last reset, clear them
+  if (state.milestoneBlock !== blockHeight) {
+    state.milestoneAlerted = []
+    state.milestoneBlock   = blockHeight
+  }
+
   // 1. New best share
   if (bsBlockRaw > 0 && bsBlockRaw > state.prevBestSinceBlock && state.prevBestSinceBlock > 0) {
     alerts.push(`[${coin}] new_best:${workerName}:${bestShareFmt}`)
@@ -184,25 +201,14 @@ async function pollCoin(
     state.netDiffCrossedAlerted = false
   }
 
-  // 3. Milestones
+  // 3. Milestones — keyed to current block height to prevent re-firing
   for (const m of MILESTONES) {
     if (progressPct >= m && !state.milestoneAlerted.includes(m)) {
       state.milestoneAlerted.push(m)
       alerts.push(`[${coin}] milestone:${m}%`)
       await sendDiscord(discord, milestoneEmbed(coin, m, etaDays, etaHours, blockHeight))
     }
-    if (progressPct < m - 5) {
-      state.milestoneAlerted = state.milestoneAlerted.filter((x) => x !== m)
-    }
   }
-
-  // New block — reset round state
-  if (blockHeight > state.prevBlockHeight && state.prevBlockHeight > 0) {
-    state.netDiffCrossedAlerted = false
-    state.milestoneAlerted      = []
-    state.prevBestSinceBlock    = 0
-  }
-  state.prevBlockHeight = blockHeight
 }
 
 export async function GET() {
