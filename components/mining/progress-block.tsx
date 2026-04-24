@@ -22,6 +22,8 @@ interface ProgressBlockProps {
   networkDifficulty: number
   networkDifficultyUnit: string
   algo: string
+  // Coin accent color — hex string e.g. '#0ac18e' for BCH, '#f7931a' for BTC
+  accentColor?: string
 }
 
 function fmtAgo(s: number): string {
@@ -48,8 +50,12 @@ export function ProgressBlock({
   networkDifficulty,
   networkDifficultyUnit,
   algo,
+  accentColor,
 }: ProgressBlockProps) {
-  const clamped = Math.min(100, Math.max(0, percent))
+  const clamped  = Math.min(100, Math.max(0, percent))
+  const accent   = accentColor ?? 'var(--color-primary)'
+  const accentStyle = { color: accent } as React.CSSProperties
+  const barStyle    = { width: `${clamped}%`, background: accent } as React.CSSProperties
 
   return (
     <div className="flex flex-col gap-4 rounded-lg border border-border bg-card p-4">
@@ -58,7 +64,7 @@ export function ProgressBlock({
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-4">
           <span className="font-mono text-foreground">
-            <span className="text-4xl font-bold text-primary">{workerCount}</span>
+            <span className="text-4xl font-bold" style={accentStyle}>{workerCount}</span>
             <span className="ml-2 text-sm uppercase tracking-widest text-muted-foreground">Online</span>
           </span>
         </div>
@@ -109,7 +115,7 @@ export function ProgressBlock({
       <div className="grid grid-cols-2 gap-3">
         <div className="flex flex-col gap-1 rounded-md border border-border bg-secondary px-3 py-2">
           <span className="text-xs uppercase tracking-widest text-muted-foreground">Best Share Since Block</span>
-          <span className="font-mono text-2xl font-bold text-primary">
+          <span className="font-mono text-2xl font-bold" style={accentStyle}>
             {bestShareSinceBlock}<span className="ml-1 text-base font-medium text-muted-foreground">{bestShareSinceBlockUnit}</span>
           </span>
           {bestShareSinceBlockWorker && (
@@ -131,17 +137,17 @@ export function ProgressBlock({
       <div className="flex flex-col gap-2">
         <div className="flex items-center justify-between">
           <span className="text-sm uppercase tracking-widest text-muted-foreground">Progress to Block</span>
-          <span className={cn(
-            'font-mono text-lg font-bold',
-            clamped >= 75 ? 'text-primary' : 'text-foreground'
-          )}>
+          <span
+            className="font-mono text-lg font-bold"
+            style={clamped >= 75 ? accentStyle : undefined}
+          >
             {clamped.toFixed(2)}%
           </span>
         </div>
         <div className="relative h-2.5 w-full overflow-hidden rounded-full bg-muted">
           <div
-            className="absolute inset-y-0 left-0 rounded-full bg-primary transition-all duration-700"
-            style={{ width: `${clamped}%` }}
+            className="absolute inset-y-0 left-0 rounded-full transition-all duration-700"
+            style={barStyle}
           />
           {[25, 50, 75].map((m) => (
             <div

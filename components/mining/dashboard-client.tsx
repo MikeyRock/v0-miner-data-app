@@ -320,8 +320,8 @@ export function DashboardClient({ initialApiUrl = '', initialDiscordUrl = '' }: 
               {(bchState.data || bchUrl) && (
                 <div className="flex flex-col gap-3">
                   <div className="flex items-center gap-2">
-                    <div className="flex h-6 w-6 items-center justify-center rounded bg-primary">
-                      <span className="text-xs font-bold text-primary-foreground">B</span>
+                    <div className="flex h-6 w-6 items-center justify-center rounded" style={{ background: '#0ac18e' }}>
+                      <span className="text-xs font-bold text-white">B</span>
                     </div>
                     <span className="text-sm font-semibold uppercase tracking-widest text-foreground">Bitcoin Cash</span>
                     <span className="text-xs text-muted-foreground">BCH</span>
@@ -347,6 +347,7 @@ export function DashboardClient({ initialApiUrl = '', initialDiscordUrl = '' }: 
                       networkDifficulty={bchState.data.networkDifficulty}
                       networkDifficultyUnit={bchState.data.networkDifficultyUnit}
                       algo={bchState.data.algo}
+                      accentColor="#0ac18e"
                     />
                   ) : (
                     <div className="flex items-center justify-center rounded-lg border border-border bg-card p-12 text-sm text-muted-foreground">
@@ -387,6 +388,7 @@ export function DashboardClient({ initialApiUrl = '', initialDiscordUrl = '' }: 
                       networkDifficulty={btcState.data.networkDifficulty}
                       networkDifficultyUnit={btcState.data.networkDifficultyUnit}
                       algo={btcState.data.algo}
+                      accentColor="#f7931a"
                     />
                   ) : (
                     <div className="flex items-center justify-center rounded-lg border border-border bg-card p-12 text-sm text-muted-foreground">
@@ -409,7 +411,7 @@ export function DashboardClient({ initialApiUrl = '', initialDiscordUrl = '' }: 
             <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">Created by MikeyRocks</p>
             <p className="mt-1 text-xs italic text-muted-foreground/60">&ldquo;Its better to have mined and lost than to have never mined at all&rdquo;</p>
           </div>
-          <span className="absolute right-0 font-mono text-[10px] text-muted-foreground/40 select-none">v2.0.0</span>
+          <span className="absolute right-0 font-mono text-[10px] text-muted-foreground/40 select-none">v2.1.0</span>
         </div>
       </footer>
 
