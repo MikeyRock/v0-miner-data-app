@@ -7,13 +7,15 @@ interface Props {
   open: boolean
   onClose: () => void
   apiUrl: string
+  btcApiUrl: string
   discordUrl: string
   pollMs: number
-  onSave: (apiUrl: string, discordUrl: string, pollMs: number) => void
+  onSave: (apiUrl: string, btcApiUrl: string, discordUrl: string, pollMs: number) => void
 }
 
-export function SettingsDrawer({ open, onClose, apiUrl, discordUrl, pollMs, onSave }: Props) {
+export function SettingsDrawer({ open, onClose, apiUrl, btcApiUrl, discordUrl, pollMs, onSave }: Props) {
   const [localApi, setLocalApi] = useState(apiUrl)
+  const [localBtcApi, setLocalBtcApi] = useState(btcApiUrl)
   const [localDiscord, setLocalDiscord] = useState(discordUrl)
   const [localPoll, setLocalPoll] = useState(String(pollMs / 1000))
   const [testStatus, setTestStatus] = useState<'idle' | 'sending' | 'ok' | 'error'>('idle')
@@ -21,13 +23,14 @@ export function SettingsDrawer({ open, onClose, apiUrl, discordUrl, pollMs, onSa
 
   useEffect(() => {
     setLocalApi(apiUrl)
+    setLocalBtcApi(btcApiUrl)
     setLocalDiscord(discordUrl)
     setLocalPoll(String(pollMs / 1000))
-  }, [open, apiUrl, discordUrl, pollMs])
+  }, [open, apiUrl, btcApiUrl, discordUrl, pollMs])
 
   function handleSave() {
     const secs = Math.max(5, parseInt(localPoll, 10) || 15)
-    onSave(localApi.trim(), localDiscord.trim(), secs * 1000)
+    onSave(localApi.trim(), localBtcApi.trim(), localDiscord.trim(), secs * 1000)
   }
 
   async function handleTestDiscord() {
@@ -113,6 +116,21 @@ export function SettingsDrawer({ open, onClose, apiUrl, discordUrl, pollMs, onSa
           </Field>
 
           <Field
+            label="AxeBTC API URL"
+            hint="Direct LAN URL to your AxeBTC node — leave blank to disable BTC panel."
+            id="btc-api-url"
+          >
+            <input
+              id="btc-api-url"
+              type="url"
+              value={localBtcApi}
+              onChange={(e) => setLocalBtcApi(e.target.value)}
+              placeholder="http://192.168.0.117:21215/api/pool"
+              className="w-full rounded-md border border-border bg-input px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-ring font-mono"
+            />
+          </Field>
+
+          <Field
             label="Discord Webhook URL"
             hint="Leave empty to disable Discord notifications."
             id="discord-url"
@@ -166,9 +184,9 @@ export function SettingsDrawer({ open, onClose, apiUrl, discordUrl, pollMs, onSa
 
           <div className="rounded-md border border-border/50 bg-muted/40 px-4 py-3 text-xs text-muted-foreground leading-relaxed space-y-1">
             <p className="font-semibold text-foreground/60 uppercase tracking-wider text-[10px]">On Umbrel</p>
-            <p>If you have the <strong className="text-foreground/70">WillItMod AxeBCH</strong> app installed, use:</p>
-            <p><code className="text-primary select-all">http://willitmod-dev-bch_app_1:3000/api/pool</code></p>
-            <p className="pt-1">No proxy, no .env file needed — just paste the URL above and hit Save.</p>
+            <p><strong className="text-foreground/70">BCH:</strong> <code className="text-primary select-all">http://willitmod-dev-bch_app_1:3000/api/pool</code></p>
+            <p><strong className="text-foreground/70">BTC:</strong> use the LAN IP and port of your AxeBTC node (e.g. <code className="text-primary">http://192.168.0.117:21215/api/pool</code>)</p>
+            <p className="pt-1">Leave BTC blank to show only the BCH panel. No proxy or .env needed.</p>
           </div>
         </div>
 
