@@ -25,19 +25,51 @@ function resolveSettingsFile(): string {
 
 const SETTINGS_FILE = resolveSettingsFile()
 
+export interface AlertSettings {
+  newBest:         boolean
+  milestones:      boolean
+  milestoneValues: number[]   // e.g. [25, 50, 75, 90]
+  blockCandidate:  boolean
+  workerOffline:   boolean
+  offlineThresholdMin: number // minutes before offline alert fires
+}
+
 export interface PersistedSettings {
-  apiUrl:      string
-  btcApiUrl:   string
-  discordUrl:  string
-  pollMs:      number
+  apiUrl:        string
+  btcApiUrl:     string
+  discordUrl:    string
+  pollMs:        number
+  alertSettings: AlertSettings
+}
+
+export const DEFAULT_ALERT_SETTINGS: AlertSettings = {
+  newBest:             true,
+  milestones:          true,
+  milestoneValues:     [25, 50, 75, 90],
+  blockCandidate:      true,
+  workerOffline:       true,
+  offlineThresholdMin: 10,
 }
 
 function defaults(): PersistedSettings {
   return {
-    apiUrl:     process.env.AXEBCH_API_URL      ?? '',
-    btcApiUrl:  process.env.AXEBTC_API_URL      ?? '',
-    discordUrl: process.env.DISCORD_WEBHOOK_URL ?? '',
-    pollMs:     15000,
+    apiUrl:        process.env.AXEBCH_API_URL      ?? '',
+    btcApiUrl:     process.env.AXEBTC_API_URL      ?? '',
+    discordUrl:    process.env.DISCORD_WEBHOOK_URL ?? '',
+    pollMs:        15000,
+    alertSettings: DEFAULT_ALERT_SETTINGS,
+  }
+}
+
+function mergeAlertSettings(saved?: Partial<AlertSettings>): AlertSettings {
+  if (!saved) return DEFAULT_ALERT_SETTINGS
+  return {
+    newBest:             saved.newBest             ?? DEFAULT_ALERT_SETTINGS.newBest,
+    milestones:          saved.milestones          ?? DEFAULT_ALERT_SETTINGS.milestones,
+    milestoneValues:     Array.isArray(saved.milestoneValues) ? saved.milestoneValues : DEFAULT_ALERT_SETTINGS.milestoneValues,
+    blockCandidate:      saved.blockCandidate      ?? DEFAULT_ALERT_SETTINGS.blockCandidate,
+    workerOffline:       saved.workerOffline       ?? DEFAULT_ALERT_SETTINGS.workerOffline,
+    offlineThresholdMin: saved.offlineThresholdMin ?? DEFAULT_ALERT_SETTINGS.offlineThresholdMin,
   }
 }
 
@@ -48,10 +80,11 @@ export function loadSettings(): PersistedSettings {
       const parsed = JSON.parse(raw) as Partial<PersistedSettings>
       const d = defaults()
       return {
-        apiUrl:     parsed.apiUrl     ?? d.apiUrl,
-        btcApiUrl:  parsed.btcApiUrl  ?? d.btcApiUrl,
-        discordUrl: parsed.discordUrl ?? d.discordUrl,
-        pollMs:     parsed.pollMs     ?? d.pollMs,
+        apiUrl:        parsed.apiUrl     ?? d.apiUrl,
+        btcApiUrl:     parsed.btcApiUrl  ?? d.btcApiUrl,
+        discordUrl:    parsed.discordUrl ?? d.discordUrl,
+        pollMs:        parsed.pollMs     ?? d.pollMs,
+        alertSettings: mergeAlertSettings(parsed.alertSettings),
       }
     }
   } catch {
@@ -77,10 +110,11 @@ export async function POST(req: NextRequest) {
     const body = await req.json() as Partial<PersistedSettings>
     const current = loadSettings()
     const updated: PersistedSettings = {
-      apiUrl:     typeof body.apiUrl     === 'string' ? body.apiUrl.trim()     : current.apiUrl,
-      btcApiUrl:  typeof body.btcApiUrl  === 'string' ? body.btcApiUrl.trim()  : current.btcApiUrl,
-      discordUrl: typeof body.discordUrl === 'string' ? body.discordUrl.trim() : current.discordUrl,
-      pollMs:     typeof body.pollMs     === 'number' ? Math.max(5000, body.pollMs) : current.pollMs,
+      apiUrl:        typeof body.apiUrl     === 'string' ? body.apiUrl.trim()     : current.apiUrl,
+      btcApiUrl:     typeof body.btcApiUrl  === 'string' ? body.btcApiUrl.trim()  : current.btcApiUrl,
+      discordUrl:    typeof body.discordUrl === 'string' ? body.discordUrl.trim() : current.discordUrl,
+      pollMs:        typeof body.pollMs     === 'number' ? Math.max(5000, body.pollMs) : current.pollMs,
+      alertSettings: body.alertSettings ? mergeAlertSettings(body.alertSettings) : current.alertSettings,
     }
     saveSettings(updated)
     return NextResponse.json(updated)

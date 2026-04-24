@@ -3,10 +3,11 @@
  * Reads settings from disk, fires Discord alerts server-side so alerts
  * work even when no browser tab is open.
  */
-import { NextResponse } from 'next/server'
+import { NextRequest, NextResponse } from 'next/server'
 import { readFileSync, writeFileSync, existsSync, mkdirSync } from 'fs'
 import { join } from 'path'
 import { loadSettings } from '../settings/route'
+import type { AlertSettings } from '../settings/route'
 
 const DATA_DIR   = process.env.SETTINGS_DIR ?? '/data'
 const STATE_FILE = join(DATA_DIR, 'poll-state.json')
@@ -18,6 +19,7 @@ interface CoinState {
   milestoneAlerted:      number[]
   milestoneBlock:        number   // block height when milestones were last reset
   offlineAlerted:        string[] // worker IDs already alerted as offline
+  seenOnline:            string[] // worker IDs seen online since server start
 }
 
 interface PollState {
@@ -33,6 +35,7 @@ function emptyCoin(): CoinState {
     milestoneAlerted:      [],
     milestoneBlock:        0,
     offlineAlerted:        [],
+    seenOnline:            [],
   }
 }
 
@@ -154,6 +157,7 @@ async function pollCoin(
   state: CoinState,
   discord: string,
   alerts: string[],
+  as: AlertSettings,
 ): Promise<void> {
   if (!apiUrl) return
 
@@ -204,14 +208,14 @@ async function pollCoin(
   }
 
   // 1. New best share
-  if (bsBlockRaw > 0 && bsBlockRaw > state.prevBestSinceBlock && state.prevBestSinceBlock > 0) {
+  if (as.newBest && bsBlockRaw > 0 && bsBlockRaw > state.prevBestSinceBlock && state.prevBestSinceBlock > 0) {
     alerts.push(`[${coin}] new_best:${workerName}:${bestShareFmt}`)
     await sendDiscord(discord, newBestEmbed(coin, workerName, bestShareFmt, netDiffFmt))
   }
   state.prevBestSinceBlock = bsBlockRaw
 
   // 2. Block candidate
-  if (bsBlockRaw > 0 && netDiffRaw > 0 && bsBlockRaw >= netDiffRaw && !state.netDiffCrossedAlerted) {
+  if (as.blockCandidate && bsBlockRaw > 0 && netDiffRaw > 0 && bsBlockRaw >= netDiffRaw && !state.netDiffCrossedAlerted) {
     state.netDiffCrossedAlerted = true
     alerts.push(`[${coin}] block_candidate:${workerName}`)
     await sendDiscord(discord, blockCandidateEmbed(coin, workerName, bestShareFmt, netDiffFmt, blockHeight))
@@ -220,56 +224,75 @@ async function pollCoin(
     state.netDiffCrossedAlerted = false
   }
 
-  // 3. Milestones — keyed to current block height to prevent re-firing
-  for (const m of MILESTONES) {
-    if (progressPct >= m && !state.milestoneAlerted.includes(m)) {
-      state.milestoneAlerted.push(m)
-      alerts.push(`[${coin}] milestone:${m}%`)
-      await sendDiscord(discord, milestoneEmbed(coin, m, etaDays, etaHours, blockHeight))
+  // 3. Milestones — keyed to current block height, respects user-configured values
+  if (as.milestones) {
+    for (const m of as.milestoneValues) {
+      if (progressPct >= m && !state.milestoneAlerted.includes(m)) {
+        state.milestoneAlerted.push(m)
+        alerts.push(`[${coin}] milestone:${m}%`)
+        await sendDiscord(discord, milestoneEmbed(coin, m, etaDays, etaHours, blockHeight))
+      }
     }
   }
 
-  // 4. Worker offline — uses workers_api.workers_details if available (BTC)
-  const workersApi = pool.workers_api as Record<string, unknown> | undefined
-  const workerDetails = workersApi && Array.isArray(workersApi.workers_details)
-    ? workersApi.workers_details as Record<string, unknown>[]
-    : []
+  // 4. Worker offline — respects toggle and threshold setting
+  if (as.workerOffline) {
+    const offlineThresholdS = (as.offlineThresholdMin ?? 10) * 60
+    const workersApi = pool.workers_api as Record<string, unknown> | undefined
+    const workerDetails = workersApi && Array.isArray(workersApi.workers_details)
+      ? workersApi.workers_details as Record<string, unknown>[]
+      : []
 
-  const now = Math.floor(Date.now() / 1000)
-  for (const w of workerDetails) {
-    const rawName = (w.workername as string) ?? (w.name as string) ?? ''
-    const workerName = rawName.includes('.') ? rawName.split('.').pop()! : rawName
-    if (!workerName) continue
+    const now = Math.floor(Date.now() / 1000)
+    for (const w of workerDetails) {
+      const rawName = (w.workername as string) ?? (w.name as string) ?? ''
+      const wName = rawName.includes('.') ? rawName.split('.').pop()! : rawName
+      if (!wName) continue
 
-    const lastShareAgoS = typeof w.lastshare_ago_s === 'number'
-      ? (w.lastshare_ago_s as number)
-      : (typeof w.lastupdate === 'number' ? Math.max(0, now - (w.lastupdate as number)) : 0)
+      const lastShareAgoS = typeof w.lastshare_ago_s === 'number'
+        ? (w.lastshare_ago_s as number)
+        : (typeof w.lastupdate === 'number' ? Math.max(0, now - (w.lastupdate as number)) : 0)
 
-    const isOffline = lastShareAgoS > 600 // 10 minutes
+      const isOffline = lastShareAgoS >= offlineThresholdS
 
-    if (isOffline && !state.offlineAlerted.includes(workerName)) {
-      state.offlineAlerted.push(workerName)
-      const minutesAgo = Math.floor(lastShareAgoS / 60)
-      alerts.push(`[${coin}] offline:${workerName}:${minutesAgo}m`)
-      await sendDiscord(discord, workerOfflineEmbed(coin, workerName, minutesAgo))
-    }
-    if (!isOffline) {
-      state.offlineAlerted = state.offlineAlerted.filter((id) => id !== workerName)
+      if (!isOffline) {
+        if (!state.seenOnline.includes(wName)) state.seenOnline.push(wName)
+        state.offlineAlerted = state.offlineAlerted.filter((id) => id !== wName)
+      } else if (state.seenOnline.includes(wName) && !state.offlineAlerted.includes(wName)) {
+        state.offlineAlerted.push(wName)
+        const minutesAgo = Math.floor(lastShareAgoS / 60)
+        alerts.push(`[${coin}] offline:${wName}:${minutesAgo}m`)
+        await sendDiscord(discord, workerOfflineEmbed(coin, wName, minutesAgo))
+      }
     }
   }
 }
 
-export async function GET() {
-  const settings = loadSettings()
-  const state    = loadState()
+async function runPoll(overrideAlertSettings?: AlertSettings) {
+  const settings     = loadSettings()
+  const state        = loadState()
   const alerts: string[] = []
-  const discord  = settings.discordUrl
+  const discord      = settings.discordUrl
+  const as           = overrideAlertSettings ?? settings.alertSettings
 
   await Promise.all([
-    pollCoin(settings.apiUrl,    'BCH', state.bch, discord, alerts),
-    pollCoin(settings.btcApiUrl, 'BTC', state.btc, discord, alerts),
+    pollCoin(settings.apiUrl,    'BCH', state.bch, discord, alerts, as),
+    pollCoin(settings.btcApiUrl, 'BTC', state.btc, discord, alerts, as),
   ])
 
   saveState(state)
-  return NextResponse.json({ ok: true, alerts })
+  return { ok: true, alerts }
+}
+
+export async function GET() {
+  return NextResponse.json(await runPoll())
+}
+
+export async function POST(req: NextRequest) {
+  try {
+    const body = await req.json() as { alertSettings?: AlertSettings }
+    return NextResponse.json(await runPoll(body.alertSettings))
+  } catch {
+    return NextResponse.json(await runPoll())
+  }
 }
