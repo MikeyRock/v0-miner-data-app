@@ -25,7 +25,7 @@ export function Header({ isConnected, lastUpdated, onRefresh, isRefreshing, onSe
 
         {/* Brand */}
         <div className="flex items-center gap-3">
-          <div className="flex h-10 w-10 items-center justify-center rounded-md bg-primary font-mono text-base font-bold text-primary-foreground select-none">
+          <div className="flex h-10 w-10 items-center justify-center rounded-md font-mono text-base font-bold select-none" style={{ background: '#e03030', color: '#fff' }}>
             B
           </div>
           <div>
