@@ -29,7 +29,7 @@ export function Header({ isConnected, lastUpdated, onRefresh, isRefreshing, onSe
             B
           </div>
           <div>
-            <h1 className="text-base font-bold tracking-tight text-foreground leading-none">AxeBCH Dashboard</h1>
+            <h1 className="text-base font-bold tracking-tight text-foreground leading-none">AXE Dashboard</h1>
             <p className="text-xs text-muted-foreground mt-0.5 leading-none">Solo Mining Monitor</p>
           </div>
         </div>

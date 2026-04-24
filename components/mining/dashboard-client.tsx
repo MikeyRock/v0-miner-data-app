@@ -396,6 +396,11 @@ export function DashboardClient({ initialApiUrl = '', initialDiscordUrl = '' }: 
         )}
       </main>
 
+      <footer className="border-t border-border px-6 py-4 text-center">
+        <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">Created by MikeyRocks</p>
+        <p className="mt-1 text-xs italic text-muted-foreground/60">&ldquo;Its better to have mined and lost than to have never mined at all&rdquo;</p>
+      </footer>
+
       <SettingsDrawer
         open={settingsOpen}
         onClose={() => setSettingsOpen(false)}
