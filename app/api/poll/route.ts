@@ -17,6 +17,7 @@ interface CoinState {
   netDiffCrossedAlerted: boolean
   milestoneAlerted:      number[]
   milestoneBlock:        number   // block height when milestones were last reset
+  offlineAlerted:        string[] // worker IDs already alerted as offline
 }
 
 interface PollState {
@@ -31,6 +32,7 @@ function emptyCoin(): CoinState {
     netDiffCrossedAlerted: false,
     milestoneAlerted:      [],
     milestoneBlock:        0,
+    offlineAlerted:        [],
   }
 }
 
@@ -113,6 +115,23 @@ function milestoneEmbed(coin: string, pct: number, etaDays: number, etaHours: nu
         { name: 'Coin',     value: coin,                         inline: true },
         { name: 'Progress', value: `${pct}%`,                   inline: true },
         { name: 'ETA',      value: `${etaDays}d ${etaHours}h`,  inline: true },
+      ],
+      footer: { text: 'Axe Mining Dashboard' },
+      timestamp: new Date().toISOString(),
+    }],
+  }
+}
+
+function workerOfflineEmbed(coin: string, workerName: string, minutesAgo: number) {
+  return {
+    embeds: [{
+      title: `[${coin}] Worker Offline`,
+      description: `**${workerName}** has not submitted a share in ${minutesAgo} minutes.`,
+      color: 0xef4444,
+      fields: [
+        { name: 'Coin',   value: coin,        inline: true },
+        { name: 'Worker', value: workerName,  inline: true },
+        { name: 'Silent for', value: `${minutesAgo}m`, inline: true },
       ],
       footer: { text: 'Axe Mining Dashboard' },
       timestamp: new Date().toISOString(),
@@ -207,6 +226,35 @@ async function pollCoin(
       state.milestoneAlerted.push(m)
       alerts.push(`[${coin}] milestone:${m}%`)
       await sendDiscord(discord, milestoneEmbed(coin, m, etaDays, etaHours, blockHeight))
+    }
+  }
+
+  // 4. Worker offline — uses workers_api.workers_details if available (BTC)
+  const workersApi = pool.workers_api as Record<string, unknown> | undefined
+  const workerDetails = workersApi && Array.isArray(workersApi.workers_details)
+    ? workersApi.workers_details as Record<string, unknown>[]
+    : []
+
+  const now = Math.floor(Date.now() / 1000)
+  for (const w of workerDetails) {
+    const rawName = (w.workername as string) ?? (w.name as string) ?? ''
+    const workerName = rawName.includes('.') ? rawName.split('.').pop()! : rawName
+    if (!workerName) continue
+
+    const lastShareAgoS = typeof w.lastshare_ago_s === 'number'
+      ? (w.lastshare_ago_s as number)
+      : (typeof w.lastupdate === 'number' ? Math.max(0, now - (w.lastupdate as number)) : 0)
+
+    const isOffline = lastShareAgoS > 600 // 10 minutes
+
+    if (isOffline && !state.offlineAlerted.includes(workerName)) {
+      state.offlineAlerted.push(workerName)
+      const minutesAgo = Math.floor(lastShareAgoS / 60)
+      alerts.push(`[${coin}] offline:${workerName}:${minutesAgo}m`)
+      await sendDiscord(discord, workerOfflineEmbed(coin, workerName, minutesAgo))
+    }
+    if (!isOffline) {
+      state.offlineAlerted = state.offlineAlerted.filter((id) => id !== workerName)
     }
   }
 }

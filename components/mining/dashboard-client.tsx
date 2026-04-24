@@ -96,40 +96,34 @@ export function DashboardClient({ initialApiUrl = '', initialDiscordUrl = '' }: 
     return full
   }, [])
 
-  // ---- Alert engine (shared, coin-labelled) --------------------------------
+  // ---- Alert engine -------------------------------------------------------
+  // Discord alerts for new best, milestones, and block candidates are handled
+  // exclusively by the server-side /api/poll route to prevent duplicates.
+  // The client only handles worker offline (needs per-worker data) and logs
+  // all events locally for the UI alert log.
   function runAlertEngine(
     json: NodeStats,
     coin: 'BCH' | 'BTC',
     refs: CoinAlertRefs,
     discordWebhookUrl: string,
   ) {
-    const bsBlockRaw = json.bestShareSinceBlockRaw ?? 0
+    const bsBlockRaw  = json.bestShareSinceBlockRaw ?? 0
     const prevBsBlock = refs.prevBestSinceBlock.current
 
-    // 1. New best share since block
+    // 1. Log new best share locally (no Discord — poll route handles it)
     if (bsBlockRaw > 0 && bsBlockRaw > prevBsBlock && prevBsBlock > 0) {
       const workerName = json.bestShareSinceBlockWorker || 'Unknown'
-      const alert = addAlert({
+      addAlert({
         type: 'ath',
-        message: `[${coin}] New best share by ${workerName}: ${json.bestShareSinceBlock}${json.bestShareSinceBlockUnit} (network diff: ${json.networkDifficulty}${json.networkDifficultyUnit})`,
+        message: `[${coin}] New best by ${workerName}: ${json.bestShareSinceBlock}${json.bestShareSinceBlockUnit} (net diff: ${json.networkDifficulty}${json.networkDifficultyUnit})`,
         workerName,
         timestamp: Date.now(),
-        sent: false,
+        sent: true, // poll route sends Discord, mark as sent
       })
-      sendDiscordAlert({
-        type: 'ath',
-        workerName,
-        coin,
-        bestShare: `${json.bestShareSinceBlock}${json.bestShareSinceBlockUnit}`,
-        blockDiff: `${json.networkDifficulty}${json.networkDifficultyUnit}`,
-        discordWebhookUrl,
-      }).then(() =>
-        setAlerts((prev) => prev.map((a) => a.id === alert.id ? { ...a, sent: true } : a))
-      )
     }
     refs.prevBestSinceBlock.current = bsBlockRaw
 
-    // 2. Block candidate — share >= network difficulty
+    // 2. Log block candidate locally (no Discord — poll route handles it)
     if (
       bsBlockRaw > 0 &&
       json.networkDifficultyRaw > 0 &&
@@ -138,30 +132,19 @@ export function DashboardClient({ initialApiUrl = '', initialDiscordUrl = '' }: 
     ) {
       refs.netDiffCrossedAlerted.current = true
       const workerName = json.bestShareSinceBlockWorker || 'Unknown'
-      const alert = addAlert({
+      addAlert({
         type: 'block_found',
-        message: `[${coin}] BLOCK CANDIDATE! ${workerName} submitted a share >= network difficulty (${json.bestShareSinceBlock}${json.bestShareSinceBlockUnit} >= ${json.networkDifficulty}${json.networkDifficultyUnit})`,
+        message: `[${coin}] BLOCK CANDIDATE! ${workerName} share >= network difficulty`,
         workerName,
         timestamp: Date.now(),
-        sent: false,
+        sent: true,
       })
-      sendDiscordAlert({
-        type: 'block_found',
-        workerName,
-        coin,
-        height: json.blockHeight,
-        bestShare: `${json.bestShareSinceBlock}${json.bestShareSinceBlockUnit}`,
-        blockDiff: `${json.networkDifficulty}${json.networkDifficultyUnit}`,
-        discordWebhookUrl,
-      }).then(() =>
-        setAlerts((prev) => prev.map((a) => a.id === alert.id ? { ...a, sent: true } : a))
-      )
     }
     if (bsBlockRaw < json.networkDifficultyRaw * 0.1) {
       refs.netDiffCrossedAlerted.current = false
     }
 
-    // 3. Worker offline
+    // 3. Worker offline — client owns this since per-worker data only exists here
     json.workers.forEach((w) => {
       if (!w.isOnline && !refs.offlineAlerted.current.has(w.workerId)) {
         refs.offlineAlerted.current.add(w.workerId)
@@ -185,26 +168,16 @@ export function DashboardClient({ initialApiUrl = '', initialDiscordUrl = '' }: 
       if (w.isOnline) refs.offlineAlerted.current.delete(w.workerId)
     })
 
-    // 4. Progress milestones
+    // 4. Log milestones locally (no Discord — poll route handles it)
     MILESTONES.forEach((m) => {
       if (json.progressPercent >= m && !refs.milestoneAlerted.current.has(m)) {
         refs.milestoneAlerted.current.add(m)
-        const alert = addAlert({
+        addAlert({
           type: 'milestone',
           message: `[${coin}] ${m}% towards block #${json.blockHeight + 1}. ETA: ${json.etaDays}d ${json.etaHours}h`,
           timestamp: Date.now(),
-          sent: false,
+          sent: true,
         })
-        sendDiscordAlert({
-          type: 'milestone',
-          coin,
-          progressPercent: m,
-          etaDays: json.etaDays,
-          etaHours: json.etaHours,
-          discordWebhookUrl,
-        }).then(() =>
-          setAlerts((prev) => prev.map((a) => a.id === alert.id ? { ...a, sent: true } : a))
-        )
       }
       if (json.progressPercent < m - 5) refs.milestoneAlerted.current.delete(m)
     })
