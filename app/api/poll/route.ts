@@ -148,10 +148,14 @@ async function pollCoin(
     return
   }
 
-  const bsBlockRaw  = (pool.best_share_since_block         as number) ?? 0
-  const netDiffRaw  = (pool.network_difficulty              as number) ?? 0
-  const blockHeight = (pool.network_height                  as number) ?? 0
-  const workerName  = (pool.best_share_since_block_worker   as string) ?? 'Unknown'
+  // BCH: `best_share_since_block` / `best_share_since_block_worker`
+  // BTC: `best_share` / `best_share_worker`
+  const bsBlockRaw  = (pool.best_share_since_block as number) ?? (pool.best_share as number) ?? 0
+  const netDiffRaw  = (pool.network_difficulty     as number) ?? 0
+  const blockHeight = (pool.network_height         as number) ?? 0
+  const workerName  =
+    (pool.best_share_since_block_worker as string) ??
+    (pool.best_share_worker            as string) ?? 'Unknown'
   const bestShareFmt = fmtDiff(bsBlockRaw)
   const netDiffFmt   = fmtDiff(netDiffRaw)
   const etaSeconds   = (pool.eta_seconds as number) ?? 0
