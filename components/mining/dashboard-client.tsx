@@ -6,9 +6,18 @@ import { ProgressBlock } from './progress-block'
 import { AlertLog } from './alert-log'
 import { SettingsDrawer } from './settings-drawer'
 import type { AlertEvent, NodeStats } from '@/lib/types'
+import type { AlertSettings } from '@/app/api/settings/route'
 
 const DEFAULT_POLL_MS = 15000
-const MILESTONES = [25, 50, 75, 90]
+
+const DEFAULT_ALERT_SETTINGS: AlertSettings = {
+  newBest:             true,
+  milestones:          true,
+  milestoneValues:     [25, 50, 75, 90],
+  blockCandidate:      true,
+  workerOffline:       true,
+  offlineThresholdMin: 10,
+}
 
 function generateId() {
   return `${Date.now()}-${Math.random().toString(36).slice(2, 7)}`
@@ -69,6 +78,7 @@ export function DashboardClient({ initialApiUrl = '', initialDiscordUrl = '' }: 
   const [btcUrl, setBtcUrl]       = useState('')
   const [discordUrl, setDiscordUrl] = useState(initialDiscordUrl)
   const [pollMs, setPollMs]         = useState(DEFAULT_POLL_MS)
+  const [alertSettings, setAlertSettings] = useState<AlertSettings>(DEFAULT_ALERT_SETTINGS)
   const [settingsOpen, setSettingsOpen] = useState(false)
   const [settingsLoaded, setSettingsLoaded] = useState(false)
   const [isRefreshing, setIsRefreshing]     = useState(false)
@@ -77,11 +87,12 @@ export function DashboardClient({ initialApiUrl = '', initialDiscordUrl = '' }: 
   useEffect(() => {
     fetch('/api/settings')
       .then((r) => r.json())
-      .then((s: { apiUrl?: string; btcApiUrl?: string; discordUrl?: string; pollMs?: number }) => {
-        if (s.apiUrl)     setBchUrl(s.apiUrl)
-        if (s.btcApiUrl)  setBtcUrl(s.btcApiUrl)
-        if (s.discordUrl) setDiscordUrl(s.discordUrl)
-        if (s.pollMs)     setPollMs(s.pollMs)
+      .then((s: { apiUrl?: string; btcApiUrl?: string; discordUrl?: string; pollMs?: number; alertSettings?: AlertSettings }) => {
+        if (s.apiUrl)         setBchUrl(s.apiUrl)
+        if (s.btcApiUrl)      setBtcUrl(s.btcApiUrl)
+        if (s.discordUrl)     setDiscordUrl(s.discordUrl)
+        if (s.pollMs)         setPollMs(s.pollMs)
+        if (s.alertSettings)  setAlertSettings(s.alertSettings)
         setSettingsLoaded(true)
       })
       .catch(() => setSettingsLoaded(true))
@@ -108,25 +119,27 @@ export function DashboardClient({ initialApiUrl = '', initialDiscordUrl = '' }: 
     coin: 'BCH' | 'BTC',
     refs: CoinAlertRefs,
     discordWebhookUrl: string,
+    as: AlertSettings,
   ) {
     const bsBlockRaw  = json.bestShareSinceBlockRaw ?? 0
     const prevBsBlock = refs.prevBestSinceBlock.current
 
-    // 1. Log new best share locally (no Discord — poll route handles it)
-    if (bsBlockRaw > 0 && bsBlockRaw > prevBsBlock && prevBsBlock > 0) {
+    // 1. New best share (log only — Discord handled by poll route)
+    if (as.newBest && bsBlockRaw > 0 && bsBlockRaw > prevBsBlock && prevBsBlock > 0) {
       const workerName = json.bestShareSinceBlockWorker || 'Unknown'
       addAlert({
         type: 'ath',
         message: `[${coin}] New best by ${workerName}: ${json.bestShareSinceBlock}${json.bestShareSinceBlockUnit} (net diff: ${json.networkDifficulty}${json.networkDifficultyUnit})`,
         workerName,
         timestamp: Date.now(),
-        sent: true, // poll route sends Discord, mark as sent
+        sent: true,
       })
     }
     refs.prevBestSinceBlock.current = bsBlockRaw
 
-    // 2. Log block candidate locally (no Discord — poll route handles it)
+    // 2. Block candidate (log only — Discord handled by poll route)
     if (
+      as.blockCandidate &&
       bsBlockRaw > 0 &&
       json.networkDifficultyRaw > 0 &&
       bsBlockRaw >= json.networkDifficultyRaw &&
@@ -146,17 +159,18 @@ export function DashboardClient({ initialApiUrl = '', initialDiscordUrl = '' }: 
       refs.netDiffCrossedAlerted.current = false
     }
 
-    // 3. Worker offline — only alert for workers we've seen online since startup
+    // 3. Worker offline — requires seen-online first, respects threshold setting
+    const offlineThresholdS = (as.offlineThresholdMin ?? 10) * 60
     json.workers.forEach((w) => {
       if (w.isOnline) {
-        // Mark as seen online — now eligible for offline alerts
         refs.seenOnline.current.add(w.workerId)
         refs.offlineAlerted.current.delete(w.workerId)
       } else if (
+        as.workerOffline &&
+        w.lastShareAgo >= offlineThresholdS &&
         refs.seenOnline.current.has(w.workerId) &&
         !refs.offlineAlerted.current.has(w.workerId)
       ) {
-        // Only fire if we saw this worker online at some point since startup
         refs.offlineAlerted.current.add(w.workerId)
         const alert = addAlert({
           type: 'worker_offline',
@@ -177,19 +191,21 @@ export function DashboardClient({ initialApiUrl = '', initialDiscordUrl = '' }: 
       }
     })
 
-    // 4. Log milestones locally (no Discord — poll route handles it)
-    MILESTONES.forEach((m) => {
-      if (json.progressPercent >= m && !refs.milestoneAlerted.current.has(m)) {
-        refs.milestoneAlerted.current.add(m)
-        addAlert({
-          type: 'milestone',
-          message: `[${coin}] ${m}% towards block #${json.blockHeight + 1}. ETA: ${json.etaDays}d ${json.etaHours}h`,
-          timestamp: Date.now(),
-          sent: true,
-        })
-      }
-      if (json.progressPercent < m - 5) refs.milestoneAlerted.current.delete(m)
-    })
+    // 4. Milestones (log only — Discord handled by poll route)
+    if (as.milestones) {
+      as.milestoneValues.forEach((m) => {
+        if (json.progressPercent >= m && !refs.milestoneAlerted.current.has(m)) {
+          refs.milestoneAlerted.current.add(m)
+          addAlert({
+            type: 'milestone',
+            message: `[${coin}] ${m}% towards block #${json.blockHeight + 1}. ETA: ${json.etaDays}d ${json.etaHours}h`,
+            timestamp: Date.now(),
+            sent: true,
+          })
+        }
+        if (json.progressPercent < m - 5) refs.milestoneAlerted.current.delete(m)
+      })
+    }
   }
 
   // ---- Fetch per coin ------------------------------------------------------
@@ -198,6 +214,7 @@ export function DashboardClient({ initialApiUrl = '', initialDiscordUrl = '' }: 
     coin: 'BCH' | 'BTC',
     setState: React.Dispatch<React.SetStateAction<CoinPanelState>>,
     refs: CoinAlertRefs,
+    as: AlertSettings,
   ) => {
     if (!url) return
     try {
@@ -209,7 +226,7 @@ export function DashboardClient({ initialApiUrl = '', initialDiscordUrl = '' }: 
       }
       const json: NodeStats = body
       setState({ data: json, error: null })
-      runAlertEngine(json, coin, refs, discordUrl)
+      runAlertEngine(json, coin, refs, discordUrl, as)
     } catch (e) {
       setState((prev) => ({ ...prev, error: e instanceof Error ? e.message : 'Fetch failed' }))
     }
@@ -219,21 +236,29 @@ export function DashboardClient({ initialApiUrl = '', initialDiscordUrl = '' }: 
   const fetchAll = useCallback(async (showSpinner = false) => {
     if (showSpinner) setIsRefreshing(true)
     await Promise.all([
-      fetchCoin(bchUrl, 'BCH', setBchState, bchRefs),
-      fetchCoin(btcUrl, 'BTC', setBtcState, btcRefs),
+      fetchCoin(bchUrl, 'BCH', setBchState, bchRefs, alertSettings),
+      fetchCoin(btcUrl, 'BTC', setBtcState, btcRefs, alertSettings),
     ])
     if (showSpinner) setIsRefreshing(false)
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [bchUrl, btcUrl, fetchCoin])
+  }, [bchUrl, btcUrl, fetchCoin, alertSettings])
 
   // Polling
   useEffect(() => {
     if (!settingsLoaded) return
     fetchAll()
-    fetch('/api/poll').catch(() => {})
+    fetch('/api/poll', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ alertSettings }),
+    }).catch(() => {})
     const id = setInterval(() => {
       fetchAll()
-      fetch('/api/poll').catch(() => {})
+      fetch('/api/poll', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ alertSettings }),
+      }).catch(() => {})
     }, pollMs)
     return () => clearInterval(id)
   }, [fetchAll, pollMs, settingsLoaded])
@@ -395,16 +420,18 @@ export function DashboardClient({ initialApiUrl = '', initialDiscordUrl = '' }: 
         btcApiUrl={btcUrl}
         discordUrl={discordUrl}
         pollMs={pollMs}
-        onSave={(bch, btc, d, p) => {
+        alertSettings={alertSettings}
+        onSave={(bch, btc, d, p, as) => {
           setBchUrl(bch)
           setBtcUrl(btc)
           setDiscordUrl(d)
           setPollMs(p)
+          setAlertSettings(as)
           setSettingsOpen(false)
           fetch('/api/settings', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ apiUrl: bch, btcApiUrl: btc, discordUrl: d, pollMs: p }),
+            body: JSON.stringify({ apiUrl: bch, btcApiUrl: btc, discordUrl: d, pollMs: p, alertSettings: as }),
           }).catch(() => {})
           setTimeout(() => fetchAll(true), 100)
         }}
