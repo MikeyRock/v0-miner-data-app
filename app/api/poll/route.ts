@@ -18,6 +18,7 @@ interface CoinState {
   milestoneAlerted:      number[]
   milestoneBlock:        number   // block height when milestones were last reset
   offlineAlerted:        string[] // worker IDs already alerted as offline
+  seenOnline:            string[] // worker IDs seen online since server start
 }
 
 interface PollState {
@@ -33,6 +34,7 @@ function emptyCoin(): CoinState {
     milestoneAlerted:      [],
     milestoneBlock:        0,
     offlineAlerted:        [],
+    seenOnline:            [],
   }
 }
 
@@ -247,14 +249,19 @@ async function pollCoin(
 
     const isOffline = lastShareAgoS > 600 // 10 minutes
 
-    if (isOffline && !state.offlineAlerted.includes(workerName)) {
+    if (!isOffline) {
+      // Mark as seen online — now eligible for offline alerts
+      if (!state.seenOnline.includes(workerName)) state.seenOnline.push(workerName)
+      state.offlineAlerted = state.offlineAlerted.filter((id) => id !== workerName)
+    } else if (
+      state.seenOnline.includes(workerName) &&
+      !state.offlineAlerted.includes(workerName)
+    ) {
+      // Only alert if we've seen this worker online since server start
       state.offlineAlerted.push(workerName)
       const minutesAgo = Math.floor(lastShareAgoS / 60)
       alerts.push(`[${coin}] offline:${workerName}:${minutesAgo}m`)
       await sendDiscord(discord, workerOfflineEmbed(coin, workerName, minutesAgo))
-    }
-    if (!isOffline) {
-      state.offlineAlerted = state.offlineAlerted.filter((id) => id !== workerName)
     }
   }
 }

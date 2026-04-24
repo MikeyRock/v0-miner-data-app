@@ -44,6 +44,7 @@ interface CoinAlertRefs {
   prevBestShare:         React.MutableRefObject<Record<string, number>>
   offlineAlerted:        React.MutableRefObject<Set<string>>
   milestoneAlerted:      React.MutableRefObject<Set<number>>
+  seenOnline:            React.MutableRefObject<Set<string>> // workers seen online since startup
 }
 
 function useCoinAlertRefs(): CoinAlertRefs {
@@ -53,6 +54,7 @@ function useCoinAlertRefs(): CoinAlertRefs {
     prevBestShare:         useRef<Record<string, number>>({}),
     offlineAlerted:        useRef<Set<string>>(new Set()),
     milestoneAlerted:      useRef<Set<number>>(new Set()),
+    seenOnline:            useRef<Set<string>>(new Set()),
   }
 }
 
@@ -144,9 +146,17 @@ export function DashboardClient({ initialApiUrl = '', initialDiscordUrl = '' }: 
       refs.netDiffCrossedAlerted.current = false
     }
 
-    // 3. Worker offline — client owns this since per-worker data only exists here
+    // 3. Worker offline — only alert for workers we've seen online since startup
     json.workers.forEach((w) => {
-      if (!w.isOnline && !refs.offlineAlerted.current.has(w.workerId)) {
+      if (w.isOnline) {
+        // Mark as seen online — now eligible for offline alerts
+        refs.seenOnline.current.add(w.workerId)
+        refs.offlineAlerted.current.delete(w.workerId)
+      } else if (
+        refs.seenOnline.current.has(w.workerId) &&
+        !refs.offlineAlerted.current.has(w.workerId)
+      ) {
+        // Only fire if we saw this worker online at some point since startup
         refs.offlineAlerted.current.add(w.workerId)
         const alert = addAlert({
           type: 'worker_offline',
@@ -165,7 +175,6 @@ export function DashboardClient({ initialApiUrl = '', initialDiscordUrl = '' }: 
           setAlerts((prev) => prev.map((a) => a.id === alert.id ? { ...a, sent: true } : a))
         )
       }
-      if (w.isOnline) refs.offlineAlerted.current.delete(w.workerId)
     })
 
     // 4. Log milestones locally (no Discord — poll route handles it)
@@ -369,9 +378,14 @@ export function DashboardClient({ initialApiUrl = '', initialDiscordUrl = '' }: 
         )}
       </main>
 
-      <footer className="border-t border-border px-6 py-4 text-center">
-        <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">Created by MikeyRocks</p>
-        <p className="mt-1 text-xs italic text-muted-foreground/60">&ldquo;Its better to have mined and lost than to have never mined at all&rdquo;</p>
+      <footer className="border-t border-border px-6 py-4">
+        <div className="relative flex items-center justify-center">
+          <div className="text-center">
+            <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">Created by MikeyRocks</p>
+            <p className="mt-1 text-xs italic text-muted-foreground/60">&ldquo;Its better to have mined and lost than to have never mined at all&rdquo;</p>
+          </div>
+          <span className="absolute right-0 font-mono text-[10px] text-muted-foreground/40 select-none">v1.4.0</span>
+        </div>
       </footer>
 
       <SettingsDrawer
