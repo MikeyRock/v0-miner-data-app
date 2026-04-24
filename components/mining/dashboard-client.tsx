@@ -344,6 +344,8 @@ export function DashboardClient({ initialApiUrl = '', initialDiscordUrl = '' }: 
                       allTimeBest={bchState.data.allTimeBest}
                       allTimeBestUnit={bchState.data.allTimeBestUnit}
                       allTimeBestWorker={bchState.data.allTimeBestWorker}
+                      totalHashrate={bchState.data.currentHashrate}
+                      totalHashrateUnit={bchState.data.currentHashrateUnit}
                       networkDifficulty={bchState.data.networkDifficulty}
                       networkDifficultyUnit={bchState.data.networkDifficultyUnit}
                       algo={bchState.data.algo}
@@ -385,6 +387,8 @@ export function DashboardClient({ initialApiUrl = '', initialDiscordUrl = '' }: 
                       allTimeBest={btcState.data.allTimeBest}
                       allTimeBestUnit={btcState.data.allTimeBestUnit}
                       allTimeBestWorker={btcState.data.allTimeBestWorker}
+                      totalHashrate={btcState.data.currentHashrate}
+                      totalHashrateUnit={btcState.data.currentHashrateUnit}
                       networkDifficulty={btcState.data.networkDifficulty}
                       networkDifficultyUnit={btcState.data.networkDifficultyUnit}
                       algo={btcState.data.algo}
@@ -411,7 +415,7 @@ export function DashboardClient({ initialApiUrl = '', initialDiscordUrl = '' }: 
             <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">Created by MikeyRocks</p>
             <p className="mt-1 text-xs italic text-muted-foreground/60">&ldquo;Its better to have mined and lost than to have never mined at all&rdquo;</p>
           </div>
-          <span className="absolute right-0 font-mono text-[10px] text-muted-foreground/40 select-none">v2.1.0</span>
+          <span className="absolute right-0 font-mono text-[10px] text-muted-foreground/40 select-none">v2.2.0</span>
         </div>
       </footer>
 

@@ -18,6 +18,9 @@ interface ProgressBlockProps {
   allTimeBest: number
   allTimeBestUnit: string
   allTimeBestWorker: string
+  // Total hashrate
+  totalHashrate: number
+  totalHashrateUnit: string
   // Network
   networkDifficulty: number
   networkDifficultyUnit: string
@@ -47,6 +50,8 @@ export function ProgressBlock({
   allTimeBest,
   allTimeBestUnit,
   allTimeBestWorker,
+  totalHashrate,
+  totalHashrateUnit,
   networkDifficulty,
   networkDifficultyUnit,
   algo,
@@ -60,13 +65,22 @@ export function ProgressBlock({
   return (
     <div className="flex flex-col gap-4 rounded-lg border border-border bg-card p-4">
 
-      {/* Top row: worker count + last share */}
+      {/* Top row: worker count + total hashrate + last share */}
       <div className="flex items-center justify-between">
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-6">
           <span className="font-mono text-foreground">
             <span className="text-4xl font-bold" style={accentStyle}>{workerCount}</span>
             <span className="ml-2 text-sm uppercase tracking-widest text-muted-foreground">Online</span>
           </span>
+          {totalHashrate > 0 && (
+            <div className="flex flex-col gap-0.5">
+              <span className="text-xs uppercase tracking-widest text-muted-foreground">Total Hashrate</span>
+              <span className="font-mono text-2xl font-bold text-foreground">
+                {totalHashrate}
+                <span className="ml-1 text-sm font-medium text-muted-foreground">{totalHashrateUnit}</span>
+              </span>
+            </div>
+          )}
         </div>
         <div className="flex flex-col items-end gap-0.5">
           <span className="text-xs uppercase tracking-widest text-muted-foreground">Last Share</span>
