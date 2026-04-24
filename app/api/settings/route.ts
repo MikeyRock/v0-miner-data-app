@@ -2,8 +2,28 @@ import { NextRequest, NextResponse } from 'next/server'
 import { readFileSync, writeFileSync, mkdirSync, existsSync } from 'fs'
 import { join } from 'path'
 
-const SETTINGS_DIR  = process.env.SETTINGS_DIR ?? '/data'
-const SETTINGS_FILE = join(SETTINGS_DIR, 'settings.json')
+// Try /data first (mounted volume), fall back to /tmp if not writable
+function resolveSettingsFile(): string {
+  const candidates = [
+    process.env.SETTINGS_DIR,
+    '/data',
+    '/tmp/axe-dashboard',
+  ].filter(Boolean) as string[]
+
+  for (const dir of candidates) {
+    try {
+      if (!existsSync(dir)) mkdirSync(dir, { recursive: true })
+      const testFile = join(dir, '.write-test')
+      writeFileSync(testFile, 'ok', 'utf-8')
+      return join(dir, 'settings.json')
+    } catch {
+      // Try next candidate
+    }
+  }
+  return join('/tmp', 'settings.json')
+}
+
+const SETTINGS_FILE = resolveSettingsFile()
 
 export interface PersistedSettings {
   apiUrl:      string
@@ -42,9 +62,6 @@ export function loadSettings(): PersistedSettings {
 
 function saveSettings(s: PersistedSettings): void {
   try {
-    if (!existsSync(SETTINGS_DIR)) {
-      mkdirSync(SETTINGS_DIR, { recursive: true })
-    }
     writeFileSync(SETTINGS_FILE, JSON.stringify(s, null, 2), 'utf-8')
   } catch (e) {
     console.error('[settings] Failed to write settings:', e)
