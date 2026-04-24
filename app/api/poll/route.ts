@@ -9,8 +9,27 @@ import { join } from 'path'
 import { loadSettings } from '../settings/route'
 import type { AlertSettings } from '../settings/route'
 
-const DATA_DIR   = process.env.SETTINGS_DIR ?? '/data'
-const STATE_FILE = join(DATA_DIR, 'poll-state.json')
+function resolveStateFile(): string {
+  const candidates = [
+    process.env.SETTINGS_DIR,
+    '/data',
+    '/tmp/axe-dashboard',
+  ].filter(Boolean) as string[]
+
+  for (const dir of candidates) {
+    try {
+      if (!existsSync(dir)) mkdirSync(dir, { recursive: true })
+      const testFile = join(dir, '.write-test')
+      writeFileSync(testFile, 'ok', 'utf-8')
+      return join(dir, 'poll-state.json')
+    } catch {
+      // Try next
+    }
+  }
+  return join('/tmp', 'poll-state.json')
+}
+
+const STATE_FILE = resolveStateFile()
 
 interface CoinState {
   prevBestSinceBlock:    number
@@ -54,7 +73,6 @@ function loadState(): PollState {
 
 function saveState(s: PollState): void {
   try {
-    if (!existsSync(DATA_DIR)) mkdirSync(DATA_DIR, { recursive: true })
     writeFileSync(STATE_FILE, JSON.stringify(s), 'utf-8')
   } catch { /* ignore */ }
 }
