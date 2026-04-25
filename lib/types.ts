@@ -43,6 +43,8 @@ export interface NodeStats {
   progressPercent: number
   etaDays: number
   etaHours: number
+  // Block reward
+  blockRewardUsd: number   // 3.125 * current coin price in USD
   // Per-worker
   workers: WorkerStats[]
   timestamp: number

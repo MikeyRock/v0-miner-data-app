@@ -34,6 +34,31 @@ function getBaseUrl(url: string): string {
   return url.replace(/\/api\/(pool|workers|node)\/?$/, '')
 }
 
+const BLOCK_REWARD = 3.125
+
+// Detect coin from URL — BCH nodes typically use port 7777, BTC uses 3333
+function detectCoinId(url: string): string {
+  if (/bch|bitcoincash/i.test(url)) return 'bitcoin-cash'
+  if (/btc|bitcoin(?!cash)/i.test(url)) return 'bitcoin'
+  // Fallback: check port
+  if (url.includes(':7777') || url.includes(':17777')) return 'bitcoin-cash'
+  return 'bitcoin'
+}
+
+async function fetchCoinPriceUsd(coinId: string): Promise<number> {
+  try {
+    const res = await fetch(
+      `https://api.coingecko.com/api/v3/simple/price?ids=${coinId}&vs_currencies=usd`,
+      { next: { revalidate: 60 }, signal: AbortSignal.timeout(4000) }
+    )
+    if (!res.ok) return 0
+    const data = await res.json() as Record<string, { usd: number }>
+    return data[coinId]?.usd ?? 0
+  } catch {
+    return 0
+  }
+}
+
 export async function GET(req: NextRequest) {
   const url = req.nextUrl.searchParams.get('url') || DEFAULT_URL
 
@@ -47,15 +72,19 @@ export async function GET(req: NextRequest) {
   const base = getBaseUrl(url)
   const poolUrl    = `${base}/api/pool`
   const workersUrl = `${base}/api/workers`
+  const coinId     = detectCoinId(url)
 
   let raw: Record<string, unknown>
   let rawWorkerList: Record<string, unknown>[] = []
+  let coinPriceUsd = 0
 
+  // Fetch pool data + live price in parallel
   try {
-    const res = await fetch(poolUrl, {
-      cache: 'no-store',
-      signal: AbortSignal.timeout(8000),
-    })
+    const [res, price] = await Promise.all([
+      fetch(poolUrl, { cache: 'no-store', signal: AbortSignal.timeout(8000) }),
+      fetchCoinPriceUsd(coinId),
+    ])
+    coinPriceUsd = price
     if (!res.ok) {
       return NextResponse.json(
         { error: `Upstream returned ${res.status} ${res.statusText}` },
@@ -232,6 +261,7 @@ export async function GET(req: NextRequest) {
     progressPercent,
     etaDays,
     etaHours,
+    blockRewardUsd: coinPriceUsd > 0 ? +(BLOCK_REWARD * coinPriceUsd).toFixed(2) : 0,
     workers,
     timestamp: Date.now(),
   }
