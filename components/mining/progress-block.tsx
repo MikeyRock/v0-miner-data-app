@@ -86,7 +86,7 @@ export function ProgressBlock({
         </div>
       </div>
 
-      {/* Hashrate windows strip + total hashrate */}
+      {/* Hashrate windows strip — window chips only, wraps freely */}
       {hashrateWindows.length > 0 && (
         <div className="flex flex-wrap gap-2">
           {hashrateWindows.map((w) => (
@@ -99,6 +99,12 @@ export function ProgressBlock({
               <span className="text-xs text-muted-foreground">{w.unit}</span>
             </div>
           ))}
+        </div>
+      )}
+
+      {/* Total hashrate + If Block Hit — always on their own row, never wraps */}
+      {(totalHashrate > 0 || (blockRewardUsd && blockRewardUsd > 0)) && (
+        <div className="flex gap-2">
           {totalHashrate > 0 && (
             <div
               className="flex flex-col items-center rounded-md border px-4 py-1.5 min-w-[72px]"
@@ -109,7 +115,6 @@ export function ProgressBlock({
               <span className="text-xs text-muted-foreground">{totalHashrateUnit}</span>
             </div>
           )}
-          {/* Block reward — 3.125 coins × live price */}
           <div
             className="flex flex-col items-center rounded-md border px-4 py-1.5 min-w-[80px]"
             style={{ borderColor: accent, background: `${accent}18` }}
