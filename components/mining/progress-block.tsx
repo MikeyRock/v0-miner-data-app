@@ -86,7 +86,9 @@ export function ProgressBlock({
         </div>
       </div>
 
-      {/* Hashrate windows strip — window chips only, wraps freely */}
+      {/* Hashrate windows + Total + If Block Hit all in one wrapping row.
+          The two accent chips are wrapped in flex-shrink-0 so they always
+          stay together and never split across lines. */}
       {hashrateWindows.length > 0 && (
         <div className="flex flex-wrap gap-2">
           {hashrateWindows.map((w) => (
@@ -99,33 +101,30 @@ export function ProgressBlock({
               <span className="text-xs text-muted-foreground">{w.unit}</span>
             </div>
           ))}
-        </div>
-      )}
-
-      {/* Total hashrate + If Block Hit — always on their own row, never wraps */}
-      {(totalHashrate > 0 || (blockRewardUsd && blockRewardUsd > 0)) && (
-        <div className="flex gap-2">
-          {totalHashrate > 0 && (
+          {/* Accent chips — shrink-0 keeps them glued together */}
+          <div className="flex shrink-0 gap-2">
+            {totalHashrate > 0 && (
+              <div
+                className="flex flex-col items-center rounded-md border px-4 py-1.5 min-w-[72px]"
+                style={{ borderColor: accent, background: `${accent}18` }}
+              >
+                <span className="text-xs uppercase tracking-widest" style={accentStyle}>Total</span>
+                <span className="font-mono text-base font-bold" style={accentStyle}>{totalHashrate}</span>
+                <span className="text-xs text-muted-foreground">{totalHashrateUnit}</span>
+              </div>
+            )}
             <div
-              className="flex flex-col items-center rounded-md border px-4 py-1.5 min-w-[72px]"
+              className="flex flex-col items-center rounded-md border px-4 py-1.5 min-w-[80px]"
               style={{ borderColor: accent, background: `${accent}18` }}
             >
-              <span className="text-xs uppercase tracking-widest" style={accentStyle}>Total</span>
-              <span className="font-mono text-base font-bold" style={accentStyle}>{totalHashrate}</span>
-              <span className="text-xs text-muted-foreground">{totalHashrateUnit}</span>
+              <span className="text-xs uppercase tracking-widest" style={accentStyle}>If Block Hit</span>
+              <span className="font-mono text-base font-bold" style={accentStyle}>
+                {blockRewardUsd && blockRewardUsd > 0
+                  ? `$${blockRewardUsd.toLocaleString('en-US', { maximumFractionDigits: 0 })}`
+                  : '—'}
+              </span>
+              <span className="text-xs text-muted-foreground">3.125 {coin ?? ''}</span>
             </div>
-          )}
-          <div
-            className="flex flex-col items-center rounded-md border px-4 py-1.5 min-w-[80px]"
-            style={{ borderColor: accent, background: `${accent}18` }}
-          >
-            <span className="text-xs uppercase tracking-widest" style={accentStyle}>If Block Hit</span>
-            <span className="font-mono text-base font-bold" style={accentStyle}>
-              {blockRewardUsd && blockRewardUsd > 0
-                ? `$${blockRewardUsd.toLocaleString('en-US', { maximumFractionDigits: 0 })}`
-                : '—'}
-            </span>
-            <span className="text-xs text-muted-foreground">3.125 {coin ?? ''}</span>
           </div>
         </div>
       )}
