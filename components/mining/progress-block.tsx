@@ -27,6 +27,7 @@ interface ProgressBlockProps {
   algo: string
   // Coin accent color — hex string e.g. '#0ac18e' for BCH, '#f7931a' for BTC
   accentColor?: string
+  coin?: 'BCH' | 'BTC'
 }
 
 function fmtAgo(s: number): string {
@@ -56,6 +57,7 @@ export function ProgressBlock({
   networkDifficultyUnit,
   algo,
   accentColor,
+  coin,
 }: ProgressBlockProps) {
   const clamped  = Math.min(100, Math.max(0, percent))
   const accent   = accentColor ?? 'var(--color-primary)'
@@ -105,6 +107,15 @@ export function ProgressBlock({
               <span className="text-xs text-muted-foreground">{totalHashrateUnit}</span>
             </div>
           )}
+          {/* Block reward — fixed at 3.125 after April 2024 halving */}
+          <div
+            className="flex flex-col items-center rounded-md border px-4 py-1.5 min-w-[72px]"
+            style={{ borderColor: accent, background: `${accent}18` }}
+          >
+            <span className="text-xs uppercase tracking-widest" style={accentStyle}>Reward</span>
+            <span className="font-mono text-base font-bold" style={accentStyle}>3.125</span>
+            <span className="text-xs text-muted-foreground">{coin ?? 'COIN'}</span>
+          </div>
         </div>
       )}
 
