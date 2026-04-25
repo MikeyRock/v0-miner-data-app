@@ -350,6 +350,7 @@ export function DashboardClient({ initialApiUrl = '', initialDiscordUrl = '' }: 
                       networkDifficultyUnit={bchState.data.networkDifficultyUnit}
                       algo={bchState.data.algo}
                       accentColor="#0ac18e"
+                      coin="BCH"
                     />
                   ) : (
                     <div className="flex items-center justify-center rounded-lg border border-border bg-card p-12 text-sm text-muted-foreground">
@@ -393,6 +394,7 @@ export function DashboardClient({ initialApiUrl = '', initialDiscordUrl = '' }: 
                       networkDifficultyUnit={btcState.data.networkDifficultyUnit}
                       algo={btcState.data.algo}
                       accentColor="#f7931a"
+                      coin="BTC"
                     />
                   ) : (
                     <div className="flex items-center justify-center rounded-lg border border-border bg-card p-12 text-sm text-muted-foreground">
@@ -415,7 +417,7 @@ export function DashboardClient({ initialApiUrl = '', initialDiscordUrl = '' }: 
             <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">Created by MikeyRocks</p>
             <p className="mt-1 text-xs italic text-muted-foreground/60">&ldquo;Its better to have mined and lost than to have never mined at all&rdquo;</p>
           </div>
-          <span className="absolute right-0 font-mono text-[10px] text-muted-foreground/40 select-none">v2.3.0</span>
+          <span className="absolute right-0 font-mono text-[10px] text-muted-foreground/40 select-none">v2.4.0</span>
         </div>
       </footer>
 
