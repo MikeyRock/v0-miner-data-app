@@ -86,47 +86,46 @@ export function ProgressBlock({
         </div>
       </div>
 
-      {/* Row 1: hashrate window chips — wraps freely */}
+      {/* Single row: all window chips + Total + If Block Hit, no wrapping.
+          Chips are compact so everything fits on one line for both coins. */}
       {hashrateWindows.length > 0 && (
-        <div className="flex flex-wrap gap-2">
+        <div className="flex gap-1.5 overflow-x-auto">
           {hashrateWindows.map((w) => (
             <div
               key={w.label}
-              className="flex flex-col items-center rounded-md border border-border bg-secondary px-3 py-1.5 min-w-[56px]"
+              className="flex flex-col items-center rounded-md border border-border bg-secondary px-2 py-1 shrink-0"
             >
-              <span className="text-xs uppercase tracking-widest text-muted-foreground">{w.label}</span>
-              <span className="font-mono text-base font-semibold text-foreground">{w.value}</span>
-              <span className="text-xs text-muted-foreground">{w.unit}</span>
+              <span className="text-[10px] uppercase tracking-widest text-muted-foreground">{w.label}</span>
+              <span className="font-mono text-sm font-semibold text-foreground leading-tight">{w.value}</span>
+              <span className="text-[10px] text-muted-foreground">{w.unit}</span>
             </div>
           ))}
-        </div>
-      )}
-
-      {/* Row 2: Total hashrate + If Block Hit — always on their own dedicated row */}
-      <div className="flex gap-2">
-        {totalHashrate > 0 && (
+          {/* Divider */}
+          <div className="w-px self-stretch bg-border mx-0.5 shrink-0" />
+          {totalHashrate > 0 && (
+            <div
+              className="flex flex-col items-center rounded-md border px-2 py-1 shrink-0"
+              style={{ borderColor: accent, background: `${accent}18` }}
+            >
+              <span className="text-[10px] uppercase tracking-widest" style={accentStyle}>Total</span>
+              <span className="font-mono text-sm font-bold leading-tight" style={accentStyle}>{totalHashrate}</span>
+              <span className="text-[10px] text-muted-foreground">{totalHashrateUnit}</span>
+            </div>
+          )}
           <div
-            className="flex flex-col items-center rounded-md border px-4 py-1.5 min-w-[72px]"
+            className="flex flex-col items-center rounded-md border px-2 py-1 shrink-0"
             style={{ borderColor: accent, background: `${accent}18` }}
           >
-            <span className="text-xs uppercase tracking-widest" style={accentStyle}>Total</span>
-            <span className="font-mono text-base font-bold" style={accentStyle}>{totalHashrate}</span>
-            <span className="text-xs text-muted-foreground">{totalHashrateUnit}</span>
+            <span className="text-[10px] uppercase tracking-widest" style={accentStyle}>If Block Hit</span>
+            <span className="font-mono text-sm font-bold leading-tight" style={accentStyle}>
+              {blockRewardUsd && blockRewardUsd > 0
+                ? `$${blockRewardUsd.toLocaleString('en-US', { maximumFractionDigits: 0 })}`
+                : '—'}
+            </span>
+            <span className="text-[10px] text-muted-foreground">3.125 {coin ?? ''}</span>
           </div>
-        )}
-        <div
-          className="flex flex-col items-center rounded-md border px-4 py-1.5 min-w-[80px]"
-          style={{ borderColor: accent, background: `${accent}18` }}
-        >
-          <span className="text-xs uppercase tracking-widest" style={accentStyle}>If Block Hit</span>
-          <span className="font-mono text-base font-bold" style={accentStyle}>
-            {blockRewardUsd && blockRewardUsd > 0
-              ? `$${blockRewardUsd.toLocaleString('en-US', { maximumFractionDigits: 0 })}`
-              : '—'}
-          </span>
-          <span className="text-xs text-muted-foreground">3.125 {coin ?? ''}</span>
         </div>
-      </div>
+      )}
 
       {/* Network difficulty + height */}
       <div className="flex items-center justify-between rounded-md bg-secondary px-3 py-2">
