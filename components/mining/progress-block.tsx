@@ -28,6 +28,7 @@ interface ProgressBlockProps {
   // Coin accent color — hex string e.g. '#0ac18e' for BCH, '#f7931a' for BTC
   accentColor?: string
   coin?: 'BCH' | 'BTC'
+  blockRewardUsd?: number
 }
 
 function fmtAgo(s: number): string {
@@ -58,6 +59,7 @@ export function ProgressBlock({
   algo,
   accentColor,
   coin,
+  blockRewardUsd,
 }: ProgressBlockProps) {
   const clamped  = Math.min(100, Math.max(0, percent))
   const accent   = accentColor ?? 'var(--color-primary)'
@@ -107,14 +109,18 @@ export function ProgressBlock({
               <span className="text-xs text-muted-foreground">{totalHashrateUnit}</span>
             </div>
           )}
-          {/* Block reward — fixed at 3.125 after April 2024 halving */}
+          {/* Block reward — 3.125 coins × live price */}
           <div
-            className="flex flex-col items-center rounded-md border px-4 py-1.5 min-w-[72px]"
+            className="flex flex-col items-center rounded-md border px-4 py-1.5 min-w-[80px]"
             style={{ borderColor: accent, background: `${accent}18` }}
           >
-            <span className="text-xs uppercase tracking-widest" style={accentStyle}>Reward</span>
-            <span className="font-mono text-base font-bold" style={accentStyle}>3.125</span>
-            <span className="text-xs text-muted-foreground">{coin ?? 'COIN'}</span>
+            <span className="text-xs uppercase tracking-widest" style={accentStyle}>If Block Hit</span>
+            <span className="font-mono text-base font-bold" style={accentStyle}>
+              {blockRewardUsd && blockRewardUsd > 0
+                ? `$${blockRewardUsd.toLocaleString('en-US', { maximumFractionDigits: 0 })}`
+                : '—'}
+            </span>
+            <span className="text-xs text-muted-foreground">3.125 {coin ?? ''}</span>
           </div>
         </div>
       )}
