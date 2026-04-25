@@ -86,9 +86,7 @@ export function ProgressBlock({
         </div>
       </div>
 
-      {/* Hashrate windows + Total + If Block Hit all in one wrapping row.
-          The two accent chips are wrapped in flex-shrink-0 so they always
-          stay together and never split across lines. */}
+      {/* Row 1: hashrate window chips — wraps freely */}
       {hashrateWindows.length > 0 && (
         <div className="flex flex-wrap gap-2">
           {hashrateWindows.map((w) => (
@@ -101,33 +99,34 @@ export function ProgressBlock({
               <span className="text-xs text-muted-foreground">{w.unit}</span>
             </div>
           ))}
-          {/* Accent chips — shrink-0 keeps them glued together */}
-          <div className="flex shrink-0 gap-2">
-            {totalHashrate > 0 && (
-              <div
-                className="flex flex-col items-center rounded-md border px-4 py-1.5 min-w-[72px]"
-                style={{ borderColor: accent, background: `${accent}18` }}
-              >
-                <span className="text-xs uppercase tracking-widest" style={accentStyle}>Total</span>
-                <span className="font-mono text-base font-bold" style={accentStyle}>{totalHashrate}</span>
-                <span className="text-xs text-muted-foreground">{totalHashrateUnit}</span>
-              </div>
-            )}
-            <div
-              className="flex flex-col items-center rounded-md border px-4 py-1.5 min-w-[80px]"
-              style={{ borderColor: accent, background: `${accent}18` }}
-            >
-              <span className="text-xs uppercase tracking-widest" style={accentStyle}>If Block Hit</span>
-              <span className="font-mono text-base font-bold" style={accentStyle}>
-                {blockRewardUsd && blockRewardUsd > 0
-                  ? `$${blockRewardUsd.toLocaleString('en-US', { maximumFractionDigits: 0 })}`
-                  : '—'}
-              </span>
-              <span className="text-xs text-muted-foreground">3.125 {coin ?? ''}</span>
-            </div>
-          </div>
         </div>
       )}
+
+      {/* Row 2: Total hashrate + If Block Hit — always on their own dedicated row */}
+      <div className="flex gap-2">
+        {totalHashrate > 0 && (
+          <div
+            className="flex flex-col items-center rounded-md border px-4 py-1.5 min-w-[72px]"
+            style={{ borderColor: accent, background: `${accent}18` }}
+          >
+            <span className="text-xs uppercase tracking-widest" style={accentStyle}>Total</span>
+            <span className="font-mono text-base font-bold" style={accentStyle}>{totalHashrate}</span>
+            <span className="text-xs text-muted-foreground">{totalHashrateUnit}</span>
+          </div>
+        )}
+        <div
+          className="flex flex-col items-center rounded-md border px-4 py-1.5 min-w-[80px]"
+          style={{ borderColor: accent, background: `${accent}18` }}
+        >
+          <span className="text-xs uppercase tracking-widest" style={accentStyle}>If Block Hit</span>
+          <span className="font-mono text-base font-bold" style={accentStyle}>
+            {blockRewardUsd && blockRewardUsd > 0
+              ? `$${blockRewardUsd.toLocaleString('en-US', { maximumFractionDigits: 0 })}`
+              : '—'}
+          </span>
+          <span className="text-xs text-muted-foreground">3.125 {coin ?? ''}</span>
+        </div>
+      </div>
 
       {/* Network difficulty + height */}
       <div className="flex items-center justify-between rounded-md bg-secondary px-3 py-2">
