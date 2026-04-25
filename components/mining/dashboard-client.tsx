@@ -5,6 +5,7 @@ import { Header } from './header'
 import { ProgressBlock } from './progress-block'
 import { AlertLog } from './alert-log'
 import { SettingsDrawer } from './settings-drawer'
+import { BlockFoundCelebration } from './block-found-celebration'
 import type { AlertEvent, NodeStats } from '@/lib/types'
 import type { AlertSettings } from '@/app/api/settings/route'
 
@@ -82,6 +83,7 @@ export function DashboardClient({ initialApiUrl = '', initialDiscordUrl = '' }: 
   const [settingsOpen, setSettingsOpen] = useState(false)
   const [settingsLoaded, setSettingsLoaded] = useState(false)
   const [isRefreshing, setIsRefreshing]     = useState(false)
+  const [celebrationCoin, setCelebrationCoin] = useState<'BCH' | 'BTC' | null>(null)
 
   // Load persisted settings from server on mount
   useEffect(() => {
@@ -154,6 +156,7 @@ export function DashboardClient({ initialApiUrl = '', initialDiscordUrl = '' }: 
         timestamp: Date.now(),
         sent: true,
       })
+      setCelebrationCoin(coin)
     }
     if (bsBlockRaw < json.networkDifficultyRaw * 0.1) {
       refs.netDiffCrossedAlerted.current = false
@@ -419,9 +422,14 @@ export function DashboardClient({ initialApiUrl = '', initialDiscordUrl = '' }: 
             <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">Created by MikeyRocks</p>
             <p className="mt-1 text-xs italic text-muted-foreground/60">&ldquo;Its better to have mined and lost than to have never mined at all&rdquo;</p>
           </div>
-          <span className="absolute right-0 font-mono text-[10px] text-muted-foreground/40 select-none">v2.5.0</span>
+          <span className="absolute right-0 font-mono text-[10px] text-muted-foreground/40 select-none">v2.6.0</span>
         </div>
       </footer>
+
+      <BlockFoundCelebration
+        coin={celebrationCoin}
+        onClear={() => setCelebrationCoin(null)}
+      />
 
       <SettingsDrawer
         open={settingsOpen}
