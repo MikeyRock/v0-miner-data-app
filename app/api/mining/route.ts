@@ -34,13 +34,20 @@ function getBaseUrl(url: string): string {
   return url.replace(/\/api\/(pool|workers|node)\/?$/, '')
 }
 
-const BLOCK_REWARD = 3.125
+// Block rewards per coin (after 2024 halvings)
+const BLOCK_REWARDS: Record<string, number> = {
+  'bitcoin': 3.125,
+  'bitcoin-cash': 3.125,
+  'ecash': 3125000, // XEC uses smaller denomination
+}
 
-// Detect coin from URL — BCH nodes typically use port 7777, BTC uses 3333
+// Detect coin from URL — BCH nodes typically use port 7777, BTC uses 3333, XEC uses 21218
 function detectCoinId(url: string): string {
+  if (/xec|ecash|axexec/i.test(url)) return 'ecash'
   if (/bch|bitcoincash/i.test(url)) return 'bitcoin-cash'
   if (/btc|bitcoin(?!cash)/i.test(url)) return 'bitcoin'
   // Fallback: check port
+  if (url.includes(':21218')) return 'ecash'
   if (url.includes(':7777') || url.includes(':17777')) return 'bitcoin-cash'
   return 'bitcoin'
 }
@@ -261,7 +268,7 @@ export async function GET(req: NextRequest) {
     progressPercent,
     etaDays,
     etaHours,
-    blockRewardUsd: coinPriceUsd > 0 ? +(BLOCK_REWARD * coinPriceUsd).toFixed(2) : 0,
+    blockRewardUsd: coinPriceUsd > 0 ? +((BLOCK_REWARDS[coinId] ?? 3.125) * coinPriceUsd).toFixed(2) : 0,
     workers,
     timestamp: Date.now(),
   }

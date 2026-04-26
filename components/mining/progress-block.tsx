@@ -25,9 +25,9 @@ interface ProgressBlockProps {
   networkDifficulty: number
   networkDifficultyUnit: string
   algo: string
-  // Coin accent color — hex string e.g. '#0ac18e' for BCH, '#f7931a' for BTC
+  // Coin accent color — hex string e.g. '#0ac18e' for BCH, '#f7931a' for BTC, '#8b5cf6' for XEC
   accentColor?: string
-  coin?: 'BCH' | 'BTC'
+  coin?: 'BCH' | 'BTC' | 'XEC'
   blockRewardUsd?: number
 }
 
@@ -122,7 +122,7 @@ export function ProgressBlock({
                 ? `$${blockRewardUsd.toLocaleString('en-US', { maximumFractionDigits: 0 })}`
                 : '—'}
             </span>
-            <span className="text-[10px] text-muted-foreground">3.125 {coin ?? ''}</span>
+            <span className="text-[10px] text-muted-foreground">{coin === 'XEC' ? '3.125M' : '3.125'} {coin ?? ''}</span>
           </div>
         </div>
       )}
