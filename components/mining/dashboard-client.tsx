@@ -418,8 +418,8 @@ export function DashboardClient({ initialApiUrl = '', initialDiscordUrl = '' }: 
               {(xecState.data || xecUrl) && (
                 <div className="flex flex-col gap-3">
                   <div className="flex items-center gap-2">
-                    <div className="flex h-6 w-6 items-center justify-center rounded" style={{ background: '#8b5cf6' }}>
-                      <span className="text-xs font-bold text-white">e</span>
+                    <div className="flex h-6 w-6 items-center justify-center rounded" style={{ background: 'linear-gradient(135deg, #1e3a5f 0%, #7c3aed 100%)' }}>
+                      <span className="text-xs font-bold" style={{ color: '#00e5ff' }}>e</span>
                     </div>
                     <span className="text-sm font-semibold uppercase tracking-widest text-foreground">eCash</span>
                     <span className="text-xs text-muted-foreground">XEC</span>
@@ -447,7 +447,7 @@ export function DashboardClient({ initialApiUrl = '', initialDiscordUrl = '' }: 
                       networkDifficulty={xecState.data.networkDifficulty}
                       networkDifficultyUnit={xecState.data.networkDifficultyUnit}
                       algo={xecState.data.algo}
-                      accentColor="#8b5cf6"
+                      accentColor="#00e5ff"
                       coin="XEC"
                       blockRewardUsd={xecState.data.blockRewardUsd}
                     />
@@ -472,7 +472,7 @@ export function DashboardClient({ initialApiUrl = '', initialDiscordUrl = '' }: 
             <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">Created by MikeyRocks</p>
             <p className="mt-1 text-xs italic text-muted-foreground/60">&ldquo;Its better to have mined and lost than to have never mined at all&rdquo;</p>
           </div>
-          <span className="absolute right-0 font-mono text-[10px] text-muted-foreground/40 select-none">v2.11.0</span>
+          <span className="absolute right-0 font-mono text-[10px] text-muted-foreground/40 select-none">v2.12.0</span>
         </div>
       </footer>
 

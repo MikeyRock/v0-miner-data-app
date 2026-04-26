@@ -22,7 +22,7 @@ interface BlockFoundCelebrationProps {
 
 const BCH_COLORS = ['#0ac18e', '#ffffff', '#00ff99', '#00cc77', '#a8ffdf']
 const BTC_COLORS = ['#f7931a', '#ffffff', '#ffb347', '#ff8c00', '#ffe0a0']
-const XEC_COLORS = ['#8b5cf6', '#ffffff', '#a78bfa', '#7c3aed', '#ddd6fe']
+const XEC_COLORS = ['#00e5ff', '#ffffff', '#00bcd4', '#1e3a5f', '#7c3aed']
 
 function createParticle(canvas: HTMLCanvasElement, colors: string[]): Particle {
   return {
@@ -47,7 +47,7 @@ export function BlockFoundCelebration({ coin, onClear }: BlockFoundCelebrationPr
   const activeRef  = useRef(false)
 
   const colors = coin === 'BCH' ? BCH_COLORS : coin === 'XEC' ? XEC_COLORS : BTC_COLORS
-  const accentColor = coin === 'BCH' ? '#0ac18e' : coin === 'XEC' ? '#8b5cf6' : '#f7931a'
+  const accentColor = coin === 'BCH' ? '#0ac18e' : coin === 'XEC' ? '#00e5ff' : '#f7931a'
   const label = coin ? `${coin} BLOCK FOUND!` : ''
 
   const stop = useCallback(() => {
