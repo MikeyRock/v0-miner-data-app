@@ -2,7 +2,7 @@ manifestVersion: 1
 id: mikeyrock-axebch-dashboard
 category: bitcoin
 name: AxeBCH Dashboard
-version: "2.12.0"
+version: "2.13.0"
 tagline: Solo mining monitor for AxeBCH, AxeBTC, and AxeXEC nodes
 description: Live dashboard for your AxeBCH, AxeBTC, and AxeXEC Solo Mining Nodes. Shows worker count, hashrate across multiple time windows, network difficulty, best share, block progress, ETA, and Discord alerts for all three coins.
 developer: MikeyRock
