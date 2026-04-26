@@ -41,6 +41,9 @@ export interface PersistedSettings {
   discordUrl:    string
   pollMs:        number
   alertSettings: AlertSettings
+  showBch:       boolean
+  showBtc:       boolean
+  showXec:       boolean
 }
 
 export const DEFAULT_ALERT_SETTINGS: AlertSettings = {
@@ -60,6 +63,9 @@ function defaults(): PersistedSettings {
     discordUrl:    process.env.DISCORD_WEBHOOK_URL ?? '',
     pollMs:        15000,
     alertSettings: DEFAULT_ALERT_SETTINGS,
+    showBch:       true,
+    showBtc:       true,
+    showXec:       true,
   }
 }
 
@@ -88,6 +94,9 @@ export function loadSettings(): PersistedSettings {
         discordUrl:    parsed.discordUrl ?? d.discordUrl,
         pollMs:        parsed.pollMs     ?? d.pollMs,
         alertSettings: mergeAlertSettings(parsed.alertSettings),
+        showBch:       parsed.showBch    ?? d.showBch,
+        showBtc:       parsed.showBtc    ?? d.showBtc,
+        showXec:       parsed.showXec    ?? d.showXec,
       }
     }
   } catch {
@@ -119,6 +128,9 @@ export async function POST(req: NextRequest) {
       discordUrl:    typeof body.discordUrl === 'string' ? body.discordUrl.trim() : current.discordUrl,
       pollMs:        typeof body.pollMs     === 'number' ? Math.max(5000, body.pollMs) : current.pollMs,
       alertSettings: body.alertSettings ? mergeAlertSettings(body.alertSettings) : current.alertSettings,
+      showBch:       typeof body.showBch    === 'boolean' ? body.showBch : current.showBch,
+      showBtc:       typeof body.showBtc    === 'boolean' ? body.showBtc : current.showBtc,
+      showXec:       typeof body.showXec    === 'boolean' ? body.showXec : current.showXec,
     }
     saveSettings(updated)
     return NextResponse.json(updated)

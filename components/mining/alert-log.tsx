@@ -30,7 +30,25 @@ export function AlertLog({ events }: AlertLogProps) {
           Alert Log
         </span>
       </div>
-      <div className="flex max-h-64 flex-col gap-0 overflow-y-auto">
+      <div 
+        className="flex flex-col gap-0 overflow-y-auto"
+        style={{ maxHeight: 'calc(3 * 52px)' }}
+      >
+        <style jsx>{`
+          div::-webkit-scrollbar {
+            width: 8px;
+          }
+          div::-webkit-scrollbar-track {
+            background: #000;
+          }
+          div::-webkit-scrollbar-thumb {
+            background: #333;
+            border-radius: 4px;
+          }
+          div::-webkit-scrollbar-thumb:hover {
+            background: #444;
+          }
+        `}</style>
         {events.length === 0 ? (
           <div className="flex items-center justify-center p-6">
             <span className="text-xs text-muted-foreground">No alerts yet this session</span>

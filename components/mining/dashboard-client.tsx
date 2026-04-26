@@ -82,6 +82,9 @@ export function DashboardClient({ initialApiUrl = '', initialDiscordUrl = '' }: 
   const [discordUrl, setDiscordUrl] = useState(initialDiscordUrl)
   const [pollMs, setPollMs]         = useState(DEFAULT_POLL_MS)
   const [alertSettings, setAlertSettings] = useState<AlertSettings>(DEFAULT_ALERT_SETTINGS)
+  const [showBch, setShowBch]       = useState(true)
+  const [showBtc, setShowBtc]       = useState(true)
+  const [showXec, setShowXec]       = useState(true)
   const [settingsOpen, setSettingsOpen] = useState(false)
   const [settingsLoaded, setSettingsLoaded] = useState(false)
   const [isRefreshing, setIsRefreshing]     = useState(false)
@@ -91,13 +94,16 @@ export function DashboardClient({ initialApiUrl = '', initialDiscordUrl = '' }: 
   useEffect(() => {
     fetch('/api/settings')
       .then((r) => r.json())
-      .then((s: { apiUrl?: string; btcApiUrl?: string; xecApiUrl?: string; discordUrl?: string; pollMs?: number; alertSettings?: AlertSettings }) => {
+      .then((s: { apiUrl?: string; btcApiUrl?: string; xecApiUrl?: string; discordUrl?: string; pollMs?: number; alertSettings?: AlertSettings; showBch?: boolean; showBtc?: boolean; showXec?: boolean }) => {
         if (s.apiUrl)         setBchUrl(s.apiUrl)
         if (s.btcApiUrl)      setBtcUrl(s.btcApiUrl)
         if (s.xecApiUrl)      setXecUrl(s.xecApiUrl)
         if (s.discordUrl)     setDiscordUrl(s.discordUrl)
         if (s.pollMs)         setPollMs(s.pollMs)
         if (s.alertSettings)  setAlertSettings(s.alertSettings)
+        if (typeof s.showBch === 'boolean') setShowBch(s.showBch)
+        if (typeof s.showBtc === 'boolean') setShowBtc(s.showBtc)
+        if (typeof s.showXec === 'boolean') setShowXec(s.showXec)
         setSettingsLoaded(true)
       })
       .catch(() => setSettingsLoaded(true))
@@ -275,6 +281,19 @@ export function DashboardClient({ initialApiUrl = '', initialDiscordUrl = '' }: 
 
   const lastUpdated = bchState.data?.timestamp ?? btcState.data?.timestamp ?? xecState.data?.timestamp ?? null
 
+  // Calculate which coins to display and grid columns
+  const displayBch = showBch && (bchState.data || bchUrl)
+  const displayBtc = showBtc && (btcState.data || btcUrl)
+  const displayXec = showXec && (xecState.data || xecUrl)
+  const enabledCount = [displayBch, displayBtc, displayXec].filter(Boolean).length
+  
+  // Dynamic grid classes: 1 coin = full width, 2 coins = 2 cols, 3 coins = 3 cols
+  const gridClass = enabledCount === 1 
+    ? 'grid grid-cols-1' 
+    : enabledCount === 2 
+      ? 'grid grid-cols-1 gap-4 lg:grid-cols-2' 
+      : 'grid grid-cols-1 gap-4 lg:grid-cols-2 xl:grid-cols-3'
+
   return (
     <div className="flex min-h-screen flex-col bg-background font-mono">
       <Header
@@ -322,10 +341,10 @@ export function DashboardClient({ initialApiUrl = '', initialDiscordUrl = '' }: 
           <div className="flex flex-col gap-4">
 
             {/* Coin panels */}
-            <div className="grid grid-cols-1 gap-4 lg:grid-cols-2 xl:grid-cols-3">
+            <div className={gridClass}>
 
               {/* BCH Panel */}
-              {(bchState.data || bchUrl) && (
+              {displayBch && (
                 <div className="flex flex-col gap-3">
                   <div className="flex items-center gap-2">
                     <div className="flex h-6 w-6 items-center justify-center rounded" style={{ background: '#0ac18e' }}>
@@ -370,7 +389,7 @@ export function DashboardClient({ initialApiUrl = '', initialDiscordUrl = '' }: 
               )}
 
               {/* BTC Panel */}
-              {(btcState.data || btcUrl) && (
+              {displayBtc && (
                 <div className="flex flex-col gap-3">
                   <div className="flex items-center gap-2">
                     <div className="flex h-6 w-6 items-center justify-center rounded bg-[#f7931a]">
@@ -415,7 +434,7 @@ export function DashboardClient({ initialApiUrl = '', initialDiscordUrl = '' }: 
               )}
 
               {/* XEC Panel */}
-              {(xecState.data || xecUrl) && (
+              {displayXec && (
                 <div className="flex flex-col gap-3">
                   <div className="flex items-center gap-2">
                     <div className="flex h-6 w-6 items-center justify-center rounded" style={{ background: 'linear-gradient(135deg, #1e3a5f 0%, #7c3aed 100%)' }}>
@@ -472,7 +491,7 @@ export function DashboardClient({ initialApiUrl = '', initialDiscordUrl = '' }: 
             <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">Created by MikeyRocks</p>
             <p className="mt-1 text-xs italic text-muted-foreground/60">&ldquo;Its better to have mined and lost than to have never mined at all&rdquo;</p>
           </div>
-          <span className="absolute right-0 font-mono text-[10px] text-muted-foreground/40 select-none">v2.20.0</span>
+          <span className="absolute right-0 font-mono text-[10px] text-muted-foreground/40 select-none">v3.0.0</span>
         </div>
       </footer>
 
@@ -490,18 +509,24 @@ export function DashboardClient({ initialApiUrl = '', initialDiscordUrl = '' }: 
         discordUrl={discordUrl}
         pollMs={pollMs}
         alertSettings={alertSettings}
-        onSave={(bch, btc, xec, d, p, as) => {
+        showBch={showBch}
+        showBtc={showBtc}
+        showXec={showXec}
+        onSave={(bch, btc, xec, d, p, as, sBch, sBtc, sXec) => {
           setBchUrl(bch)
           setBtcUrl(btc)
           setXecUrl(xec)
           setDiscordUrl(d)
           setPollMs(p)
           setAlertSettings(as)
+          setShowBch(sBch)
+          setShowBtc(sBtc)
+          setShowXec(sXec)
           setSettingsOpen(false)
           fetch('/api/settings', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ apiUrl: bch, btcApiUrl: btc, xecApiUrl: xec, discordUrl: d, pollMs: p, alertSettings: as }),
+            body: JSON.stringify({ apiUrl: bch, btcApiUrl: btc, xecApiUrl: xec, discordUrl: d, pollMs: p, alertSettings: as, showBch: sBch, showBtc: sBtc, showXec: sXec }),
           }).catch(() => {})
           setTimeout(() => fetchAll(true), 100)
         }}

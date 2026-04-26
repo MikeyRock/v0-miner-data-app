@@ -24,10 +24,13 @@ interface Props {
   discordUrl: string
   pollMs: number
   alertSettings: AlertSettings
-  onSave: (apiUrl: string, btcApiUrl: string, xecApiUrl: string, discordUrl: string, pollMs: number, alertSettings: AlertSettings) => void
+  showBch: boolean
+  showBtc: boolean
+  showXec: boolean
+  onSave: (apiUrl: string, btcApiUrl: string, xecApiUrl: string, discordUrl: string, pollMs: number, alertSettings: AlertSettings, showBch: boolean, showBtc: boolean, showXec: boolean) => void
 }
 
-export function SettingsDrawer({ open, onClose, apiUrl, btcApiUrl, xecApiUrl, discordUrl, pollMs, alertSettings, onSave }: Props) {
+export function SettingsDrawer({ open, onClose, apiUrl, btcApiUrl, xecApiUrl, discordUrl, pollMs, alertSettings, showBch, showBtc, showXec, onSave }: Props) {
   const [tab, setTab] = useState<'connection' | 'alerts'>('connection')
 
   // Connection tab state
@@ -42,6 +45,11 @@ export function SettingsDrawer({ open, onClose, apiUrl, btcApiUrl, xecApiUrl, di
   // Alert settings tab state
   const [localAlerts, setLocalAlerts] = useState<AlertSettings>(alertSettings ?? DEFAULT_ALERT_SETTINGS)
 
+  // Display toggles state
+  const [localShowBch, setLocalShowBch] = useState(showBch)
+  const [localShowBtc, setLocalShowBtc] = useState(showBtc)
+  const [localShowXec, setLocalShowXec] = useState(showXec)
+
   useEffect(() => {
     setLocalApi(apiUrl)
     setLocalBtcApi(btcApiUrl)
@@ -49,12 +57,15 @@ export function SettingsDrawer({ open, onClose, apiUrl, btcApiUrl, xecApiUrl, di
     setLocalDiscord(discordUrl)
     setLocalPoll(String(pollMs / 1000))
     setLocalAlerts(alertSettings ?? DEFAULT_ALERT_SETTINGS)
+    setLocalShowBch(showBch)
+    setLocalShowBtc(showBtc)
+    setLocalShowXec(showXec)
     setTab('connection')
-  }, [open, apiUrl, btcApiUrl, xecApiUrl, discordUrl, pollMs, alertSettings])
+  }, [open, apiUrl, btcApiUrl, xecApiUrl, discordUrl, pollMs, alertSettings, showBch, showBtc, showXec])
 
   function handleSave() {
     const secs = Math.max(5, parseInt(localPoll, 10) || 15)
-    onSave(localApi.trim(), localBtcApi.trim(), localXecApi.trim(), localDiscord.trim(), secs * 1000, localAlerts)
+    onSave(localApi.trim(), localBtcApi.trim(), localXecApi.trim(), localDiscord.trim(), secs * 1000, localAlerts, localShowBch, localShowBtc, localShowXec)
   }
 
   function toggleMilestone(m: number) {
@@ -162,6 +173,21 @@ export function SettingsDrawer({ open, onClose, apiUrl, btcApiUrl, xecApiUrl, di
                   placeholder="http://willitmod-dev-bch_app_1:3000/api/pool"
                   className="w-full rounded-md border border-border bg-input px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-ring font-mono"
                 />
+                <div className="flex items-center justify-between mt-2 px-1">
+                  <span className="text-xs text-muted-foreground">Display on dashboard</span>
+                  <button
+                    role="switch"
+                    aria-checked={localShowBch}
+                    onClick={() => setLocalShowBch(!localShowBch)}
+                    className={`relative h-5 w-9 flex-shrink-0 rounded-full border-2 transition-colors
+                      ${localShowBch ? 'bg-[#0ac18e] border-[#0ac18e]' : 'bg-muted border-border'}`}
+                  >
+                    <span
+                      className={`absolute top-0.5 left-0.5 h-3 w-3 rounded-full bg-white shadow transition-transform
+                        ${localShowBch ? 'translate-x-4' : 'translate-x-0'}`}
+                    />
+                  </button>
+                </div>
               </Field>
 
               <Field label="AxeBTC API URL" hint="Direct LAN URL to your AxeBTC node — leave blank to disable BTC panel." id="btc-api-url">
@@ -173,6 +199,21 @@ export function SettingsDrawer({ open, onClose, apiUrl, btcApiUrl, xecApiUrl, di
                   placeholder="http://willitmod-btc_app_1:3000/api/pool"
                   className="w-full rounded-md border border-border bg-input px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-ring font-mono"
                 />
+                <div className="flex items-center justify-between mt-2 px-1">
+                  <span className="text-xs text-muted-foreground">Display on dashboard</span>
+                  <button
+                    role="switch"
+                    aria-checked={localShowBtc}
+                    onClick={() => setLocalShowBtc(!localShowBtc)}
+                    className={`relative h-5 w-9 flex-shrink-0 rounded-full border-2 transition-colors
+                      ${localShowBtc ? 'bg-[#f7931a] border-[#f7931a]' : 'bg-muted border-border'}`}
+                  >
+                    <span
+                      className={`absolute top-0.5 left-0.5 h-3 w-3 rounded-full bg-white shadow transition-transform
+                        ${localShowBtc ? 'translate-x-4' : 'translate-x-0'}`}
+                    />
+                  </button>
+                </div>
               </Field>
 
               <Field label="AxeXEC API URL" hint="Direct LAN URL to your AxeXEC node — leave blank to disable XEC panel." id="xec-api-url">
@@ -184,6 +225,21 @@ export function SettingsDrawer({ open, onClose, apiUrl, btcApiUrl, xecApiUrl, di
                   placeholder="http://192.168.0.117:21218/api/pool"
                   className="w-full rounded-md border border-border bg-input px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-ring font-mono"
                 />
+                <div className="flex items-center justify-between mt-2 px-1">
+                  <span className="text-xs text-muted-foreground">Display on dashboard</span>
+                  <button
+                    role="switch"
+                    aria-checked={localShowXec}
+                    onClick={() => setLocalShowXec(!localShowXec)}
+                    className={`relative h-5 w-9 flex-shrink-0 rounded-full border-2 transition-colors
+                      ${localShowXec ? 'bg-[#00e5ff] border-[#00e5ff]' : 'bg-muted border-border'}`}
+                  >
+                    <span
+                      className={`absolute top-0.5 left-0.5 h-3 w-3 rounded-full bg-white shadow transition-transform
+                        ${localShowXec ? 'translate-x-4' : 'translate-x-0'}`}
+                    />
+                  </button>
+                </div>
               </Field>
 
               <Field label="Discord Webhook URL" hint="Leave empty to disable Discord notifications." id="discord-url">
