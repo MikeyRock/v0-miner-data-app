@@ -1,17 +1,25 @@
 'use client'
 
 import { cn } from '@/lib/utils'
-import type { AlertEvent } from '@/lib/types'
 
-interface AlertLogProps {
+export interface AlertEvent {
+  id: string
+  type: 'worker_offline' | 'worker_online' | 'block_found' | 'milestone' | 'best_share'
+  message: string
+  timestamp: number
+  sent?: boolean
+}
+
+export interface AlertLogProps {
   events: AlertEvent[]
 }
 
-const TYPE_CONFIG = {
-  block_found: { label: 'Block Found', color: 'text-green-400 bg-green-500/10 border-green-500/30' },
-  ath: { label: 'New ATH', color: 'text-primary bg-primary/10 border-primary/30' },
-  worker_offline: { label: 'Offline', color: 'text-red-400 bg-red-500/10 border-red-500/30' },
-  milestone: { label: 'Milestone', color: 'text-yellow-400 bg-yellow-500/10 border-yellow-500/30' },
+const TYPE_CONFIG: Record<string, { label: string; color: string }> = {
+  worker_offline: { label: 'Offline', color: 'border-red-500/60 bg-red-500/10 text-red-400' },
+  worker_online: { label: 'Online', color: 'border-green-500/60 bg-green-500/10 text-green-400' },
+  block_found: { label: 'Block!', color: 'border-yellow-500/60 bg-yellow-500/10 text-yellow-400' },
+  milestone: { label: 'Milestone', color: 'border-orange-500/60 bg-orange-500/10 text-orange-400' },
+  best_share: { label: 'Best Share', color: 'border-blue-500/60 bg-blue-500/10 text-blue-400' },
 }
 
 function timeAgo(ts: number): string {
@@ -25,33 +33,33 @@ function timeAgo(ts: number): string {
 export function AlertLog({ events }: AlertLogProps) {
   return (
     <div className="flex flex-col overflow-hidden rounded-lg border border-border bg-card">
-      <div className="border-b border-border px-4 py-3">
-        <span className="text-xs font-medium uppercase tracking-widest text-muted-foreground">
+      <div className="border-b border-border px-2 py-1">
+        <span className="text-[10px] font-medium uppercase tracking-widest text-muted-foreground">
           Alert Log
         </span>
       </div>
       <div 
         className="flex flex-col gap-0 overflow-y-auto"
-        style={{ maxHeight: 'calc(3 * 52px)' }}
+        style={{ maxHeight: 'calc(3 * 22px)' }}
       >
         <style jsx>{`
           div::-webkit-scrollbar {
-            width: 8px;
+            width: 6px;
           }
           div::-webkit-scrollbar-track {
             background: #000;
           }
           div::-webkit-scrollbar-thumb {
             background: #333;
-            border-radius: 4px;
+            border-radius: 3px;
           }
           div::-webkit-scrollbar-thumb:hover {
             background: #444;
           }
         `}</style>
         {events.length === 0 ? (
-          <div className="flex items-center justify-center p-6">
-            <span className="text-xs text-muted-foreground">No alerts yet this session</span>
+          <div className="flex items-center justify-center py-2">
+            <span className="text-[10px] text-muted-foreground">No alerts yet this session</span>
           </div>
         ) : (
           events.slice().reverse().map((event) => {
@@ -59,21 +67,21 @@ export function AlertLog({ events }: AlertLogProps) {
             return (
               <div
                 key={event.id}
-                className="flex items-start gap-3 border-b border-border/40 px-4 py-2.5 last:border-0"
+                className="flex items-center gap-1.5 border-b border-border/40 px-2 py-0.5 last:border-0"
               >
                 <span
                   className={cn(
-                    'mt-0.5 shrink-0 rounded border px-1.5 py-0.5 text-xs font-medium',
+                    'shrink-0 rounded border px-1 py-px text-[9px] font-medium leading-tight',
                     config.color
                   )}
                 >
                   {config.label}
                 </span>
-                <span className="flex-1 text-xs text-foreground leading-relaxed">{event.message}</span>
-                <div className="flex shrink-0 flex-col items-end gap-0.5">
-                  <span className="text-xs text-muted-foreground">{timeAgo(event.timestamp)}</span>
+                <span className="flex-1 text-[10px] text-foreground truncate">{event.message}</span>
+                <div className="flex shrink-0 items-center gap-1.5">
+                  <span className="text-[9px] text-muted-foreground">{timeAgo(event.timestamp)}</span>
                   {event.sent && (
-                    <span className="text-xs text-green-400">Discord sent</span>
+                    <span className="text-[9px] text-green-400">Sent</span>
                   )}
                 </div>
               </div>
