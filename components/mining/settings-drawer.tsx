@@ -20,18 +20,20 @@ interface Props {
   onClose: () => void
   apiUrl: string
   btcApiUrl: string
+  xecApiUrl: string
   discordUrl: string
   pollMs: number
   alertSettings: AlertSettings
-  onSave: (apiUrl: string, btcApiUrl: string, discordUrl: string, pollMs: number, alertSettings: AlertSettings) => void
+  onSave: (apiUrl: string, btcApiUrl: string, xecApiUrl: string, discordUrl: string, pollMs: number, alertSettings: AlertSettings) => void
 }
 
-export function SettingsDrawer({ open, onClose, apiUrl, btcApiUrl, discordUrl, pollMs, alertSettings, onSave }: Props) {
+export function SettingsDrawer({ open, onClose, apiUrl, btcApiUrl, xecApiUrl, discordUrl, pollMs, alertSettings, onSave }: Props) {
   const [tab, setTab] = useState<'connection' | 'alerts'>('connection')
 
   // Connection tab state
   const [localApi, setLocalApi]         = useState(apiUrl)
   const [localBtcApi, setLocalBtcApi]   = useState(btcApiUrl)
+  const [localXecApi, setLocalXecApi]   = useState(xecApiUrl)
   const [localDiscord, setLocalDiscord] = useState(discordUrl)
   const [localPoll, setLocalPoll]       = useState(String(pollMs / 1000))
   const [testStatus, setTestStatus]     = useState<'idle' | 'sending' | 'ok' | 'error'>('idle')
@@ -43,15 +45,16 @@ export function SettingsDrawer({ open, onClose, apiUrl, btcApiUrl, discordUrl, p
   useEffect(() => {
     setLocalApi(apiUrl)
     setLocalBtcApi(btcApiUrl)
+    setLocalXecApi(xecApiUrl)
     setLocalDiscord(discordUrl)
     setLocalPoll(String(pollMs / 1000))
     setLocalAlerts(alertSettings ?? DEFAULT_ALERT_SETTINGS)
     setTab('connection')
-  }, [open, apiUrl, btcApiUrl, discordUrl, pollMs, alertSettings])
+  }, [open, apiUrl, btcApiUrl, xecApiUrl, discordUrl, pollMs, alertSettings])
 
   function handleSave() {
     const secs = Math.max(5, parseInt(localPoll, 10) || 15)
-    onSave(localApi.trim(), localBtcApi.trim(), localDiscord.trim(), secs * 1000, localAlerts)
+    onSave(localApi.trim(), localBtcApi.trim(), localXecApi.trim(), localDiscord.trim(), secs * 1000, localAlerts)
   }
 
   function toggleMilestone(m: number) {
@@ -172,6 +175,17 @@ export function SettingsDrawer({ open, onClose, apiUrl, btcApiUrl, discordUrl, p
                 />
               </Field>
 
+              <Field label="AxeXEC API URL" hint="Direct LAN URL to your AxeXEC node — leave blank to disable XEC panel." id="xec-api-url">
+                <input
+                  id="xec-api-url"
+                  type="url"
+                  value={localXecApi}
+                  onChange={(e) => setLocalXecApi(e.target.value)}
+                  placeholder="http://192.168.0.117:21218/api/pool"
+                  className="w-full rounded-md border border-border bg-input px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-ring font-mono"
+                />
+              </Field>
+
               <Field label="Discord Webhook URL" hint="Leave empty to disable Discord notifications." id="discord-url">
                 <div className="flex gap-2">
                   <input
@@ -216,7 +230,8 @@ export function SettingsDrawer({ open, onClose, apiUrl, btcApiUrl, discordUrl, p
                 <p className="font-semibold text-foreground/60 uppercase tracking-wider text-[10px]">On Umbrel</p>
                 <p><strong className="text-foreground/70">BCH:</strong> <code className="text-primary select-all">http://willitmod-dev-bch_app_1:3000/api/pool</code></p>
                 <p><strong className="text-foreground/70">BTC:</strong> <code className="text-primary">http://willitmod-btc_app_1:3000/api/pool</code></p>
-                <p className="pt-1">Leave BTC blank to show only the BCH panel.</p>
+                <p><strong className="text-foreground/70">XEC:</strong> <code className="text-primary">http://192.168.0.117:21218/api/pool</code></p>
+                <p className="pt-1">Leave any URL blank to hide that panel.</p>
               </div>
             </>
           )}

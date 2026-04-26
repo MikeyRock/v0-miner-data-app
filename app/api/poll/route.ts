@@ -44,6 +44,7 @@ interface CoinState {
 interface PollState {
   bch: CoinState
   btc: CoinState
+  xec: CoinState
 }
 
 function emptyCoin(): CoinState {
@@ -65,10 +66,11 @@ function loadState(): PollState {
       return {
         bch: raw.bch ?? emptyCoin(),
         btc: raw.btc ?? emptyCoin(),
+        xec: raw.xec ?? emptyCoin(),
       }
     }
   } catch { /* ignore */ }
-  return { bch: emptyCoin(), btc: emptyCoin() }
+  return { bch: emptyCoin(), btc: emptyCoin(), xec: emptyCoin() }
 }
 
 function saveState(s: PollState): void {
@@ -171,7 +173,7 @@ const MILESTONES = [25, 50, 75, 90]
 
 async function pollCoin(
   apiUrl: string,
-  coin: 'BCH' | 'BTC',
+  coin: 'BCH' | 'BTC' | 'XEC',
   state: CoinState,
   discord: string,
   alerts: string[],
@@ -296,6 +298,7 @@ async function runPoll(overrideAlertSettings?: AlertSettings) {
   await Promise.all([
     pollCoin(settings.apiUrl,    'BCH', state.bch, discord, alerts, as),
     pollCoin(settings.btcApiUrl, 'BTC', state.btc, discord, alerts, as),
+    pollCoin(settings.xecApiUrl, 'XEC', state.xec, discord, alerts, as),
   ])
 
   saveState(state)

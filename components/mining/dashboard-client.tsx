@@ -73,25 +73,28 @@ function useCoinAlertRefs(): CoinAlertRefs {
 export function DashboardClient({ initialApiUrl = '', initialDiscordUrl = '' }: DashboardClientProps) {
   const [bchState, setBchState] = useState<CoinPanelState>({ data: null, error: null })
   const [btcState, setBtcState] = useState<CoinPanelState>({ data: null, error: null })
+  const [xecState, setXecState] = useState<CoinPanelState>({ data: null, error: null })
   const [alerts, setAlerts]     = useState<AlertEvent[]>([])
 
   const [bchUrl, setBchUrl]       = useState(initialApiUrl)
   const [btcUrl, setBtcUrl]       = useState('')
+  const [xecUrl, setXecUrl]       = useState('')
   const [discordUrl, setDiscordUrl] = useState(initialDiscordUrl)
   const [pollMs, setPollMs]         = useState(DEFAULT_POLL_MS)
   const [alertSettings, setAlertSettings] = useState<AlertSettings>(DEFAULT_ALERT_SETTINGS)
   const [settingsOpen, setSettingsOpen] = useState(false)
   const [settingsLoaded, setSettingsLoaded] = useState(false)
   const [isRefreshing, setIsRefreshing]     = useState(false)
-  const [celebrationCoin, setCelebrationCoin] = useState<'BCH' | 'BTC' | null>(null)
+  const [celebrationCoin, setCelebrationCoin] = useState<'BCH' | 'BTC' | 'XEC' | null>(null)
 
   // Load persisted settings from server on mount
   useEffect(() => {
     fetch('/api/settings')
       .then((r) => r.json())
-      .then((s: { apiUrl?: string; btcApiUrl?: string; discordUrl?: string; pollMs?: number; alertSettings?: AlertSettings }) => {
+      .then((s: { apiUrl?: string; btcApiUrl?: string; xecApiUrl?: string; discordUrl?: string; pollMs?: number; alertSettings?: AlertSettings }) => {
         if (s.apiUrl)         setBchUrl(s.apiUrl)
         if (s.btcApiUrl)      setBtcUrl(s.btcApiUrl)
+        if (s.xecApiUrl)      setXecUrl(s.xecApiUrl)
         if (s.discordUrl)     setDiscordUrl(s.discordUrl)
         if (s.pollMs)         setPollMs(s.pollMs)
         if (s.alertSettings)  setAlertSettings(s.alertSettings)
@@ -104,6 +107,7 @@ export function DashboardClient({ initialApiUrl = '', initialDiscordUrl = '' }: 
   // Alert refs per coin
   const bchRefs = useCoinAlertRefs()
   const btcRefs = useCoinAlertRefs()
+  const xecRefs = useCoinAlertRefs()
 
   const addAlert = useCallback((event: Omit<AlertEvent, 'id'>): AlertEvent => {
     const full: AlertEvent = { ...event, id: generateId() }
@@ -118,7 +122,7 @@ export function DashboardClient({ initialApiUrl = '', initialDiscordUrl = '' }: 
   // all events locally for the UI alert log.
   function runAlertEngine(
     json: NodeStats,
-    coin: 'BCH' | 'BTC',
+    coin: 'BCH' | 'BTC' | 'XEC',
     refs: CoinAlertRefs,
     discordWebhookUrl: string,
     as: AlertSettings,
@@ -214,7 +218,7 @@ export function DashboardClient({ initialApiUrl = '', initialDiscordUrl = '' }: 
   // ---- Fetch per coin ------------------------------------------------------
   const fetchCoin = useCallback(async (
     url: string,
-    coin: 'BCH' | 'BTC',
+    coin: 'BCH' | 'BTC' | 'XEC',
     setState: React.Dispatch<React.SetStateAction<CoinPanelState>>,
     refs: CoinAlertRefs,
     as: AlertSettings,
@@ -241,10 +245,11 @@ export function DashboardClient({ initialApiUrl = '', initialDiscordUrl = '' }: 
     await Promise.all([
       fetchCoin(bchUrl, 'BCH', setBchState, bchRefs, alertSettings),
       fetchCoin(btcUrl, 'BTC', setBtcState, btcRefs, alertSettings),
+      fetchCoin(xecUrl, 'XEC', setXecState, xecRefs, alertSettings),
     ])
     if (showSpinner) setIsRefreshing(false)
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [bchUrl, btcUrl, fetchCoin, alertSettings])
+  }, [bchUrl, btcUrl, xecUrl, fetchCoin, alertSettings])
 
   // Polling
   useEffect(() => {
@@ -266,9 +271,9 @@ export function DashboardClient({ initialApiUrl = '', initialDiscordUrl = '' }: 
     return () => clearInterval(id)
   }, [fetchAll, pollMs, settingsLoaded])
 
-  const isConnected = !!(bchState.data || btcState.data)
+  const isConnected = !!(bchState.data || btcState.data || xecState.data)
 
-  const lastUpdated = bchState.data?.timestamp ?? btcState.data?.timestamp ?? null
+  const lastUpdated = bchState.data?.timestamp ?? btcState.data?.timestamp ?? xecState.data?.timestamp ?? null
 
   return (
     <div className="flex min-h-screen flex-col bg-background font-mono">
@@ -283,7 +288,7 @@ export function DashboardClient({ initialApiUrl = '', initialDiscordUrl = '' }: 
       <main className="flex-1 p-4 md:p-6 max-w-screen-2xl mx-auto w-full">
 
         {/* Empty state */}
-        {!bchState.data && !btcState.data && (
+        {!bchState.data && !btcState.data && !xecState.data && (
           <div className="flex flex-col items-center justify-center min-h-[60vh] gap-6 text-center">
             <div className="flex h-16 w-16 items-center justify-center rounded-full border-2 border-border bg-card">
               <span className="font-mono text-2xl font-bold text-primary">B</span>
@@ -291,7 +296,7 @@ export function DashboardClient({ initialApiUrl = '', initialDiscordUrl = '' }: 
             <div className="max-w-sm space-y-2">
               <h2 className="text-base font-semibold text-foreground">Not connected</h2>
               <p className="text-sm leading-relaxed text-muted-foreground">
-                Open Settings and enter your AxeBCH and/or AxeBTC API URLs.
+                Open Settings and enter your AxeBCH, AxeBTC, and/or AxeXEC API URLs.
               </p>
             </div>
             <div className="flex gap-3">
@@ -313,11 +318,11 @@ export function DashboardClient({ initialApiUrl = '', initialDiscordUrl = '' }: 
         )}
 
         {/* Live data — side by side */}
-        {(bchState.data || btcState.data) && (
+        {(bchState.data || btcState.data || xecState.data) && (
           <div className="flex flex-col gap-4">
 
             {/* Coin panels */}
-            <div className="grid grid-cols-1 gap-4 xl:grid-cols-2">
+            <div className="grid grid-cols-1 gap-4 lg:grid-cols-2 xl:grid-cols-3">
 
               {/* BCH Panel */}
               {(bchState.data || bchUrl) && (
@@ -408,6 +413,51 @@ export function DashboardClient({ initialApiUrl = '', initialDiscordUrl = '' }: 
                   )}
                 </div>
               )}
+
+              {/* XEC Panel */}
+              {(xecState.data || xecUrl) && (
+                <div className="flex flex-col gap-3">
+                  <div className="flex items-center gap-2">
+                    <div className="flex h-6 w-6 items-center justify-center rounded" style={{ background: 'linear-gradient(135deg, #1e3a5f 0%, #7c3aed 100%)' }}>
+                      <span className="text-xs font-bold" style={{ color: '#00e5ff' }}>e</span>
+                    </div>
+                    <span className="text-sm font-semibold uppercase tracking-widest text-foreground">eCash</span>
+                    <span className="text-xs text-muted-foreground">XEC</span>
+                    {xecState.error && (
+                      <span className="ml-auto text-xs text-red-400">Connection error</span>
+                    )}
+                  </div>
+                  {xecState.data ? (
+                    <ProgressBlock
+                      percent={xecState.data.progressPercent}
+                      etaDays={xecState.data.etaDays}
+                      etaHours={xecState.data.etaHours}
+                      blockHeight={xecState.data.blockHeight}
+                      lastShareAgo={xecState.data.lastShareAgo}
+                      workerCount={xecState.data.workerCount}
+                      hashrateWindows={xecState.data.hashrateWindows}
+                      bestShareSinceBlock={xecState.data.bestShareSinceBlock}
+                      bestShareSinceBlockUnit={xecState.data.bestShareSinceBlockUnit}
+                      bestShareSinceBlockWorker={xecState.data.bestShareSinceBlockWorker}
+                      allTimeBest={xecState.data.allTimeBest}
+                      allTimeBestUnit={xecState.data.allTimeBestUnit}
+                      allTimeBestWorker={xecState.data.allTimeBestWorker}
+                      totalHashrate={xecState.data.currentHashrate}
+                      totalHashrateUnit={xecState.data.currentHashrateUnit}
+                      networkDifficulty={xecState.data.networkDifficulty}
+                      networkDifficultyUnit={xecState.data.networkDifficultyUnit}
+                      algo={xecState.data.algo}
+                      accentColor="#00e5ff"
+                      coin="XEC"
+                      blockRewardUsd={xecState.data.blockRewardUsd}
+                    />
+                  ) : (
+                    <div className="flex items-center justify-center rounded-lg border border-border bg-card p-12 text-sm text-muted-foreground">
+                      {xecState.error ?? 'Connecting...'}
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
 
             {/* Alert log — full width */}
@@ -422,7 +472,7 @@ export function DashboardClient({ initialApiUrl = '', initialDiscordUrl = '' }: 
             <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">Created by MikeyRocks</p>
             <p className="mt-1 text-xs italic text-muted-foreground/60">&ldquo;Its better to have mined and lost than to have never mined at all&rdquo;</p>
           </div>
-          <span className="absolute right-0 font-mono text-[10px] text-muted-foreground/40 select-none">v2.10.0</span>
+          <span className="absolute right-0 font-mono text-[10px] text-muted-foreground/40 select-none">v2.12.0</span>
         </div>
       </footer>
 
@@ -436,12 +486,14 @@ export function DashboardClient({ initialApiUrl = '', initialDiscordUrl = '' }: 
         onClose={() => setSettingsOpen(false)}
         apiUrl={bchUrl}
         btcApiUrl={btcUrl}
+        xecApiUrl={xecUrl}
         discordUrl={discordUrl}
         pollMs={pollMs}
         alertSettings={alertSettings}
-        onSave={(bch, btc, d, p, as) => {
+        onSave={(bch, btc, xec, d, p, as) => {
           setBchUrl(bch)
           setBtcUrl(btc)
+          setXecUrl(xec)
           setDiscordUrl(d)
           setPollMs(p)
           setAlertSettings(as)
@@ -449,7 +501,7 @@ export function DashboardClient({ initialApiUrl = '', initialDiscordUrl = '' }: 
           fetch('/api/settings', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ apiUrl: bch, btcApiUrl: btc, discordUrl: d, pollMs: p, alertSettings: as }),
+            body: JSON.stringify({ apiUrl: bch, btcApiUrl: btc, xecApiUrl: xec, discordUrl: d, pollMs: p, alertSettings: as }),
           }).catch(() => {})
           setTimeout(() => fetchAll(true), 100)
         }}
