@@ -86,46 +86,40 @@ export function ProgressBlock({
         </div>
       </div>
 
-      {/* Two rows: hashrate windows on top, Total + If Block Hit below */}
+      {/* Single row: all hashrate windows + Total + If Block Hit */}
       {hashrateWindows.length > 0 && (
-        <div className="flex flex-col gap-1.5">
-          {/* Row 1: window chips — flex wrap allowed */}
-          <div className="flex flex-wrap gap-1">
-            {hashrateWindows.map((w) => (
-              <div
-                key={w.label}
-                className="flex flex-col items-center rounded border border-border bg-secondary px-1.5 py-0.5 min-w-[40px]"
-              >
-                <span className="text-[8px] uppercase tracking-wide text-muted-foreground">{w.label}</span>
-                <span className="font-mono text-xs font-semibold text-foreground leading-tight">{w.value}</span>
-                <span className="text-[8px] text-muted-foreground">{w.unit}</span>
-              </div>
-            ))}
-          </div>
-          {/* Row 2: Total + If Block Hit */}
-          <div className="flex gap-1">
-            {totalHashrate > 0 && (
-              <div
-                className="flex flex-col items-center rounded border px-1.5 py-0.5 min-w-[50px]"
-                style={{ borderColor: accent, background: `${accent}18` }}
-              >
-                <span className="text-[8px] uppercase tracking-wide" style={accentStyle}>Total</span>
-                <span className="font-mono text-xs font-bold leading-tight" style={accentStyle}>{totalHashrate}</span>
-                <span className="text-[8px] text-muted-foreground">{totalHashrateUnit}</span>
-              </div>
-            )}
+        <div className="flex flex-wrap gap-1">
+          {hashrateWindows.map((w) => (
             <div
-              className="flex flex-col items-center rounded border px-1.5 py-0.5 min-w-[60px]"
+              key={w.label}
+              className="flex flex-col items-center rounded border border-border bg-secondary px-1.5 py-0.5 min-w-[36px]"
+            >
+              <span className="text-[7px] uppercase tracking-wide text-muted-foreground">{w.label}</span>
+              <span className="font-mono text-[11px] font-semibold text-foreground leading-tight">{w.value}</span>
+              <span className="text-[7px] text-muted-foreground">{w.unit}</span>
+            </div>
+          ))}
+          {totalHashrate > 0 && (
+            <div
+              className="flex flex-col items-center rounded border px-1.5 py-0.5 min-w-[42px]"
               style={{ borderColor: accent, background: `${accent}18` }}
             >
-              <span className="text-[8px] uppercase tracking-wide" style={accentStyle}>If Block Hit</span>
-              <span className="font-mono text-xs font-bold leading-tight" style={accentStyle}>
-                {blockRewardUsd && blockRewardUsd > 0
-                  ? `$${blockRewardUsd.toLocaleString('en-US', { maximumFractionDigits: 0 })}`
-                  : '—'}
-              </span>
-              <span className="text-[8px] text-muted-foreground">{coin === 'XEC' ? '3.125M' : '3.125'} {coin ?? ''}</span>
+              <span className="text-[7px] uppercase tracking-wide" style={accentStyle}>Total</span>
+              <span className="font-mono text-[11px] font-bold leading-tight" style={accentStyle}>{totalHashrate}</span>
+              <span className="text-[7px] text-muted-foreground">{totalHashrateUnit}</span>
             </div>
+          )}
+          <div
+            className="flex flex-col items-center rounded border px-1.5 py-0.5 min-w-[54px]"
+            style={{ borderColor: accent, background: `${accent}18` }}
+          >
+            <span className="text-[7px] uppercase tracking-wide" style={accentStyle}>If Block Hit</span>
+            <span className="font-mono text-[11px] font-bold leading-tight" style={accentStyle}>
+              {blockRewardUsd && blockRewardUsd > 0
+                ? `$${blockRewardUsd.toLocaleString('en-US', { maximumFractionDigits: 0 })}`
+                : '—'}
+            </span>
+            <span className="text-[7px] text-muted-foreground">{coin === 'XEC' ? '3.125M' : '3.125'} {coin ?? ''}</span>
           </div>
         </div>
       )}
