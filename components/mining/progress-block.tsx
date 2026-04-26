@@ -81,16 +81,20 @@ export function ProgressBlock({
         </div>
       </div>
 
-      {/* Main stats grid: Total Hashrate + If Block Hit */}
+      {/* Main stats grid: Best Share Since Block + If Block Hit */}
       <div className="grid grid-cols-2 gap-3">
-        {/* Total Hashrate */}
+        {/* Best Share Since Block */}
         <div
           className="flex flex-col items-center justify-center rounded-lg border-2 py-4"
           style={{ borderColor: accent, background: `${accent}10` }}
         >
-          <span className="text-xs uppercase tracking-widest text-muted-foreground mb-1">Total Hashrate</span>
-          <span className="font-mono text-3xl font-bold" style={accentStyle}>{totalHashrate}</span>
-          <span className="text-base text-muted-foreground">{totalHashrateUnit}</span>
+          <span className="text-xs uppercase tracking-widest text-muted-foreground mb-1">Best Share Since Block</span>
+          <span className="font-mono text-3xl font-bold" style={accentStyle}>
+            {bestShareSinceBlock}<span className="ml-1 text-lg font-medium text-muted-foreground">{bestShareSinceBlockUnit}</span>
+          </span>
+          {bestShareSinceBlockWorker && (
+            <span className="text-base text-muted-foreground">by {bestShareSinceBlockWorker}</span>
+          )}
         </div>
 
         {/* If Block Hit */}
@@ -129,16 +133,12 @@ export function ProgressBlock({
         </div>
       </div>
 
-      {/* Best share cards - matching style to above */}
+      {/* Total Hashrate + All-Time Best */}
       <div className="grid grid-cols-2 gap-3">
         <div className="flex flex-col items-center justify-center rounded-lg border border-border/60 bg-secondary/40 py-4">
-          <span className="text-xs uppercase tracking-widest text-muted-foreground mb-1">Best Share Since Block</span>
-          <span className="font-mono text-3xl font-bold" style={accentStyle}>
-            {bestShareSinceBlock}<span className="ml-1 text-lg font-medium text-muted-foreground">{bestShareSinceBlockUnit}</span>
-          </span>
-          {bestShareSinceBlockWorker && (
-            <span className="text-base text-muted-foreground">by {bestShareSinceBlockWorker}</span>
-          )}
+          <span className="text-xs uppercase tracking-widest text-muted-foreground mb-1">Total Hashrate</span>
+          <span className="font-mono text-3xl font-bold" style={accentStyle}>{totalHashrate}</span>
+          <span className="text-base text-muted-foreground">{totalHashrateUnit}</span>
         </div>
         <div className="flex flex-col items-center justify-center rounded-lg border border-border/60 bg-secondary/40 py-4">
           <span className="text-xs uppercase tracking-widest text-muted-foreground mb-1">All-Time Best</span>
