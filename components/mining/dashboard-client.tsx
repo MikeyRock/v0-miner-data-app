@@ -222,16 +222,23 @@ export function DashboardClient({ initialApiUrl = '', initialDiscordUrl = '' }: 
   }
 
   // ---- Fetch per coin ------------------------------------------------------
+  const abortControllerRef = useRef<AbortController | null>(null)
+  
   const fetchCoin = useCallback(async (
     url: string,
     coin: 'BCH' | 'BTC' | 'XEC',
     setState: React.Dispatch<React.SetStateAction<CoinPanelState>>,
     refs: CoinAlertRefs,
     as: AlertSettings,
+    signal?: AbortSignal,
   ) => {
     if (!url) return
     try {
-      const res = await fetch(`/api/mining?url=${encodeURIComponent(url)}`, { cache: 'no-store' })
+      const res = await fetch(`/api/mining?url=${encodeURIComponent(url)}`, { 
+        cache: 'no-store',
+        signal,
+      })
+      if (signal?.aborted) return
       const body = await res.json()
       if (!res.ok) {
         setState((prev) => ({ ...prev, error: body.error ?? `HTTP ${res.status}` }))
@@ -241,17 +248,25 @@ export function DashboardClient({ initialApiUrl = '', initialDiscordUrl = '' }: 
       setState({ data: json, error: null })
       runAlertEngine(json, coin, refs, discordUrl, as)
     } catch (e) {
+      if (e instanceof Error && e.name === 'AbortError') return
       setState((prev) => ({ ...prev, error: e instanceof Error ? e.message : 'Fetch failed' }))
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [discordUrl, addAlert])
 
   const fetchAll = useCallback(async (showSpinner = false) => {
+    // Abort any in-flight requests before starting new ones
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort()
+    }
+    const controller = new AbortController()
+    abortControllerRef.current = controller
+    
     if (showSpinner) setIsRefreshing(true)
     await Promise.all([
-      fetchCoin(bchUrl, 'BCH', setBchState, bchRefs, alertSettings),
-      fetchCoin(btcUrl, 'BTC', setBtcState, btcRefs, alertSettings),
-      fetchCoin(xecUrl, 'XEC', setXecState, xecRefs, alertSettings),
+      fetchCoin(bchUrl, 'BCH', setBchState, bchRefs, alertSettings, controller.signal),
+      fetchCoin(btcUrl, 'BTC', setBtcState, btcRefs, alertSettings, controller.signal),
+      fetchCoin(xecUrl, 'XEC', setXecState, xecRefs, alertSettings, controller.signal),
     ])
     if (showSpinner) setIsRefreshing(false)
   // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -260,22 +275,35 @@ export function DashboardClient({ initialApiUrl = '', initialDiscordUrl = '' }: 
   // Polling
   useEffect(() => {
     if (!settingsLoaded) return
-    fetchAll()
-    fetch('/api/poll', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ alertSettings }),
-    }).catch(() => {})
-    const id = setInterval(() => {
-      fetchAll()
+    
+    // Create abort controller for poll requests
+    const pollController = new AbortController()
+    
+    const doPoll = () => {
       fetch('/api/poll', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ alertSettings }),
+        signal: pollController.signal,
       }).catch(() => {})
+    }
+    
+    fetchAll()
+    doPoll()
+    
+    const id = setInterval(() => {
+      fetchAll()
+      doPoll()
     }, pollMs)
-    return () => clearInterval(id)
-  }, [fetchAll, pollMs, settingsLoaded])
+    
+    return () => {
+      clearInterval(id)
+      pollController.abort()
+      if (abortControllerRef.current) {
+        abortControllerRef.current.abort()
+      }
+    }
+  }, [fetchAll, pollMs, settingsLoaded, alertSettings])
 
   const isConnected = !!(bchState.data || btcState.data || xecState.data)
 
@@ -491,7 +519,7 @@ export function DashboardClient({ initialApiUrl = '', initialDiscordUrl = '' }: 
             <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">Created by MikeyRocks</p>
             <p className="mt-1 text-xs italic text-muted-foreground/60">&ldquo;Its better to have mined and lost than to have never mined at all&rdquo;</p>
           </div>
-          <span className="absolute right-0 font-mono text-[10px] text-muted-foreground/40 select-none">v3.0.0</span>
+          <span className="absolute right-0 font-mono text-[10px] text-muted-foreground/40 select-none">v3.0.1</span>
         </div>
       </footer>
 
