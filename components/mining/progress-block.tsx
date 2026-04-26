@@ -73,24 +73,28 @@ export function ProgressBlock({
       <div className="flex items-center justify-between">
         <div className="flex items-baseline gap-2">
           <span className="font-mono text-4xl font-bold" style={accentStyle}>{workerCount}</span>
-          <span className="text-sm uppercase tracking-widest text-muted-foreground">Online</span>
+          <span className="text-base uppercase tracking-widest text-muted-foreground">Online</span>
         </div>
         <div className="text-right">
-          <div className="text-[11px] uppercase tracking-widest text-muted-foreground">Last Share</div>
-          <div className="font-mono text-lg font-medium text-foreground">{fmtAgo(lastShareAgo)}</div>
+          <div className="text-xs uppercase tracking-widest text-muted-foreground">Last Share</div>
+          <div className="font-mono text-xl font-medium text-foreground">{fmtAgo(lastShareAgo)}</div>
         </div>
       </div>
 
-      {/* Main stats grid: Total Hashrate + If Block Hit */}
+      {/* Main stats grid: Best Share Since Block + If Block Hit */}
       <div className="grid grid-cols-2 gap-3">
-        {/* Total Hashrate */}
+        {/* Best Share Since Block */}
         <div
           className="flex flex-col items-center justify-center rounded-lg border-2 py-4"
           style={{ borderColor: accent, background: `${accent}10` }}
         >
-          <span className="text-[11px] uppercase tracking-widest text-muted-foreground mb-1">Total Hashrate</span>
-          <span className="font-mono text-3xl font-bold" style={accentStyle}>{totalHashrate}</span>
-          <span className="text-sm text-muted-foreground">{totalHashrateUnit}</span>
+          <span className="text-xs uppercase tracking-widest text-muted-foreground mb-1">Best Share Since Block</span>
+          <span className="font-mono text-3xl font-bold" style={accentStyle}>
+            {bestShareSinceBlock}<span className="ml-1 text-lg font-medium text-muted-foreground">{bestShareSinceBlockUnit}</span>
+          </span>
+          {bestShareSinceBlockWorker && (
+            <span className="text-base text-muted-foreground">by {bestShareSinceBlockWorker}</span>
+          )}
         </div>
 
         {/* If Block Hit */}
@@ -98,13 +102,13 @@ export function ProgressBlock({
           className="flex flex-col items-center justify-center rounded-lg border-2 py-4"
           style={{ borderColor: accent, background: `${accent}10` }}
         >
-          <span className="text-[11px] uppercase tracking-widest text-muted-foreground mb-1">If Block Hit</span>
+          <span className="text-xs uppercase tracking-widest text-muted-foreground mb-1">If Block Hit</span>
           <span className="font-mono text-3xl font-bold" style={accentStyle}>
             {blockRewardUsd && blockRewardUsd > 0
               ? `$${blockRewardUsd.toLocaleString('en-US', { maximumFractionDigits: 0 })}`
               : '—'}
           </span>
-          <span className="text-sm text-muted-foreground">{coin === 'XEC' ? '3.125M' : '3.125'} {coin ?? ''}</span>
+          <span className="text-base text-muted-foreground">{coin === 'XEC' ? '3.125M' : '3.125'} {coin ?? ''}</span>
         </div>
       </div>
 
@@ -112,41 +116,37 @@ export function ProgressBlock({
       <div className="grid grid-cols-2 gap-3">
         {/* Network Difficulty */}
         <div className="flex flex-col items-center justify-center rounded-lg border border-border/60 bg-secondary/40 py-4">
-          <span className="text-[11px] uppercase tracking-widest text-muted-foreground mb-1">Network Difficulty</span>
+          <span className="text-xs uppercase tracking-widest text-muted-foreground mb-1">Network Difficulty</span>
           <span className="font-mono text-2xl font-semibold text-foreground">
-            {networkDifficulty}<span className="ml-1 text-base text-muted-foreground">{networkDifficultyUnit}</span>
+            {networkDifficulty}<span className="ml-1 text-lg text-muted-foreground">{networkDifficultyUnit}</span>
           </span>
-          <span className="text-[11px] text-muted-foreground">{algo} · Height {blockHeight.toLocaleString()}</span>
+          <span className="text-sm text-muted-foreground">{algo} · Height {blockHeight.toLocaleString()}</span>
         </div>
 
         {/* ETA to Block */}
         <div className="flex flex-col items-center justify-center rounded-lg border border-border/60 bg-secondary/40 py-4">
-          <span className="text-[11px] uppercase tracking-widest text-muted-foreground mb-1">ETA to Block</span>
+          <span className="text-xs uppercase tracking-widest text-muted-foreground mb-1">ETA to Block</span>
           <span className="font-mono text-2xl font-semibold text-foreground">
             {etaDays > 0 ? `${etaDays}d ` : ''}{etaHours}h
           </span>
-          <span className="text-[11px] text-muted-foreground">based on pool hashrate</span>
+          <span className="text-sm text-muted-foreground">based on pool hashrate</span>
         </div>
       </div>
 
-      {/* Best share cards - matching style to above */}
+      {/* Total Hashrate + All-Time Best */}
       <div className="grid grid-cols-2 gap-3">
         <div className="flex flex-col items-center justify-center rounded-lg border border-border/60 bg-secondary/40 py-4">
-          <span className="text-[11px] uppercase tracking-widest text-muted-foreground mb-1">Best Share Since Block</span>
-          <span className="font-mono text-2xl font-bold" style={accentStyle}>
-            {bestShareSinceBlock}<span className="ml-1 text-base font-medium text-muted-foreground">{bestShareSinceBlockUnit}</span>
-          </span>
-          {bestShareSinceBlockWorker && (
-            <span className="text-sm text-muted-foreground">by {bestShareSinceBlockWorker}</span>
-          )}
+          <span className="text-xs uppercase tracking-widest text-muted-foreground mb-1">Total Hashrate</span>
+          <span className="font-mono text-3xl font-bold" style={accentStyle}>{totalHashrate}</span>
+          <span className="text-base text-muted-foreground">{totalHashrateUnit}</span>
         </div>
         <div className="flex flex-col items-center justify-center rounded-lg border border-border/60 bg-secondary/40 py-4">
-          <span className="text-[11px] uppercase tracking-widest text-muted-foreground mb-1">All-Time Best</span>
-          <span className="font-mono text-2xl font-bold text-foreground">
-            {allTimeBest}<span className="ml-1 text-base font-medium text-muted-foreground">{allTimeBestUnit}</span>
+          <span className="text-xs uppercase tracking-widest text-muted-foreground mb-1">All-Time Best</span>
+          <span className="font-mono text-3xl font-bold text-foreground">
+            {allTimeBest}<span className="ml-1 text-lg font-medium text-muted-foreground">{allTimeBestUnit}</span>
           </span>
           {allTimeBestWorker && (
-            <span className="text-sm text-muted-foreground">by {allTimeBestWorker}</span>
+            <span className="text-base text-muted-foreground">by {allTimeBestWorker}</span>
           )}
         </div>
       </div>
@@ -154,9 +154,9 @@ export function ProgressBlock({
       {/* Progress bar */}
       <div className="flex flex-col gap-2 mt-auto">
         <div className="flex items-center justify-between">
-          <span className="text-sm uppercase tracking-widest text-muted-foreground">Progress to Block</span>
+          <span className="text-base uppercase tracking-widest text-muted-foreground">Progress to Block</span>
           <span
-            className="font-mono text-lg font-bold"
+            className="font-mono text-xl font-bold"
             style={clamped >= 75 ? accentStyle : undefined}
           >
             {clamped.toFixed(2)}%
@@ -175,7 +175,7 @@ export function ProgressBlock({
             />
           ))}
         </div>
-        <p className="text-[11px] text-muted-foreground text-center">
+        <p className="text-sm text-muted-foreground text-center">
           Highest share difficulty seen — not a guaranteed winning share.
         </p>
       </div>
