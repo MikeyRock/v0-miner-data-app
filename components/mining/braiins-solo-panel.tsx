@@ -8,8 +8,8 @@ interface BraiinsSoloPanelProps {
   error: string | null
 }
 
-// Braiins orange accent color
-const ACCENT = '#ff9500'
+// Braiins purple accent color
+const ACCENT = '#9b59b6'
 
 function fmtAgo(ts: number): string {
   const diff = Math.floor((Date.now() / 1000) - ts)
