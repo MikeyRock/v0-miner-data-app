@@ -21,22 +21,25 @@ interface Props {
   apiUrl: string
   btcApiUrl: string
   xecApiUrl: string
+  braiinsSoloAddress: string
   discordUrl: string
   pollMs: number
   alertSettings: AlertSettings
   showBch: boolean
   showBtc: boolean
   showXec: boolean
-  onSave: (apiUrl: string, btcApiUrl: string, xecApiUrl: string, discordUrl: string, pollMs: number, alertSettings: AlertSettings, showBch: boolean, showBtc: boolean, showXec: boolean) => void
+  showBraiinsSolo: boolean
+  onSave: (apiUrl: string, btcApiUrl: string, xecApiUrl: string, braiinsSoloAddress: string, discordUrl: string, pollMs: number, alertSettings: AlertSettings, showBch: boolean, showBtc: boolean, showXec: boolean, showBraiinsSolo: boolean) => void
 }
 
-export function SettingsDrawer({ open, onClose, apiUrl, btcApiUrl, xecApiUrl, discordUrl, pollMs, alertSettings, showBch, showBtc, showXec, onSave }: Props) {
+export function SettingsDrawer({ open, onClose, apiUrl, btcApiUrl, xecApiUrl, braiinsSoloAddress, discordUrl, pollMs, alertSettings, showBch, showBtc, showXec, showBraiinsSolo, onSave }: Props) {
   const [tab, setTab] = useState<'connection' | 'alerts'>('connection')
 
   // Connection tab state
   const [localApi, setLocalApi]         = useState(apiUrl)
   const [localBtcApi, setLocalBtcApi]   = useState(btcApiUrl)
   const [localXecApi, setLocalXecApi]   = useState(xecApiUrl)
+  const [localBraiinsSolo, setLocalBraiinsSolo] = useState(braiinsSoloAddress)
   const [localDiscord, setLocalDiscord] = useState(discordUrl)
   const [localPoll, setLocalPoll]       = useState(String(pollMs / 1000))
   const [testStatus, setTestStatus]     = useState<'idle' | 'sending' | 'ok' | 'error'>('idle')
@@ -49,23 +52,26 @@ export function SettingsDrawer({ open, onClose, apiUrl, btcApiUrl, xecApiUrl, di
   const [localShowBch, setLocalShowBch] = useState(showBch)
   const [localShowBtc, setLocalShowBtc] = useState(showBtc)
   const [localShowXec, setLocalShowXec] = useState(showXec)
+  const [localShowBraiinsSolo, setLocalShowBraiinsSolo] = useState(showBraiinsSolo)
 
   useEffect(() => {
     setLocalApi(apiUrl)
     setLocalBtcApi(btcApiUrl)
     setLocalXecApi(xecApiUrl)
+    setLocalBraiinsSolo(braiinsSoloAddress)
     setLocalDiscord(discordUrl)
     setLocalPoll(String(pollMs / 1000))
     setLocalAlerts(alertSettings ?? DEFAULT_ALERT_SETTINGS)
     setLocalShowBch(showBch)
     setLocalShowBtc(showBtc)
     setLocalShowXec(showXec)
+    setLocalShowBraiinsSolo(showBraiinsSolo)
     setTab('connection')
-  }, [open, apiUrl, btcApiUrl, xecApiUrl, discordUrl, pollMs, alertSettings, showBch, showBtc, showXec])
+  }, [open, apiUrl, btcApiUrl, xecApiUrl, braiinsSoloAddress, discordUrl, pollMs, alertSettings, showBch, showBtc, showXec, showBraiinsSolo])
 
   function handleSave() {
     const secs = Math.max(5, parseInt(localPoll, 10) || 15)
-    onSave(localApi.trim(), localBtcApi.trim(), localXecApi.trim(), localDiscord.trim(), secs * 1000, localAlerts, localShowBch, localShowBtc, localShowXec)
+    onSave(localApi.trim(), localBtcApi.trim(), localXecApi.trim(), localBraiinsSolo.trim(), localDiscord.trim(), secs * 1000, localAlerts, localShowBch, localShowBtc, localShowXec, localShowBraiinsSolo)
   }
 
   function toggleMilestone(m: number) {
@@ -237,6 +243,32 @@ export function SettingsDrawer({ open, onClose, apiUrl, btcApiUrl, xecApiUrl, di
                     <span
                       className={`absolute top-0.5 left-0.5 h-3 w-3 rounded-full bg-white shadow transition-transform
                         ${localShowXec ? 'translate-x-4' : 'translate-x-0'}`}
+                    />
+                  </button>
+                </div>
+              </Field>
+
+              <Field label="Braiins Solo BTC Address" hint="Your BTC wallet address on Braiins Solo pool." id="braiins-solo">
+                <input
+                  id="braiins-solo"
+                  type="text"
+                  value={localBraiinsSolo}
+                  onChange={(e) => setLocalBraiinsSolo(e.target.value)}
+                  placeholder="37EibWiQDH3xhj8U9VtqCHkkGFPa8HF5MT"
+                  className="w-full rounded-md border border-border bg-input px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-ring font-mono"
+                />
+                <div className="flex items-center justify-between mt-2 px-1">
+                  <span className="text-xs text-muted-foreground">Display on dashboard</span>
+                  <button
+                    role="switch"
+                    aria-checked={localShowBraiinsSolo}
+                    onClick={() => setLocalShowBraiinsSolo(!localShowBraiinsSolo)}
+                    className={`relative h-5 w-9 flex-shrink-0 rounded-full border-2 transition-colors
+                      ${localShowBraiinsSolo ? 'bg-[#ff9500] border-[#ff9500]' : 'bg-muted border-border'}`}
+                  >
+                    <span
+                      className={`absolute top-0.5 left-0.5 h-3 w-3 rounded-full bg-white shadow transition-transform
+                        ${localShowBraiinsSolo ? 'translate-x-4' : 'translate-x-0'}`}
                     />
                   </button>
                 </div>

@@ -38,12 +38,14 @@ export interface PersistedSettings {
   apiUrl:        string
   btcApiUrl:     string
   xecApiUrl:     string
+  braiinsSoloAddress: string
   discordUrl:    string
   pollMs:        number
   alertSettings: AlertSettings
   showBch:       boolean
   showBtc:       boolean
   showXec:       boolean
+  showBraiinsSolo: boolean
 }
 
 export const DEFAULT_ALERT_SETTINGS: AlertSettings = {
@@ -60,12 +62,14 @@ function defaults(): PersistedSettings {
     apiUrl:        process.env.AXEBCH_API_URL      ?? '',
     btcApiUrl:     process.env.AXEBTC_API_URL      ?? '',
     xecApiUrl:     process.env.AXEXEC_API_URL      ?? '',
+    braiinsSoloAddress: process.env.BRAIINS_SOLO_ADDRESS ?? '',
     discordUrl:    process.env.DISCORD_WEBHOOK_URL ?? '',
     pollMs:        15000,
     alertSettings: DEFAULT_ALERT_SETTINGS,
     showBch:       true,
     showBtc:       true,
     showXec:       true,
+    showBraiinsSolo: false,
   }
 }
 
@@ -91,12 +95,14 @@ export function loadSettings(): PersistedSettings {
         apiUrl:        parsed.apiUrl     ?? d.apiUrl,
         btcApiUrl:     parsed.btcApiUrl  ?? d.btcApiUrl,
         xecApiUrl:     parsed.xecApiUrl  ?? d.xecApiUrl,
+        braiinsSoloAddress: parsed.braiinsSoloAddress ?? d.braiinsSoloAddress,
         discordUrl:    parsed.discordUrl ?? d.discordUrl,
         pollMs:        parsed.pollMs     ?? d.pollMs,
         alertSettings: mergeAlertSettings(parsed.alertSettings),
         showBch:       parsed.showBch    ?? d.showBch,
         showBtc:       parsed.showBtc    ?? d.showBtc,
         showXec:       parsed.showXec    ?? d.showXec,
+        showBraiinsSolo: parsed.showBraiinsSolo ?? d.showBraiinsSolo,
       }
     }
   } catch {
@@ -125,12 +131,14 @@ export async function POST(req: NextRequest) {
       apiUrl:        typeof body.apiUrl     === 'string' ? body.apiUrl.trim()     : current.apiUrl,
       btcApiUrl:     typeof body.btcApiUrl  === 'string' ? body.btcApiUrl.trim()  : current.btcApiUrl,
       xecApiUrl:     typeof body.xecApiUrl  === 'string' ? body.xecApiUrl.trim()  : current.xecApiUrl,
+      braiinsSoloAddress: typeof body.braiinsSoloAddress === 'string' ? body.braiinsSoloAddress.trim() : current.braiinsSoloAddress,
       discordUrl:    typeof body.discordUrl === 'string' ? body.discordUrl.trim() : current.discordUrl,
       pollMs:        typeof body.pollMs     === 'number' ? Math.max(5000, body.pollMs) : current.pollMs,
       alertSettings: body.alertSettings ? mergeAlertSettings(body.alertSettings) : current.alertSettings,
       showBch:       typeof body.showBch    === 'boolean' ? body.showBch : current.showBch,
       showBtc:       typeof body.showBtc    === 'boolean' ? body.showBtc : current.showBtc,
       showXec:       typeof body.showXec    === 'boolean' ? body.showXec : current.showXec,
+      showBraiinsSolo: typeof body.showBraiinsSolo === 'boolean' ? body.showBraiinsSolo : current.showBraiinsSolo,
     }
     saveSettings(updated)
     return NextResponse.json(updated)
