@@ -264,7 +264,7 @@ export function SettingsDrawer({ open, onClose, apiUrl, btcApiUrl, xecApiUrl, br
                     aria-checked={localShowBraiinsSolo}
                     onClick={() => setLocalShowBraiinsSolo(!localShowBraiinsSolo)}
                     className={`relative h-5 w-9 flex-shrink-0 rounded-full border-2 transition-colors
-                      ${localShowBraiinsSolo ? 'bg-[#ff9500] border-[#ff9500]' : 'bg-muted border-border'}`}
+                      ${localShowBraiinsSolo ? 'bg-[#9b59b6] border-[#9b59b6]' : 'bg-muted border-border'}`}
                   >
                     <span
                       className={`absolute top-0.5 left-0.5 h-3 w-3 rounded-full bg-white shadow transition-transform
