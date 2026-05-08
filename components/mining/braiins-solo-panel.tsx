@@ -1,5 +1,6 @@
 'use client'
 
+import Image from 'next/image'
 import type { BraiinsSoloStats } from '@/app/api/braiins-solo/route'
 
 interface BraiinsSoloPanelProps {
@@ -29,14 +30,26 @@ function formatBestShare(value: number): { num: string; unit: string } {
 export function BraiinsSoloPanel({ data, error }: BraiinsSoloPanelProps) {
   const accentStyle = { color: ACCENT }
 
+  const LogoHeader = () => (
+    <div className="flex items-center gap-2">
+      <div className="flex h-7 items-center justify-center rounded bg-black px-2">
+        <Image
+          src="/braiins-logo.jpg"
+          alt="Braiins"
+          width={70}
+          height={20}
+          className="object-contain"
+        />
+      </div>
+      <span className="text-sm font-semibold uppercase tracking-wider text-foreground">Solo</span>
+      <span className="ml-1 text-xs text-muted-foreground">BTC</span>
+    </div>
+  )
+
   if (error) {
     return (
       <div className="flex flex-col gap-4">
-        <div className="flex items-center gap-2">
-          <span className="flex h-6 w-6 items-center justify-center rounded-full text-xs font-bold text-black" style={{ backgroundColor: ACCENT }}>B</span>
-          <span className="text-sm font-semibold uppercase tracking-wider text-foreground">Braiins Solo</span>
-          <span className="ml-1 text-xs text-muted-foreground">BTC</span>
-        </div>
+        <LogoHeader />
         <div className="flex flex-col gap-5 rounded-xl border border-border bg-card p-4">
           <p className="text-sm text-red-400">{error}</p>
         </div>
@@ -47,11 +60,7 @@ export function BraiinsSoloPanel({ data, error }: BraiinsSoloPanelProps) {
   if (!data) {
     return (
       <div className="flex flex-col gap-4">
-        <div className="flex items-center gap-2">
-          <span className="flex h-6 w-6 items-center justify-center rounded-full text-xs font-bold text-black" style={{ backgroundColor: ACCENT }}>B</span>
-          <span className="text-sm font-semibold uppercase tracking-wider text-foreground">Braiins Solo</span>
-          <span className="ml-1 text-xs text-muted-foreground">BTC</span>
-        </div>
+        <LogoHeader />
         <div className="flex flex-col gap-5 rounded-xl border border-border bg-card p-4 animate-pulse">
           <div className="h-8 w-24 bg-muted rounded" />
         </div>
@@ -65,11 +74,7 @@ export function BraiinsSoloPanel({ data, error }: BraiinsSoloPanelProps) {
   return (
     <div className="flex flex-col gap-4">
       {/* Header */}
-      <div className="flex items-center gap-2">
-        <span className="flex h-6 w-6 items-center justify-center rounded-full text-xs font-bold text-black" style={{ backgroundColor: ACCENT }}>B</span>
-        <span className="text-sm font-semibold uppercase tracking-wider text-foreground">Braiins Solo</span>
-        <span className="ml-1 text-xs text-muted-foreground">BTC</span>
-      </div>
+      <LogoHeader />
 
       {/* Panel */}
       <div className="flex flex-col gap-5 rounded-xl border border-border bg-card p-4 h-full">
