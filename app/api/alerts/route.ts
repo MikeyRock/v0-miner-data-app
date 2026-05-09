@@ -3,10 +3,11 @@ import { NextRequest, NextResponse } from 'next/server'
 const DISCORD_WEBHOOK_URL = process.env.DISCORD_WEBHOOK_URL ?? ''
 
 interface AlertPayload {
-  type: 'block_found' | 'worker_offline' | 'milestone' | 'ath'
-  coin?: 'BCH' | 'BTC'
+  type: 'block_found' | 'worker_offline' | 'milestone' | 'ath' | 'braiins_best_share' | 'braiins_best_ever'
+  coin?: 'BCH' | 'BTC' | 'XEC' | 'Braiins'
   workerName?: string
-  bestShare?: string
+  bestShare?: string | number
+  bestEver?: number
   blockDiff?: string
   height?: number
   progressPercent?: number
@@ -106,9 +107,51 @@ function buildEmbed(payload: AlertPayload) {
         ],
       }
 
+    case 'braiins_best_share':
+      return {
+        embeds: [
+          {
+            title: `[Braiins Solo] New Best Share`,
+            description: `New best share submitted to Braiins Solo pool!`,
+            color: 0x9b59b6,
+            fields: [
+              { name: 'Best Share', value: formatHashrateValue(payload.bestShare as number), inline: true },
+            ],
+            footer: { text: 'Braiins Solo Pool' },
+            timestamp: new Date().toISOString(),
+          },
+        ],
+      }
+
+    case 'braiins_best_ever':
+      return {
+        embeds: [
+          {
+            title: `[Braiins Solo] NEW ALL-TIME BEST!`,
+            description: `You just hit a new all-time best share on Braiins Solo!`,
+            color: 0x9b59b6,
+            fields: [
+              { name: 'Best Ever', value: formatHashrateValue(payload.bestEver ?? 0), inline: true },
+            ],
+            footer: { text: 'Braiins Solo Pool' },
+            timestamp: new Date().toISOString(),
+          },
+        ],
+      }
+
     default:
       return { content: `Mining alert at <t:${ts}:T>` }
   }
+}
+
+function formatHashrateValue(value: number): string {
+  if (value >= 1e18) return `${(value / 1e18).toFixed(2)}E`
+  if (value >= 1e15) return `${(value / 1e15).toFixed(2)}P`
+  if (value >= 1e12) return `${(value / 1e12).toFixed(2)}T`
+  if (value >= 1e9) return `${(value / 1e9).toFixed(2)}G`
+  if (value >= 1e6) return `${(value / 1e6).toFixed(2)}M`
+  if (value >= 1e3) return `${(value / 1e3).toFixed(2)}K`
+  return value.toFixed(2)
 }
 
 export async function POST(req: NextRequest) {
