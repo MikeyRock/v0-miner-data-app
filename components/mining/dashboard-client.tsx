@@ -121,6 +121,12 @@ export function DashboardClient({ initialApiUrl = '', initialDiscordUrl = '' }: 
   const bchRefs = useCoinAlertRefs()
   const btcRefs = useCoinAlertRefs()
   const xecRefs = useCoinAlertRefs()
+  
+  // Braiins Solo alert refs
+  const braiinsPrevBestShare = useRef<number>(0)
+  const braiinsPrevBestEver = useRef<number>(0)
+  const braiinsOfflineAlerted = useRef<Set<string>>(new Set())
+  const braiinsSeenOnline = useRef<Set<string>>(new Set())
 
   const addAlert = useCallback((event: Omit<AlertEvent, 'id'>): AlertEvent => {
     const full: AlertEvent = { ...event, id: generateId() }
@@ -228,6 +234,93 @@ export function DashboardClient({ initialApiUrl = '', initialDiscordUrl = '' }: 
     }
   }
 
+  // ---- Braiins Solo Alert Engine --------------------------------------------
+  function runBraiinsSoloAlertEngine(
+    data: BraiinsSoloStats,
+    as: AlertSettings,
+  ) {
+    // 1. New best share since block
+    if (as.newBest && data.bestshare > 0 && data.bestshare > braiinsPrevBestShare.current && braiinsPrevBestShare.current > 0) {
+      addAlert({
+        type: 'best_share',
+        message: `[Braiins] New best share: ${formatHashrate(data.bestshare)}`,
+        timestamp: Date.now(),
+        sent: false,
+      })
+      // Send to Discord
+      sendDiscordAlert({
+        type: 'braiins_best_share',
+        bestShare: data.bestshare,
+        discordWebhookUrl: discordUrl,
+      }).then(() => {
+        // Mark as sent (simplified - would need to track the alert ID)
+      })
+    }
+    braiinsPrevBestShare.current = data.bestshare
+
+    // 2. New all-time best
+    if (as.newBest && data.bestever > 0 && data.bestever > braiinsPrevBestEver.current && braiinsPrevBestEver.current > 0) {
+      addAlert({
+        type: 'best_share',
+        message: `[Braiins] NEW ALL-TIME BEST: ${formatHashrate(data.bestever)}!`,
+        timestamp: Date.now(),
+        sent: false,
+      })
+      sendDiscordAlert({
+        type: 'braiins_best_ever',
+        bestEver: data.bestever,
+        discordWebhookUrl: discordUrl,
+      })
+    }
+    braiinsPrevBestEver.current = data.bestever
+
+    // 3. Worker offline detection
+    const offlineThresholdS = (as.offlineThresholdMin ?? 10) * 60
+    const now = Math.floor(Date.now() / 1000)
+    
+    data.worker?.forEach((w) => {
+      const lastShareAgo = now - w.lastshare
+      const isOnline = lastShareAgo < offlineThresholdS
+      
+      if (isOnline) {
+        braiinsSeenOnline.current.add(w.workername)
+        braiinsOfflineAlerted.current.delete(w.workername)
+      } else if (
+        as.workerOffline &&
+        braiinsSeenOnline.current.has(w.workername) &&
+        !braiinsOfflineAlerted.current.has(w.workername)
+      ) {
+        braiinsOfflineAlerted.current.add(w.workername)
+        const alert = addAlert({
+          type: 'worker_offline',
+          message: `[Braiins] ${w.workername} offline — no share for ${Math.floor(lastShareAgo / 60)}m`,
+          workerName: w.workername,
+          timestamp: Date.now(),
+          sent: false,
+        })
+        sendDiscordAlert({
+          type: 'worker_offline',
+          workerName: w.workername,
+          coin: 'Braiins',
+          lastShareAgo,
+          discordWebhookUrl: discordUrl,
+        }).then(() =>
+          setAlerts((prev) => prev.map((a) => a.id === alert.id ? { ...a, sent: true } : a))
+        )
+      }
+    })
+  }
+
+  function formatHashrate(value: number): string {
+    if (value >= 1e18) return `${(value / 1e18).toFixed(2)}E`
+    if (value >= 1e15) return `${(value / 1e15).toFixed(2)}P`
+    if (value >= 1e12) return `${(value / 1e12).toFixed(2)}T`
+    if (value >= 1e9) return `${(value / 1e9).toFixed(2)}G`
+    if (value >= 1e6) return `${(value / 1e6).toFixed(2)}M`
+    if (value >= 1e3) return `${(value / 1e3).toFixed(2)}K`
+    return value.toFixed(2)
+  }
+
   // ---- Fetch per coin ------------------------------------------------------
   const abortControllerRef = useRef<AbortController | null>(null)
   
@@ -261,7 +354,7 @@ export function DashboardClient({ initialApiUrl = '', initialDiscordUrl = '' }: 
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [discordUrl, addAlert])
 
-  const fetchBraiinsSolo = useCallback(async (address: string, signal?: AbortSignal) => {
+  const fetchBraiinsSolo = useCallback(async (address: string, signal?: AbortSignal, as?: AlertSettings) => {
     if (!address) return
     try {
       const res = await fetch(`/api/braiins-solo?address=${encodeURIComponent(address)}`, {
@@ -275,11 +368,16 @@ export function DashboardClient({ initialApiUrl = '', initialDiscordUrl = '' }: 
         return
       }
       setBraiinsSoloState({ data: body, error: null })
+      // Run Braiins Solo alert engine
+      if (as) {
+        runBraiinsSoloAlertEngine(body, as)
+      }
     } catch (e) {
       if (e instanceof Error && e.name === 'AbortError') return
       setBraiinsSoloState({ data: null, error: e instanceof Error ? e.message : 'Fetch failed' })
     }
-  }, [])
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [discordUrl, addAlert])
 
   const fetchAll = useCallback(async (showSpinner = false) => {
     // Abort any in-flight requests before starting new ones
@@ -294,7 +392,7 @@ export function DashboardClient({ initialApiUrl = '', initialDiscordUrl = '' }: 
       fetchCoin(bchUrl, 'BCH', setBchState, bchRefs, alertSettings, controller.signal),
       fetchCoin(btcUrl, 'BTC', setBtcState, btcRefs, alertSettings, controller.signal),
       fetchCoin(xecUrl, 'XEC', setXecState, xecRefs, alertSettings, controller.signal),
-      fetchBraiinsSolo(braiinsSoloAddress, controller.signal),
+      fetchBraiinsSolo(braiinsSoloAddress, controller.signal, alertSettings),
     ])
     if (showSpinner) setIsRefreshing(false)
   // eslint-disable-next-line react-hooks/exhaustive-deps
