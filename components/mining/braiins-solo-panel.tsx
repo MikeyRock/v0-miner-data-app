@@ -90,21 +90,25 @@ export function BraiinsSoloPanel({ data, error }: BraiinsSoloPanelProps) {
           </div>
         </div>
 
-        {/* Hashrate Cards */}
+        {/* Best Share Cards */}
         <div className="grid grid-cols-2 gap-3">
           <div
             className="flex flex-col items-center justify-center rounded-lg border-2 py-4"
             style={{ borderColor: ACCENT, background: `${ACCENT}10` }}
           >
-            <span className="text-xs uppercase tracking-widest text-muted-foreground mb-1">Hashrate (5m)</span>
-            <span className="font-mono text-3xl font-bold" style={accentStyle}>{data.hashrate5m}</span>
+            <span className="text-xs uppercase tracking-widest text-muted-foreground mb-1">Best Share</span>
+            <span className="font-mono text-3xl font-bold" style={accentStyle}>
+              {bestShare.num}<span className="ml-1 text-lg font-medium text-muted-foreground">{bestShare.unit}</span>
+            </span>
           </div>
           <div
             className="flex flex-col items-center justify-center rounded-lg border-2 py-4"
             style={{ borderColor: ACCENT, background: `${ACCENT}10` }}
           >
-            <span className="text-xs uppercase tracking-widest text-muted-foreground mb-1">Hashrate (1hr)</span>
-            <span className="font-mono text-3xl font-bold" style={accentStyle}>{data.hashrate1hr}</span>
+            <span className="text-xs uppercase tracking-widest text-muted-foreground mb-1">Best Ever</span>
+            <span className="font-mono text-3xl font-bold" style={accentStyle}>
+              {bestEver.num}<span className="ml-1 text-lg font-medium text-muted-foreground">{bestEver.unit}</span>
+            </span>
           </div>
         </div>
 
@@ -124,19 +128,15 @@ export function BraiinsSoloPanel({ data, error }: BraiinsSoloPanelProps) {
           </div>
         </div>
 
-        {/* Best Share */}
+        {/* Hashrate Cards */}
         <div className="grid grid-cols-2 gap-3">
           <div className="flex flex-col items-center justify-center rounded-lg border border-border/60 bg-secondary/40 py-4">
-            <span className="text-xs uppercase tracking-widest text-muted-foreground mb-1">Best Share</span>
-            <span className="font-mono text-3xl font-bold" style={accentStyle}>
-              {bestShare.num}<span className="ml-1 text-lg font-medium text-muted-foreground">{bestShare.unit}</span>
-            </span>
+            <span className="text-xs uppercase tracking-widest text-muted-foreground mb-1">Hashrate (5m)</span>
+            <span className="font-mono text-3xl font-bold" style={accentStyle}>{data.hashrate5m}</span>
           </div>
           <div className="flex flex-col items-center justify-center rounded-lg border border-border/60 bg-secondary/40 py-4">
-            <span className="text-xs uppercase tracking-widest text-muted-foreground mb-1">Best Ever</span>
-            <span className="font-mono text-3xl font-bold text-foreground">
-              {bestEver.num}<span className="ml-1 text-lg font-medium text-muted-foreground">{bestEver.unit}</span>
-            </span>
+            <span className="text-xs uppercase tracking-widest text-muted-foreground mb-1">Hashrate (1hr)</span>
+            <span className="font-mono text-3xl font-bold" style={accentStyle}>{data.hashrate1hr}</span>
           </div>
         </div>
 
