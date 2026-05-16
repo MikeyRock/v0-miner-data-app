@@ -52,7 +52,7 @@ export interface NodeStats {
 
 export interface AlertEvent {
   id: string
-  type: 'block_found' | 'worker_offline' | 'milestone' | 'ath'
+  type: 'block_found' | 'worker_offline' | 'milestone' | 'ath' | 'best_share' | 'worker_online'
   message: string
   workerName?: string
   timestamp: number

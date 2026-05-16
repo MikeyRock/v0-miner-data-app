@@ -22,6 +22,7 @@ interface Props {
   btcApiUrl: string
   xecApiUrl: string
   braiinsSoloAddress: string
+  blitzpoolAddress: string
   discordUrl: string
   pollMs: number
   alertSettings: AlertSettings
@@ -29,10 +30,11 @@ interface Props {
   showBtc: boolean
   showXec: boolean
   showBraiinsSolo: boolean
-  onSave: (apiUrl: string, btcApiUrl: string, xecApiUrl: string, braiinsSoloAddress: string, discordUrl: string, pollMs: number, alertSettings: AlertSettings, showBch: boolean, showBtc: boolean, showXec: boolean, showBraiinsSolo: boolean) => void
+  showBlitzpool: boolean
+  onSave: (apiUrl: string, btcApiUrl: string, xecApiUrl: string, braiinsSoloAddress: string, blitzpoolAddress: string, discordUrl: string, pollMs: number, alertSettings: AlertSettings, showBch: boolean, showBtc: boolean, showXec: boolean, showBraiinsSolo: boolean, showBlitzpool: boolean) => void
 }
 
-export function SettingsDrawer({ open, onClose, apiUrl, btcApiUrl, xecApiUrl, braiinsSoloAddress, discordUrl, pollMs, alertSettings, showBch, showBtc, showXec, showBraiinsSolo, onSave }: Props) {
+export function SettingsDrawer({ open, onClose, apiUrl, btcApiUrl, xecApiUrl, braiinsSoloAddress, blitzpoolAddress, discordUrl, pollMs, alertSettings, showBch, showBtc, showXec, showBraiinsSolo, showBlitzpool, onSave }: Props) {
   const [tab, setTab] = useState<'connection' | 'alerts'>('connection')
 
   // Connection tab state
@@ -40,6 +42,7 @@ export function SettingsDrawer({ open, onClose, apiUrl, btcApiUrl, xecApiUrl, br
   const [localBtcApi, setLocalBtcApi]   = useState(btcApiUrl)
   const [localXecApi, setLocalXecApi]   = useState(xecApiUrl)
   const [localBraiinsSolo, setLocalBraiinsSolo] = useState(braiinsSoloAddress)
+  const [localBlitzpool, setLocalBlitzpool] = useState(blitzpoolAddress)
   const [localDiscord, setLocalDiscord] = useState(discordUrl)
   const [localPoll, setLocalPoll]       = useState(String(pollMs / 1000))
   const [testStatus, setTestStatus]     = useState<'idle' | 'sending' | 'ok' | 'error'>('idle')
@@ -53,12 +56,14 @@ export function SettingsDrawer({ open, onClose, apiUrl, btcApiUrl, xecApiUrl, br
   const [localShowBtc, setLocalShowBtc] = useState(showBtc)
   const [localShowXec, setLocalShowXec] = useState(showXec)
   const [localShowBraiinsSolo, setLocalShowBraiinsSolo] = useState(showBraiinsSolo)
+  const [localShowBlitzpool, setLocalShowBlitzpool] = useState(showBlitzpool)
 
   useEffect(() => {
     setLocalApi(apiUrl)
     setLocalBtcApi(btcApiUrl)
     setLocalXecApi(xecApiUrl)
     setLocalBraiinsSolo(braiinsSoloAddress)
+    setLocalBlitzpool(blitzpoolAddress)
     setLocalDiscord(discordUrl)
     setLocalPoll(String(pollMs / 1000))
     setLocalAlerts(alertSettings ?? DEFAULT_ALERT_SETTINGS)
@@ -66,12 +71,13 @@ export function SettingsDrawer({ open, onClose, apiUrl, btcApiUrl, xecApiUrl, br
     setLocalShowBtc(showBtc)
     setLocalShowXec(showXec)
     setLocalShowBraiinsSolo(showBraiinsSolo)
+    setLocalShowBlitzpool(showBlitzpool)
     setTab('connection')
-  }, [open, apiUrl, btcApiUrl, xecApiUrl, braiinsSoloAddress, discordUrl, pollMs, alertSettings, showBch, showBtc, showXec, showBraiinsSolo])
+  }, [open, apiUrl, btcApiUrl, xecApiUrl, braiinsSoloAddress, blitzpoolAddress, discordUrl, pollMs, alertSettings, showBch, showBtc, showXec, showBraiinsSolo, showBlitzpool])
 
   function handleSave() {
     const secs = Math.max(5, parseInt(localPoll, 10) || 15)
-    onSave(localApi.trim(), localBtcApi.trim(), localXecApi.trim(), localBraiinsSolo.trim(), localDiscord.trim(), secs * 1000, localAlerts, localShowBch, localShowBtc, localShowXec, localShowBraiinsSolo)
+    onSave(localApi.trim(), localBtcApi.trim(), localXecApi.trim(), localBraiinsSolo.trim(), localBlitzpool.trim(), localDiscord.trim(), secs * 1000, localAlerts, localShowBch, localShowBtc, localShowXec, localShowBraiinsSolo, localShowBlitzpool)
   }
 
   function toggleMilestone(m: number) {
@@ -269,6 +275,32 @@ export function SettingsDrawer({ open, onClose, apiUrl, btcApiUrl, xecApiUrl, br
                     <span
                       className={`absolute top-0.5 left-0.5 h-3 w-3 rounded-full bg-white shadow transition-transform
                         ${localShowBraiinsSolo ? 'translate-x-4' : 'translate-x-0'}`}
+                    />
+                  </button>
+                </div>
+              </Field>
+
+              <Field label="Blitzpool BTC Address" hint="Your BTC wallet address on Blitzpool solo mining pool." id="blitzpool-address">
+                <input
+                  id="blitzpool-address"
+                  type="text"
+                  value={localBlitzpool}
+                  onChange={(e) => setLocalBlitzpool(e.target.value)}
+                  placeholder="37EibWiQDH3xhj8U9VtqCHkkGFPa8HF5MT"
+                  className="w-full rounded-md border border-border bg-input px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-ring font-mono"
+                />
+                <div className="flex items-center justify-between mt-2 px-1">
+                  <span className="text-xs text-muted-foreground">Display on dashboard</span>
+                  <button
+                    role="switch"
+                    aria-checked={localShowBlitzpool}
+                    onClick={() => setLocalShowBlitzpool(!localShowBlitzpool)}
+                    className={`relative h-5 w-9 flex-shrink-0 rounded-full border-2 transition-colors
+                      ${localShowBlitzpool ? 'bg-[#3B82F6] border-[#3B82F6]' : 'bg-muted border-border'}`}
+                  >
+                    <span
+                      className={`absolute top-0.5 left-0.5 h-3 w-3 rounded-full bg-white shadow transition-transform
+                        ${localShowBlitzpool ? 'translate-x-4' : 'translate-x-0'}`}
                     />
                   </button>
                 </div>

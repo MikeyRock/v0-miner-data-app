@@ -7,9 +7,11 @@ import { AlertLog } from './alert-log'
 import { SettingsDrawer } from './settings-drawer'
 import { BlockFoundCelebration } from './block-found-celebration'
 import { BraiinsSoloPanel } from './braiins-solo-panel'
+import { BlitzpoolPanel } from './blitzpool-panel'
 import type { AlertEvent, NodeStats } from '@/lib/types'
 import type { AlertSettings } from '@/app/api/settings/route'
 import type { BraiinsSoloStats } from '@/app/api/braiins-solo/route'
+import type { BlitzpoolStats } from '@/app/api/blitzpool/route'
 
 const DEFAULT_POLL_MS = 15000
 
@@ -77,12 +79,14 @@ export function DashboardClient({ initialApiUrl = '', initialDiscordUrl = '' }: 
   const [btcState, setBtcState] = useState<CoinPanelState>({ data: null, error: null })
   const [xecState, setXecState] = useState<CoinPanelState>({ data: null, error: null })
   const [braiinsSoloState, setBraiinsSoloState] = useState<{ data: BraiinsSoloStats | null; error: string | null }>({ data: null, error: null })
+  const [blitzpoolState, setBlitzpoolState] = useState<{ data: BlitzpoolStats | null; error: string | null }>({ data: null, error: null })
   const [alerts, setAlerts]     = useState<AlertEvent[]>([])
 
   const [bchUrl, setBchUrl]       = useState(initialApiUrl)
   const [btcUrl, setBtcUrl]       = useState('')
   const [xecUrl, setXecUrl]       = useState('')
   const [braiinsSoloAddress, setBraiinsSoloAddress] = useState('')
+  const [blitzpoolAddress, setBlitzpoolAddress] = useState('')
   const [discordUrl, setDiscordUrl] = useState(initialDiscordUrl)
   const [pollMs, setPollMs]         = useState(DEFAULT_POLL_MS)
   const [alertSettings, setAlertSettings] = useState<AlertSettings>(DEFAULT_ALERT_SETTINGS)
@@ -90,6 +94,7 @@ export function DashboardClient({ initialApiUrl = '', initialDiscordUrl = '' }: 
   const [showBtc, setShowBtc]       = useState(true)
   const [showXec, setShowXec]       = useState(true)
   const [showBraiinsSolo, setShowBraiinsSolo] = useState(false)
+  const [showBlitzpool, setShowBlitzpool] = useState(false)
   const [settingsOpen, setSettingsOpen] = useState(false)
   const [settingsLoaded, setSettingsLoaded] = useState(false)
   const [isRefreshing, setIsRefreshing]     = useState(false)
@@ -99,11 +104,12 @@ export function DashboardClient({ initialApiUrl = '', initialDiscordUrl = '' }: 
   useEffect(() => {
     fetch('/api/settings')
       .then((r) => r.json())
-      .then((s: { apiUrl?: string; btcApiUrl?: string; xecApiUrl?: string; braiinsSoloAddress?: string; discordUrl?: string; pollMs?: number; alertSettings?: AlertSettings; showBch?: boolean; showBtc?: boolean; showXec?: boolean; showBraiinsSolo?: boolean }) => {
+      .then((s: { apiUrl?: string; btcApiUrl?: string; xecApiUrl?: string; braiinsSoloAddress?: string; blitzpoolAddress?: string; discordUrl?: string; pollMs?: number; alertSettings?: AlertSettings; showBch?: boolean; showBtc?: boolean; showXec?: boolean; showBraiinsSolo?: boolean; showBlitzpool?: boolean }) => {
         if (s.apiUrl)             setBchUrl(s.apiUrl)
         if (s.btcApiUrl)          setBtcUrl(s.btcApiUrl)
         if (s.xecApiUrl)          setXecUrl(s.xecApiUrl)
         if (s.braiinsSoloAddress) setBraiinsSoloAddress(s.braiinsSoloAddress)
+        if (s.blitzpoolAddress)   setBlitzpoolAddress(s.blitzpoolAddress)
         if (s.discordUrl)         setDiscordUrl(s.discordUrl)
         if (s.pollMs)             setPollMs(s.pollMs)
         if (s.alertSettings)      setAlertSettings(s.alertSettings)
@@ -111,6 +117,7 @@ export function DashboardClient({ initialApiUrl = '', initialDiscordUrl = '' }: 
         if (typeof s.showBtc === 'boolean') setShowBtc(s.showBtc)
         if (typeof s.showXec === 'boolean') setShowXec(s.showXec)
         if (typeof s.showBraiinsSolo === 'boolean') setShowBraiinsSolo(s.showBraiinsSolo)
+        if (typeof s.showBlitzpool === 'boolean') setShowBlitzpool(s.showBlitzpool)
         setSettingsLoaded(true)
       })
       .catch(() => setSettingsLoaded(true))
@@ -379,6 +386,26 @@ export function DashboardClient({ initialApiUrl = '', initialDiscordUrl = '' }: 
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [discordUrl, addAlert])
 
+  const fetchBlitzpool = useCallback(async (address: string, signal?: AbortSignal) => {
+    if (!address) return
+    try {
+      const res = await fetch(`/api/blitzpool?address=${encodeURIComponent(address)}`, {
+        cache: 'no-store',
+        signal,
+      })
+      if (signal?.aborted) return
+      const body = await res.json()
+      if (!res.ok) {
+        setBlitzpoolState({ data: null, error: body.error ?? `HTTP ${res.status}` })
+        return
+      }
+      setBlitzpoolState({ data: body, error: null })
+    } catch (e) {
+      if (e instanceof Error && e.name === 'AbortError') return
+      setBlitzpoolState({ data: null, error: e instanceof Error ? e.message : 'Fetch failed' })
+    }
+  }, [])
+
   const fetchAll = useCallback(async (showSpinner = false) => {
     // Abort any in-flight requests before starting new ones
     if (abortControllerRef.current) {
@@ -393,10 +420,11 @@ export function DashboardClient({ initialApiUrl = '', initialDiscordUrl = '' }: 
       fetchCoin(btcUrl, 'BTC', setBtcState, btcRefs, alertSettings, controller.signal),
       fetchCoin(xecUrl, 'XEC', setXecState, xecRefs, alertSettings, controller.signal),
       fetchBraiinsSolo(braiinsSoloAddress, controller.signal, alertSettings),
+      fetchBlitzpool(blitzpoolAddress, controller.signal),
     ])
     if (showSpinner) setIsRefreshing(false)
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [bchUrl, btcUrl, xecUrl, braiinsSoloAddress, fetchCoin, fetchBraiinsSolo, alertSettings])
+  }, [bchUrl, btcUrl, xecUrl, braiinsSoloAddress, blitzpoolAddress, fetchCoin, fetchBraiinsSolo, fetchBlitzpool, alertSettings])
 
   // Polling
   useEffect(() => {
@@ -431,7 +459,7 @@ export function DashboardClient({ initialApiUrl = '', initialDiscordUrl = '' }: 
     }
   }, [fetchAll, pollMs, settingsLoaded, alertSettings])
 
-  const isConnected = !!(bchState.data || btcState.data || xecState.data || braiinsSoloState.data)
+  const isConnected = !!(bchState.data || btcState.data || xecState.data || braiinsSoloState.data || blitzpoolState.data)
 
   const lastUpdated = bchState.data?.timestamp ?? btcState.data?.timestamp ?? xecState.data?.timestamp ?? null
 
@@ -440,7 +468,8 @@ export function DashboardClient({ initialApiUrl = '', initialDiscordUrl = '' }: 
   const displayBtc = showBtc && (btcState.data || btcUrl)
   const displayXec = showXec && (xecState.data || xecUrl)
   const displayBraiinsSolo = showBraiinsSolo && (braiinsSoloState.data || braiinsSoloAddress)
-  const enabledCount = [displayBch, displayBtc, displayXec, displayBraiinsSolo].filter(Boolean).length
+  const displayBlitzpool = showBlitzpool && (blitzpoolState.data || blitzpoolAddress)
+  const enabledCount = [displayBch, displayBtc, displayXec, displayBraiinsSolo, displayBlitzpool].filter(Boolean).length
   
   // Dynamic grid classes: 1 panel = full width, 2 = 2 cols, 3+ = responsive grid
   const gridClass = enabledCount === 1 
@@ -449,7 +478,9 @@ export function DashboardClient({ initialApiUrl = '', initialDiscordUrl = '' }: 
       ? 'grid grid-cols-1 gap-4 lg:grid-cols-2' 
       : enabledCount === 3
         ? 'grid grid-cols-1 gap-4 lg:grid-cols-2 xl:grid-cols-3'
-        : 'grid grid-cols-1 gap-4 lg:grid-cols-2 xl:grid-cols-4'
+        : enabledCount === 4
+          ? 'grid grid-cols-1 gap-4 lg:grid-cols-2 xl:grid-cols-4'
+          : 'grid grid-cols-1 gap-4 lg:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-5'
 
   return (
     <div className="flex min-h-screen flex-col bg-background font-mono">
@@ -464,7 +495,7 @@ export function DashboardClient({ initialApiUrl = '', initialDiscordUrl = '' }: 
       <main className="flex-1 p-4 md:p-6 max-w-screen-2xl mx-auto w-full">
 
         {/* Empty state */}
-        {!bchState.data && !btcState.data && !xecState.data && !braiinsSoloState.data && (
+        {!bchState.data && !btcState.data && !xecState.data && !braiinsSoloState.data && !blitzpoolState.data && (
           <div className="flex flex-col items-center justify-center min-h-[60vh] gap-6 text-center">
             <div className="flex h-16 w-16 items-center justify-center rounded-full border-2 border-border bg-card">
               <span className="font-mono text-2xl font-bold text-primary">B</span>
@@ -494,7 +525,7 @@ export function DashboardClient({ initialApiUrl = '', initialDiscordUrl = '' }: 
         )}
 
         {/* Live data — side by side */}
-        {(bchState.data || btcState.data || xecState.data || braiinsSoloState.data) && (
+        {(bchState.data || btcState.data || xecState.data || braiinsSoloState.data || blitzpoolState.data) && (
           <div className="flex flex-col gap-4">
 
             {/* Coin panels */}
@@ -642,6 +673,14 @@ export function DashboardClient({ initialApiUrl = '', initialDiscordUrl = '' }: 
                   error={braiinsSoloState.error}
                 />
               )}
+
+              {/* Blitzpool Panel */}
+              {displayBlitzpool && (
+                <BlitzpoolPanel
+                  data={blitzpoolState.data}
+                  error={blitzpoolState.error}
+                />
+              )}
             </div>
 
             {/* Alert log — full width */}
@@ -672,6 +711,7 @@ export function DashboardClient({ initialApiUrl = '', initialDiscordUrl = '' }: 
         btcApiUrl={btcUrl}
         xecApiUrl={xecUrl}
         braiinsSoloAddress={braiinsSoloAddress}
+        blitzpoolAddress={blitzpoolAddress}
         discordUrl={discordUrl}
         pollMs={pollMs}
         alertSettings={alertSettings}
@@ -679,11 +719,13 @@ export function DashboardClient({ initialApiUrl = '', initialDiscordUrl = '' }: 
         showBtc={showBtc}
         showXec={showXec}
         showBraiinsSolo={showBraiinsSolo}
-        onSave={(bch, btc, xec, braiins, d, p, as, sBch, sBtc, sXec, sBraiins) => {
+        showBlitzpool={showBlitzpool}
+        onSave={(bch, btc, xec, braiins, blitz, d, p, as, sBch, sBtc, sXec, sBraiins, sBlitz) => {
           setBchUrl(bch)
           setBtcUrl(btc)
           setXecUrl(xec)
           setBraiinsSoloAddress(braiins)
+          setBlitzpoolAddress(blitz)
           setDiscordUrl(d)
           setPollMs(p)
           setAlertSettings(as)
@@ -691,11 +733,12 @@ export function DashboardClient({ initialApiUrl = '', initialDiscordUrl = '' }: 
           setShowBtc(sBtc)
           setShowXec(sXec)
           setShowBraiinsSolo(sBraiins)
+          setShowBlitzpool(sBlitz)
           setSettingsOpen(false)
           fetch('/api/settings', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ apiUrl: bch, btcApiUrl: btc, xecApiUrl: xec, braiinsSoloAddress: braiins, discordUrl: d, pollMs: p, alertSettings: as, showBch: sBch, showBtc: sBtc, showXec: sXec, showBraiinsSolo: sBraiins }),
+            body: JSON.stringify({ apiUrl: bch, btcApiUrl: btc, xecApiUrl: xec, braiinsSoloAddress: braiins, blitzpoolAddress: blitz, discordUrl: d, pollMs: p, alertSettings: as, showBch: sBch, showBtc: sBtc, showXec: sXec, showBraiinsSolo: sBraiins, showBlitzpool: sBlitz }),
           }).catch(() => {})
           setTimeout(() => fetchAll(true), 100)
         }}
