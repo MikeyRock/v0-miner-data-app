@@ -39,6 +39,7 @@ export interface PersistedSettings {
   btcApiUrl:     string
   xecApiUrl:     string
   braiinsSoloAddress: string
+  blitzpoolAddress:   string
   discordUrl:    string
   pollMs:        number
   alertSettings: AlertSettings
@@ -46,6 +47,7 @@ export interface PersistedSettings {
   showBtc:       boolean
   showXec:       boolean
   showBraiinsSolo: boolean
+  showBlitzpool:   boolean
 }
 
 export const DEFAULT_ALERT_SETTINGS: AlertSettings = {
@@ -63,6 +65,7 @@ function defaults(): PersistedSettings {
     btcApiUrl:     process.env.AXEBTC_API_URL      ?? '',
     xecApiUrl:     process.env.AXEXEC_API_URL      ?? '',
     braiinsSoloAddress: process.env.BRAIINS_SOLO_ADDRESS ?? '',
+    blitzpoolAddress:   process.env.BLITZPOOL_ADDRESS ?? '',
     discordUrl:    process.env.DISCORD_WEBHOOK_URL ?? '',
     pollMs:        15000,
     alertSettings: DEFAULT_ALERT_SETTINGS,
@@ -70,6 +73,7 @@ function defaults(): PersistedSettings {
     showBtc:       true,
     showXec:       true,
     showBraiinsSolo: false,
+    showBlitzpool:   false,
   }
 }
 
@@ -96,6 +100,7 @@ export function loadSettings(): PersistedSettings {
         btcApiUrl:     parsed.btcApiUrl  ?? d.btcApiUrl,
         xecApiUrl:     parsed.xecApiUrl  ?? d.xecApiUrl,
         braiinsSoloAddress: parsed.braiinsSoloAddress ?? d.braiinsSoloAddress,
+        blitzpoolAddress:   parsed.blitzpoolAddress ?? d.blitzpoolAddress,
         discordUrl:    parsed.discordUrl ?? d.discordUrl,
         pollMs:        parsed.pollMs     ?? d.pollMs,
         alertSettings: mergeAlertSettings(parsed.alertSettings),
@@ -103,6 +108,7 @@ export function loadSettings(): PersistedSettings {
         showBtc:       parsed.showBtc    ?? d.showBtc,
         showXec:       parsed.showXec    ?? d.showXec,
         showBraiinsSolo: parsed.showBraiinsSolo ?? d.showBraiinsSolo,
+        showBlitzpool:   parsed.showBlitzpool ?? d.showBlitzpool,
       }
     }
   } catch {
@@ -132,6 +138,7 @@ export async function POST(req: NextRequest) {
       btcApiUrl:     typeof body.btcApiUrl  === 'string' ? body.btcApiUrl.trim()  : current.btcApiUrl,
       xecApiUrl:     typeof body.xecApiUrl  === 'string' ? body.xecApiUrl.trim()  : current.xecApiUrl,
       braiinsSoloAddress: typeof body.braiinsSoloAddress === 'string' ? body.braiinsSoloAddress.trim() : current.braiinsSoloAddress,
+      blitzpoolAddress:   typeof body.blitzpoolAddress === 'string' ? body.blitzpoolAddress.trim() : current.blitzpoolAddress,
       discordUrl:    typeof body.discordUrl === 'string' ? body.discordUrl.trim() : current.discordUrl,
       pollMs:        typeof body.pollMs     === 'number' ? Math.max(5000, body.pollMs) : current.pollMs,
       alertSettings: body.alertSettings ? mergeAlertSettings(body.alertSettings) : current.alertSettings,
@@ -139,6 +146,7 @@ export async function POST(req: NextRequest) {
       showBtc:       typeof body.showBtc    === 'boolean' ? body.showBtc : current.showBtc,
       showXec:       typeof body.showXec    === 'boolean' ? body.showXec : current.showXec,
       showBraiinsSolo: typeof body.showBraiinsSolo === 'boolean' ? body.showBraiinsSolo : current.showBraiinsSolo,
+      showBlitzpool:   typeof body.showBlitzpool === 'boolean' ? body.showBlitzpool : current.showBlitzpool,
     }
     saveSettings(updated)
     return NextResponse.json(updated)

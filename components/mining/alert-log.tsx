@@ -4,7 +4,7 @@ import { cn } from '@/lib/utils'
 
 export interface AlertEvent {
   id: string
-  type: 'worker_offline' | 'worker_online' | 'block_found' | 'milestone' | 'best_share'
+  type: 'worker_offline' | 'worker_online' | 'block_found' | 'milestone' | 'best_share' | 'ath'
   message: string
   timestamp: number
   sent?: boolean
