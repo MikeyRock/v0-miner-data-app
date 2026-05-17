@@ -3,11 +3,12 @@ import { NextRequest, NextResponse } from 'next/server'
 const DISCORD_WEBHOOK_URL = process.env.DISCORD_WEBHOOK_URL ?? ''
 
 interface AlertPayload {
-  type: 'block_found' | 'worker_offline' | 'milestone' | 'ath' | 'braiins_best_share' | 'braiins_best_ever'
-  coin?: 'BCH' | 'BTC' | 'XEC' | 'Braiins'
+  type: 'block_found' | 'worker_offline' | 'milestone' | 'ath' | 'braiins_best_share' | 'braiins_best_ever' | 'blitzpool_best_diff'
+  coin?: 'BCH' | 'BTC' | 'XEC' | 'Braiins' | 'Blitzpool'
   workerName?: string
   bestShare?: string | number
   bestEver?: number
+  bestDifficulty?: number
   blockDiff?: string
   height?: number
   progressPercent?: number
@@ -134,6 +135,22 @@ function buildEmbed(payload: AlertPayload) {
               { name: 'Best Ever', value: formatHashrateValue(payload.bestEver ?? 0), inline: true },
             ],
             footer: { text: 'Braiins Solo Pool' },
+            timestamp: new Date().toISOString(),
+          },
+        ],
+      }
+
+    case 'blitzpool_best_diff':
+      return {
+        embeds: [
+          {
+            title: `[Blitzpool] New Best Difficulty!`,
+            description: `You just hit a new best difficulty on Blitzpool!`,
+            color: 0x3B82F6,
+            fields: [
+              { name: 'Best Difficulty', value: formatHashrateValue(payload.bestDifficulty ?? 0), inline: true },
+            ],
+            footer: { text: 'Blitzpool Solo Mining' },
             timestamp: new Date().toISOString(),
           },
         ],

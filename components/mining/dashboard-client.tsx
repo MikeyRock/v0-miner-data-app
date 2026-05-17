@@ -135,6 +135,11 @@ export function DashboardClient({ initialApiUrl = '', initialDiscordUrl = '' }: 
   const braiinsOfflineAlerted = useRef<Set<string>>(new Set())
   const braiinsSeenOnline = useRef<Set<string>>(new Set())
 
+  // Blitzpool alert refs
+  const blitzpoolPrevBestDiff = useRef<number>(0)
+  const blitzpoolOfflineAlerted = useRef<Set<string>>(new Set())
+  const blitzpoolSeenOnline = useRef<Set<string>>(new Set())
+
   const addAlert = useCallback((event: Omit<AlertEvent, 'id'>): AlertEvent => {
     const full: AlertEvent = { ...event, id: generateId() }
     setAlerts((prev) => [...prev.slice(-99), full])
@@ -328,6 +333,65 @@ export function DashboardClient({ initialApiUrl = '', initialDiscordUrl = '' }: 
     return value.toFixed(2)
   }
 
+  // ---- Blitzpool Alert Engine ------------------------------------------------
+  function runBlitzpoolAlertEngine(
+    data: BlitzpoolStats,
+    as: AlertSettings,
+  ) {
+    // 1. New best difficulty
+    if (as.newBest && data.bestDifficulty > 0 && data.bestDifficulty > blitzpoolPrevBestDiff.current && blitzpoolPrevBestDiff.current > 0) {
+      const alert = addAlert({
+        type: 'best_share',
+        message: `[Blitzpool] New best difficulty: ${formatHashrate(data.bestDifficulty)}`,
+        timestamp: Date.now(),
+        sent: false,
+      })
+      sendDiscordAlert({
+        type: 'blitzpool_best_diff',
+        bestDifficulty: data.bestDifficulty,
+        discordWebhookUrl: discordUrl,
+      }).then(() =>
+        setAlerts((prev) => prev.map((a) => a.id === alert.id ? { ...a, sent: true } : a))
+      )
+    }
+    blitzpoolPrevBestDiff.current = data.bestDifficulty
+
+    // 2. Worker offline detection (based on worker hashrate being 0)
+    const offlineThresholdS = (as.offlineThresholdMin ?? 10) * 60
+    
+    data.workers?.forEach((w) => {
+      // Consider worker offline if hashrate is 0
+      const isOnline = w.hashrate > 0
+      
+      if (isOnline) {
+        blitzpoolSeenOnline.current.add(w.name)
+        blitzpoolOfflineAlerted.current.delete(w.name)
+      } else if (
+        as.workerOffline &&
+        blitzpoolSeenOnline.current.has(w.name) &&
+        !blitzpoolOfflineAlerted.current.has(w.name)
+      ) {
+        blitzpoolOfflineAlerted.current.add(w.name)
+        const alert = addAlert({
+          type: 'worker_offline',
+          message: `[Blitzpool] ${w.name} offline — hashrate is 0`,
+          workerName: w.name,
+          timestamp: Date.now(),
+          sent: false,
+        })
+        sendDiscordAlert({
+          type: 'worker_offline',
+          workerName: w.name,
+          coin: 'Blitzpool',
+          lastShareAgo: 0,
+          discordWebhookUrl: discordUrl,
+        }).then(() =>
+          setAlerts((prev) => prev.map((a) => a.id === alert.id ? { ...a, sent: true } : a))
+        )
+      }
+    })
+  }
+
   // ---- Fetch per coin ------------------------------------------------------
   const abortControllerRef = useRef<AbortController | null>(null)
   
@@ -386,7 +450,7 @@ export function DashboardClient({ initialApiUrl = '', initialDiscordUrl = '' }: 
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [discordUrl, addAlert])
 
-  const fetchBlitzpool = useCallback(async (address: string, signal?: AbortSignal) => {
+  const fetchBlitzpool = useCallback(async (address: string, signal?: AbortSignal, as?: AlertSettings) => {
     if (!address) return
     try {
       const res = await fetch(`/api/blitzpool?address=${encodeURIComponent(address)}`, {
@@ -400,11 +464,16 @@ export function DashboardClient({ initialApiUrl = '', initialDiscordUrl = '' }: 
         return
       }
       setBlitzpoolState({ data: body, error: null })
+      // Run Blitzpool alert engine
+      if (as) {
+        runBlitzpoolAlertEngine(body, as)
+      }
     } catch (e) {
       if (e instanceof Error && e.name === 'AbortError') return
       setBlitzpoolState({ data: null, error: e instanceof Error ? e.message : 'Fetch failed' })
     }
-  }, [])
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [discordUrl, addAlert])
 
   const fetchAll = useCallback(async (showSpinner = false) => {
     // Abort any in-flight requests before starting new ones
@@ -420,7 +489,7 @@ export function DashboardClient({ initialApiUrl = '', initialDiscordUrl = '' }: 
       fetchCoin(btcUrl, 'BTC', setBtcState, btcRefs, alertSettings, controller.signal),
       fetchCoin(xecUrl, 'XEC', setXecState, xecRefs, alertSettings, controller.signal),
       fetchBraiinsSolo(braiinsSoloAddress, controller.signal, alertSettings),
-      fetchBlitzpool(blitzpoolAddress, controller.signal),
+      fetchBlitzpool(blitzpoolAddress, controller.signal, alertSettings),
     ])
     if (showSpinner) setIsRefreshing(false)
   // eslint-disable-next-line react-hooks/exhaustive-deps
