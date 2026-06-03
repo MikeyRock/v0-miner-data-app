@@ -223,146 +223,97 @@ export function BraiinsWebDashboard() {
         </div>
       </div>
 
-      <div className="p-4 max-w-full mx-auto h-[calc(100vh-80px)] overflow-y-auto space-y-4">
-        {/* Top Stats Cards - Responsive grid */}
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-2">
+      <div className="p-3 max-w-full mx-auto overflow-y-auto space-y-2">
+        {/* Top Stats Cards */}
+        <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-2">
           {/* Best Share Card */}
-          <div className="group relative rounded-lg border border-slate-700/50 bg-gradient-to-br from-slate-800/50 to-slate-900/50 p-3 hover:border-cyan-500/50 hover:shadow-lg hover:shadow-cyan-500/20 transition-all duration-300 backdrop-blur">
-            <div className="flex items-start justify-between mb-2">
-              <div className="text-cyan-400 text-xs font-bold uppercase tracking-wider">Best Share</div>
-              <div className="w-6 h-6 rounded-full bg-gradient-to-br from-cyan-500/20 to-blue-500/20 flex items-center justify-center text-cyan-400 text-xs">📊</div>
-            </div>
-            <div className="text-xl font-bold text-white">{formatNumber(braiinsData?.bestshare)}</div>
-            <div className="text-slate-400 text-xs mt-1">Peak difficulty</div>
-            <div className="mt-2 h-0.5 bg-gradient-to-r from-cyan-500 to-transparent rounded-full"></div>
-          </div>
-
-          {/* 1M Hashrate Card */}
-          <div className="group relative rounded-lg border border-slate-700/50 bg-gradient-to-br from-slate-800/50 to-slate-900/50 p-3 hover:border-purple-500/50 hover:shadow-lg hover:shadow-purple-500/20 transition-all duration-300 backdrop-blur">
-            <div className="flex items-start justify-between mb-2">
-              <div className="text-purple-400 text-xs font-bold uppercase tracking-wider">1m Rate</div>
-              <div className="w-6 h-6 rounded-full bg-gradient-to-br from-purple-500/20 to-pink-500/20 flex items-center justify-center text-purple-400 text-xs">⚡</div>
-            </div>
-            <div className="text-xl font-bold text-white">{formatHashrate(braiinsData?.hashrate1m)}</div>
-            <div className="text-slate-400 text-xs mt-1">Current</div>
-            <div className="mt-2 h-0.5 bg-gradient-to-r from-purple-500 to-transparent rounded-full"></div>
-          </div>
-
-          {/* Total Shares Card */}
-          <div className="group relative rounded-lg border border-slate-700/50 bg-gradient-to-br from-slate-800/50 to-slate-900/50 p-3 hover:border-cyan-500/50 hover:shadow-lg hover:shadow-cyan-500/20 transition-all duration-300 backdrop-blur">
-            <div className="flex items-start justify-between mb-2">
-              <div className="text-cyan-400 text-xs font-bold uppercase tracking-wider">Total Shares</div>
-              <div className="w-6 h-6 rounded-full bg-gradient-to-br from-cyan-500/20 to-teal-500/20 flex items-center justify-center text-cyan-400 text-xs">✓</div>
-            </div>
-            <div className="text-xl font-bold text-white">{formatNumber(braiinsData?.totalshares)}G</div>
-            <div className="text-slate-400 text-xs mt-1">Cumulative</div>
-            <div className="mt-2 h-0.5 bg-gradient-to-r from-cyan-500 to-transparent rounded-full"></div>
-          </div>
-
-          {/* Active Miners Card */}
-          <div className="group relative rounded-lg border border-slate-700/50 bg-gradient-to-br from-slate-800/50 to-slate-900/50 p-3 hover:border-purple-500/50 hover:shadow-lg hover:shadow-purple-500/20 transition-all duration-300 backdrop-blur">
-            <div className="flex items-start justify-between mb-2">
-              <div className="text-purple-400 text-xs font-bold uppercase tracking-wider">Active</div>
-              <div className="w-6 h-6 rounded-full bg-gradient-to-br from-purple-500/20 to-pink-500/20 flex items-center justify-center text-purple-400 text-xs">🖥</div>
-            </div>
-            <div className="text-xl font-bold text-white">{activeMinersList.length}</div>
-            <div className="text-slate-400 text-xs mt-1">Mining</div>
-            <div className="mt-2 h-0.5 bg-gradient-to-r from-purple-500 to-transparent rounded-full"></div>
-          </div>
-        </div>
-        <div className="flex items-center gap-3">
-          <div className={`w-2 h-2 rounded-full ${loading ? 'bg-yellow-500 animate-pulse' : 'bg-cyan-400'}`}></div>
-          <span className={`text-sm font-medium ${loading ? 'text-yellow-400' : 'text-cyan-400'}`}>
-            {loading ? 'Updating...' : 'Live'}
-          </span>
-        </div>
-      </div>
-
-      <div className="p-6 max-w-7xl mx-auto space-y-6">
-        {/* Top Stats Cards with Gradient */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-          {/* Best Share Card */}
-          <div className="group relative rounded-lg border border-cyan-500/30 bg-gradient-to-br from-cyan-950/40 via-slate-900/50 to-slate-950/60 p-5 hover:border-cyan-400/60 hover:shadow-xl hover:shadow-cyan-500/30 transition-all duration-300 backdrop-blur overflow-hidden">
-            <div className="absolute inset-0 bg-gradient-to-br from-cyan-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+          <div className="group relative rounded-lg border border-cyan-500/50 bg-gradient-to-br from-cyan-950/60 via-slate-900/50 to-slate-950/60 p-2.5 hover:border-cyan-400/80 hover:shadow-2xl hover:shadow-cyan-500/50 transition-all duration-300 backdrop-blur-lg overflow-hidden">
+            <div className="absolute inset-0 bg-gradient-to-br from-cyan-500/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+            <div className="absolute inset-0 rounded-lg opacity-0 group-hover:opacity-20 bg-[radial-gradient(ellipse_at_50%_50%,_rgba(6,182,212,0.4),transparent_70%)] blur-xl transition-all duration-300"></div>
             <div className="relative z-10">
-              <div className="flex items-start justify-between mb-3">
-                <div className="text-cyan-400 text-xs font-bold uppercase tracking-wider">Best Share</div>
-                <div className="w-8 h-8 rounded-full bg-gradient-to-br from-cyan-500/20 to-blue-500/20 flex items-center justify-center text-cyan-400 group-hover:shadow-lg group-hover:shadow-cyan-500/50 transition-all">⬆</div>
+              <div className="flex items-start justify-between mb-1">
+                <div className="text-cyan-300 text-xs font-bold uppercase tracking-widest">Best Share</div>
+                <div className="w-4 h-4 rounded-full bg-gradient-to-br from-cyan-400 to-cyan-600 flex items-center justify-center text-cyan-900 text-xs shadow-lg shadow-cyan-500/50 animate-pulse">📊</div>
               </div>
-              <div className="text-3xl font-bold text-white">{formatNumber(braiinsData?.bestshare)}</div>
-              <div className="text-slate-400 text-xs mt-2">Peak difficulty</div>
-              <div className="mt-3 h-1 bg-gradient-to-r from-cyan-500 via-cyan-400 to-transparent rounded-full"></div>
+              <div className="text-lg font-black text-cyan-100 drop-shadow-lg">{formatNumber(braiinsData?.bestshare)}</div>
+              <div className="text-slate-400 text-xs mt-0.5">Peak difficulty</div>
+              <div className="mt-1 h-0.5 bg-gradient-to-r from-cyan-500 via-cyan-400 to-transparent rounded-full shadow-lg shadow-cyan-500/50"></div>
             </div>
           </div>
 
           {/* 1M Hashrate Card */}
-          <div className="group relative rounded-lg border border-purple-500/30 bg-gradient-to-br from-purple-950/40 via-slate-900/50 to-slate-950/60 p-5 hover:border-purple-400/60 hover:shadow-xl hover:shadow-purple-500/30 transition-all duration-300 backdrop-blur overflow-hidden">
-            <div className="absolute inset-0 bg-gradient-to-br from-purple-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+          <div className="group relative rounded-lg border border-purple-500/50 bg-gradient-to-br from-purple-950/60 via-slate-900/50 to-slate-950/60 p-2.5 hover:border-purple-400/80 hover:shadow-2xl hover:shadow-purple-500/50 transition-all duration-300 backdrop-blur-lg overflow-hidden">
+            <div className="absolute inset-0 bg-gradient-to-br from-purple-500/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+            <div className="absolute inset-0 rounded-lg opacity-0 group-hover:opacity-20 bg-[radial-gradient(ellipse_at_50%_50%,_rgba(168,85,247,0.4),transparent_70%)] blur-xl transition-all duration-300"></div>
             <div className="relative z-10">
-              <div className="flex items-start justify-between mb-3">
-                <div className="text-purple-400 text-xs font-bold uppercase tracking-wider">1m Hashrate</div>
-                <div className="w-8 h-8 rounded-full bg-gradient-to-br from-purple-500/20 to-pink-500/20 flex items-center justify-center text-purple-400 group-hover:shadow-lg group-hover:shadow-purple-500/50 transition-all">⚡</div>
+              <div className="flex items-start justify-between mb-1">
+                <div className="text-purple-300 text-xs font-bold uppercase tracking-widest">1m Rate</div>
+                <div className="w-4 h-4 rounded-full bg-gradient-to-br from-purple-400 to-purple-600 flex items-center justify-center text-purple-900 text-xs shadow-lg shadow-purple-500/50 animate-pulse">⚡</div>
               </div>
-              <div className="text-3xl font-bold text-white">{formatHashrate(braiinsData?.hashrate1m)}</div>
-              <div className="text-slate-400 text-xs mt-2">Current rate</div>
-              <div className="mt-3 h-1 bg-gradient-to-r from-purple-500 via-pink-500 to-transparent rounded-full"></div>
+              <div className="text-lg font-black text-purple-100 drop-shadow-lg">{formatHashrate(braiinsData?.hashrate1m)}</div>
+              <div className="text-slate-400 text-xs mt-0.5">Current rate</div>
+              <div className="mt-1 h-0.5 bg-gradient-to-r from-purple-500 via-pink-500 to-transparent rounded-full shadow-lg shadow-purple-500/50"></div>
             </div>
           </div>
 
           {/* Total Shares Card */}
-          <div className="group relative rounded-lg border border-cyan-500/30 bg-gradient-to-br from-cyan-950/40 via-slate-900/50 to-slate-950/60 p-5 hover:border-cyan-400/60 hover:shadow-xl hover:shadow-cyan-500/30 transition-all duration-300 backdrop-blur overflow-hidden">
-            <div className="absolute inset-0 bg-gradient-to-br from-cyan-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+          <div className="group relative rounded-lg border border-cyan-500/50 bg-gradient-to-br from-cyan-950/60 via-slate-900/50 to-slate-950/60 p-2.5 hover:border-cyan-400/80 hover:shadow-2xl hover:shadow-cyan-500/50 transition-all duration-300 backdrop-blur-lg overflow-hidden">
+            <div className="absolute inset-0 bg-gradient-to-br from-cyan-500/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+            <div className="absolute inset-0 rounded-lg opacity-0 group-hover:opacity-20 bg-[radial-gradient(ellipse_at_50%_50%,_rgba(6,182,212,0.4),transparent_70%)] blur-xl transition-all duration-300"></div>
             <div className="relative z-10">
-              <div className="flex items-start justify-between mb-3">
-                <div className="text-cyan-400 text-xs font-bold uppercase tracking-wider">Total Shares</div>
-                <div className="w-8 h-8 rounded-full bg-gradient-to-br from-cyan-500/20 to-teal-500/20 flex items-center justify-center text-cyan-400 group-hover:shadow-lg group-hover:shadow-cyan-500/50 transition-all">✓</div>
+              <div className="flex items-start justify-between mb-1">
+                <div className="text-cyan-300 text-xs font-bold uppercase tracking-widest">Total Shares</div>
+                <div className="w-4 h-4 rounded-full bg-gradient-to-br from-teal-400 to-cyan-600 flex items-center justify-center text-cyan-900 text-xs shadow-lg shadow-cyan-500/50 animate-pulse">✓</div>
               </div>
-              <div className="text-3xl font-bold text-white">{formatNumber(braiinsData?.totalshares)}G</div>
-              <div className="text-slate-400 text-xs mt-2">Cumulative</div>
-              <div className="mt-3 h-1 bg-gradient-to-r from-cyan-500 via-teal-500 to-transparent rounded-full"></div>
+              <div className="text-lg font-black text-cyan-100 drop-shadow-lg">{formatNumber(braiinsData?.totalshares)}G</div>
+              <div className="text-slate-400 text-xs mt-0.5">Cumulative</div>
+              <div className="mt-1 h-0.5 bg-gradient-to-r from-cyan-500 via-teal-500 to-transparent rounded-full shadow-lg shadow-cyan-500/50"></div>
             </div>
           </div>
 
           {/* Active Miners Card */}
-          <div className="group relative rounded-lg border border-purple-500/30 bg-gradient-to-br from-purple-950/40 via-slate-900/50 to-slate-950/60 p-5 hover:border-purple-400/60 hover:shadow-xl hover:shadow-purple-500/30 transition-all duration-300 backdrop-blur overflow-hidden">
-            <div className="absolute inset-0 bg-gradient-to-br from-purple-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+          <div className="group relative rounded-lg border border-orange-500/50 bg-gradient-to-br from-orange-950/60 via-slate-900/50 to-slate-950/60 p-2.5 hover:border-orange-400/80 hover:shadow-2xl hover:shadow-orange-500/50 transition-all duration-300 backdrop-blur-lg overflow-hidden">
+            <div className="absolute inset-0 bg-gradient-to-br from-orange-500/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+            <div className="absolute inset-0 rounded-lg opacity-0 group-hover:opacity-20 bg-[radial-gradient(ellipse_at_50%_50%,_rgba(249,115,22,0.4),transparent_70%)] blur-xl transition-all duration-300"></div>
             <div className="relative z-10">
-              <div className="flex items-start justify-between mb-3">
-                <div className="text-purple-400 text-xs font-bold uppercase tracking-wider">Active Rigs</div>
-                <div className="w-8 h-8 rounded-full bg-gradient-to-br from-purple-500/20 to-pink-500/20 flex items-center justify-center text-purple-400 group-hover:shadow-lg group-hover:shadow-purple-500/50 transition-all">🖥</div>
+              <div className="flex items-start justify-between mb-1">
+                <div className="text-orange-300 text-xs font-bold uppercase tracking-widest">Active</div>
+                <div className="w-4 h-4 rounded-full bg-gradient-to-br from-orange-400 to-red-600 flex items-center justify-center text-orange-900 text-xs shadow-lg shadow-orange-500/50 animate-bounce">🖥</div>
               </div>
-              <div className="text-3xl font-bold text-white">{activeMinersList.length}</div>
-              <div className="text-slate-400 text-xs mt-2">Currently mining</div>
-              <div className="mt-3 h-1 bg-gradient-to-r from-purple-500 via-pink-500 to-transparent rounded-full"></div>
+              <div className="text-lg font-black text-orange-100 drop-shadow-lg">{activeMinersList.length}</div>
+              <div className="text-slate-400 text-xs mt-0.5">Mining</div>
+              <div className="mt-1 h-0.5 bg-gradient-to-r from-orange-500 via-red-500 to-transparent rounded-full shadow-lg shadow-orange-500/50"></div>
             </div>
           </div>
         </div>
 
         {/* Charts Row */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-1">
           {/* Hashrate Trend Chart */}
-          <div className="rounded-lg border border-cyan-500/30 bg-gradient-to-br from-slate-800/30 to-slate-900/40 p-5 backdrop-blur hover:border-cyan-400/50 transition-all">
-            <h3 className="text-sm font-bold text-cyan-400 mb-4 uppercase tracking-wider">Hashrate Trend</h3>
-            <div className="h-48 flex items-end justify-between gap-2">
-              <div className="flex-1 h-1/3 bg-gradient-to-t from-cyan-500/50 to-cyan-300/30 rounded hover:shadow-lg hover:shadow-cyan-500/50 transition-all" title={`1m: ${formatHashrate(braiinsData?.hashrate1m)}`}></div>
-              <div className="flex-1 h-1/2 bg-gradient-to-t from-cyan-500/50 to-cyan-300/30 rounded hover:shadow-lg hover:shadow-cyan-500/50 transition-all" title={`5m: ${formatHashrate(braiinsData?.hashrate5m)}`}></div>
-              <div className="flex-1 h-2/3 bg-gradient-to-t from-cyan-500/50 to-cyan-300/30 rounded hover:shadow-lg hover:shadow-cyan-500/50 transition-all" title={`1h: ${formatHashrate(braiinsData?.hashrate1hr)}`}></div>
+          <div className="group relative rounded-lg border border-cyan-500/40 bg-gradient-to-br from-slate-800/40 to-slate-900/50 p-2 backdrop-blur-lg hover:border-cyan-400/70 hover:shadow-xl hover:shadow-cyan-500/40 transition-all">
+            <div className="absolute inset-0 rounded-lg opacity-0 group-hover:opacity-15 bg-[radial-gradient(ellipse_at_50%_50%,_rgba(6,182,212,0.3),transparent_70%)] blur-lg transition-all duration-300"></div>
+            <h3 className="text-xs font-bold text-cyan-300 mb-1 uppercase tracking-widest">Hashrate Trend</h3>
+            <div className="h-20 flex items-end justify-between gap-1 relative z-10">
+              <div className="flex-1 h-1/3 bg-gradient-to-t from-cyan-500/60 to-cyan-400/30 rounded hover:shadow-xl hover:shadow-cyan-500/60 transition-all" title={`1m: ${formatHashrate(braiinsData?.hashrate1m)}`}></div>
+              <div className="flex-1 h-1/2 bg-gradient-to-t from-cyan-500/60 to-cyan-400/30 rounded hover:shadow-xl hover:shadow-cyan-500/60 transition-all" title={`5m: ${formatHashrate(braiinsData?.hashrate5m)}`}></div>
+              <div className="flex-1 h-2/3 bg-gradient-to-t from-cyan-500/60 to-cyan-400/30 rounded hover:shadow-xl hover:shadow-cyan-500/60 transition-all" title={`1h: ${formatHashrate(braiinsData?.hashrate1hr)}`}></div>
             </div>
-            <div className="mt-4 grid grid-cols-3 gap-2 text-xs text-slate-400">
-              <div>1m: {formatHashrate(braiinsData?.hashrate1m)}</div>
-              <div>5m: {formatHashrate(braiinsData?.hashrate5m)}</div>
-              <div>1h: {formatHashrate(braiinsData?.hashrate1hr)}</div>
+            <div className="mt-1 grid grid-cols-3 gap-1 text-xs text-slate-300 relative z-10">
+              <div className="text-cyan-300">1m: {formatHashrate(braiinsData?.hashrate1m)}</div>
+              <div className="text-cyan-300">5m: {formatHashrate(braiinsData?.hashrate5m)}</div>
+              <div className="text-cyan-300">1h: {formatHashrate(braiinsData?.hashrate1hr)}</div>
             </div>
           </div>
 
           {/* Best Share to Difficulty */}
-          <div className="rounded-lg border border-purple-500/30 bg-gradient-to-br from-slate-800/30 to-slate-900/40 p-5 backdrop-blur hover:border-purple-400/50 transition-all">
-            <h3 className="text-sm font-bold text-purple-400 mb-4 uppercase tracking-wider">Best Share vs Difficulty</h3>
-            <div className="flex items-center justify-center h-48">
-              <div className="relative w-32 h-32">
-                <svg viewBox="0 0 100 100" className="w-full h-full">
+          <div className="group relative rounded-lg border border-purple-500/40 bg-gradient-to-br from-slate-800/40 to-slate-900/50 p-2 backdrop-blur-lg hover:border-purple-400/70 hover:shadow-xl hover:shadow-purple-500/40 transition-all">
+            <div className="absolute inset-0 rounded-lg opacity-0 group-hover:opacity-15 bg-[radial-gradient(ellipse_at_50%_50%,_rgba(168,85,247,0.3),transparent_70%)] blur-lg transition-all duration-300"></div>
+            <h3 className="text-xs font-bold text-purple-300 mb-1 uppercase tracking-widest">Best Share vs Difficulty</h3>
+            <div className="flex items-center justify-center h-20 relative z-10">
+              <div className="relative w-16 h-16">
+                <svg viewBox="0 0 100 100" className="w-full h-full drop-shadow-lg">
                   {/* Background circle */}
-                  <circle cx="50" cy="50" r="45" fill="none" stroke="rgba(148, 113, 248, 0.1)" strokeWidth="2"/>
+                  <circle cx="50" cy="50" r="45" fill="none" stroke="rgba(148, 113, 248, 0.15)" strokeWidth="2"/>
                   {/* Progress circle */}
                   {(() => {
                     const ratio = Math.min((bestShareNum / networkDifficulty) * 100, 100)
@@ -371,7 +322,7 @@ export function BraiinsWebDashboard() {
                     return (
                       <circle cx="50" cy="50" r="45" fill="none" stroke="url(#gradient)" strokeWidth="3" 
                         strokeDasharray={`${circumference - dashoffset} ${circumference}`}
-                        strokeLinecap="round" transform="rotate(-90 50 50)" />
+                        strokeLinecap="round" transform="rotate(-90 50 50)" filter="drop-shadow(0 0 4px rgba(6,182,212,0.5))" />
                     )
                   })()}
                   <defs>
@@ -383,7 +334,7 @@ export function BraiinsWebDashboard() {
                 </svg>
                 <div className="absolute inset-0 flex items-center justify-center">
                   <div className="text-center">
-                    <div className="text-xl font-bold text-cyan-400">{Math.min(Math.round((bestShareNum / networkDifficulty) * 100), 100)}%</div>
+                    <div className="text-sm font-bold text-cyan-300 drop-shadow-lg">{Math.min(Math.round((bestShareNum / networkDifficulty) * 100), 100)}%</div>
                     <div className="text-xs text-slate-400">difficulty</div>
                   </div>
                 </div>
@@ -393,47 +344,47 @@ export function BraiinsWebDashboard() {
         </div>
 
         {/* BTC Reward Section */}
-        <div className="rounded-lg border border-purple-500/30 bg-gradient-to-r from-purple-950/40 via-slate-900/40 to-cyan-950/40 p-6 backdrop-blur hover:border-purple-400/50 transition-all">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="rounded-lg border border-purple-500/30 bg-gradient-to-r from-purple-950/40 via-slate-900/40 to-cyan-950/40 p-2 backdrop-blur hover:border-purple-400/50 transition-all">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
             <div className="group">
-              <div className="text-purple-400 text-xs font-bold uppercase tracking-wider mb-2">Estimated USD Reward</div>
-              <div className="text-2xl font-bold text-white">{usdReward}</div>
-              <div className="text-slate-400 text-xs mt-1">For best share at ${btcPrice.toLocaleString()}/BTC</div>
-              <div className="mt-2 h-1 bg-gradient-to-r from-purple-500 to-transparent rounded-full group-hover:shadow-lg group-hover:shadow-purple-500/50 transition-all"></div>
+              <div className="text-purple-400 text-xs font-bold uppercase tracking-wider mb-0.5">USD Reward</div>
+              <div className="text-lg font-bold text-white">{usdReward}</div>
+              <div className="text-slate-400 text-xs mt-0.5">@ ${btcPrice.toLocaleString()}/BTC</div>
+              <div className="mt-1 h-0.5 bg-gradient-to-r from-purple-500 to-transparent rounded-full group-hover:shadow-lg group-hover:shadow-purple-500/50 transition-all"></div>
             </div>
             <div className="group">
-              <div className="text-cyan-400 text-xs font-bold uppercase tracking-wider mb-2">Best Share Difficulty</div>
-              <div className="text-2xl font-bold text-white">{formatNumber(braiinsData?.bestshare)}</div>
-              <div className="text-slate-400 text-xs mt-1">Current peak</div>
-              <div className="mt-2 h-1 bg-gradient-to-r from-cyan-500 to-transparent rounded-full group-hover:shadow-lg group-hover:shadow-cyan-500/50 transition-all"></div>
+              <div className="text-cyan-400 text-xs font-bold uppercase tracking-wider mb-0.5">Best Share</div>
+              <div className="text-lg font-bold text-white">{formatNumber(braiinsData?.bestshare)}</div>
+              <div className="text-slate-400 text-xs mt-0.5">Current peak</div>
+              <div className="mt-1 h-0.5 bg-gradient-to-r from-cyan-500 to-transparent rounded-full group-hover:shadow-lg group-hover:shadow-cyan-500/50 transition-all"></div>
             </div>
             <div className="group">
-              <div className="text-purple-400 text-xs font-bold uppercase tracking-wider mb-2">Network Difficulty</div>
-              <div className="text-2xl font-bold text-white">{(networkDifficulty / 1e12).toFixed(2)}T</div>
-              <div className="text-slate-400 text-xs mt-1">Bitcoin network</div>
-              <div className="mt-2 h-1 bg-gradient-to-r from-purple-500 to-transparent rounded-full group-hover:shadow-lg group-hover:shadow-purple-500/50 transition-all"></div>
+              <div className="text-purple-400 text-xs font-bold uppercase tracking-wider mb-0.5">Network Diff</div>
+              <div className="text-lg font-bold text-white">{(networkDifficulty / 1e12).toFixed(2)}T</div>
+              <div className="text-slate-400 text-xs mt-0.5">Bitcoin network</div>
+              <div className="mt-1 h-0.5 bg-gradient-to-r from-purple-500 to-transparent rounded-full group-hover:shadow-lg group-hover:shadow-purple-500/50 transition-all"></div>
             </div>
           </div>
         </div>
 
         {/* Active Miners Grid */}
         {activeMinersList.length > 0 && (
-          <div className="rounded-lg border border-cyan-500/30 bg-gradient-to-br from-slate-800/30 to-slate-900/40 p-4 backdrop-blur">
-            <h2 className="text-sm font-bold text-white mb-3">Active Mining Rigs ({activeMinersList.length})</h2>
-            <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 xl:grid-cols-7 gap-1">
+          <div className="rounded-lg border border-cyan-500/30 bg-gradient-to-br from-slate-800/30 to-slate-900/40 p-2 backdrop-blur">
+            <h2 className="text-xs font-bold text-white mb-1">Active Rigs ({activeMinersList.length})</h2>
+            <div className="grid grid-cols-4 sm:grid-cols-5 md:grid-cols-6 lg:grid-cols-8 xl:grid-cols-10 gap-0.5">
               {activeMinersList.map((miner, idx) => (
-                <div key={idx} className="group relative rounded border border-slate-700/50 bg-gradient-to-br from-slate-800/50 to-slate-900/50 p-2 hover:border-cyan-500/30 hover:shadow-lg hover:shadow-cyan-500/10 transition-all duration-300 text-xs">
-                  <div className="flex items-center justify-between mb-1">
+                <div key={idx} className="group relative rounded border border-slate-700/50 bg-gradient-to-br from-slate-800/50 to-slate-900/50 p-1 hover:border-cyan-500/30 hover:shadow-lg hover:shadow-cyan-500/10 transition-all duration-300 text-xs">
+                  <div className="flex items-center justify-between mb-0.5">
                     <div className="text-cyan-400 font-bold text-xs truncate">{miner.name}</div>
-                    <div className="w-1 h-1 rounded-full bg-cyan-400 animate-pulse flex-shrink-0"></div>
+                    <div className="w-0.5 h-0.5 rounded-full bg-cyan-400 animate-pulse flex-shrink-0"></div>
                   </div>
                   
                   <div className="space-y-0.5 text-xs">
-                    <div className="flex justify-between gap-1">
+                    <div className="flex justify-between gap-0.5">
                       <span className="text-slate-500">1m:</span>
                       <span className="text-cyan-300 font-mono text-xs truncate">{formatHashrate(miner.hashrate1m)}</span>
                     </div>
-                    <div className="flex justify-between gap-1">
+                    <div className="flex justify-between gap-0.5">
                       <span className="text-slate-500">Best:</span>
                       <span className="text-cyan-300 font-mono text-xs">{formatNumber(miner.bestshare)}</span>
                     </div>

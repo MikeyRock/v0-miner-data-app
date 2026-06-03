@@ -3,9 +3,10 @@ import { NextRequest, NextResponse } from 'next/server'
 const DISCORD_WEBHOOK_URL = process.env.DISCORD_WEBHOOK_URL ?? ''
 
 interface AlertPayload {
-  type: 'block_found' | 'worker_offline' | 'milestone' | 'ath' | 'braiins_best_share' | 'braiins_best_ever' | 'blitzpool_best_diff'
+  type: 'block_found' | 'worker_offline' | 'milestone' | 'ath' | 'braiins_best_share' | 'braiins_best_ever' | 'braiins_rig_best' | 'blitzpool_best_diff'
   coin?: 'BCH' | 'BTC' | 'XEC' | 'Braiins' | 'Blitzpool'
   workerName?: string
+  deviceName?: string
   bestShare?: string | number
   bestEver?: number
   bestDifficulty?: number
@@ -119,6 +120,23 @@ function buildEmbed(payload: AlertPayload) {
               { name: 'Best Share', value: formatHashrateValue(payload.bestShare as number), inline: true },
             ],
             footer: { text: 'Braiins Solo Pool' },
+            timestamp: new Date().toISOString(),
+          },
+        ],
+      }
+
+    case 'braiins_rig_best':
+      return {
+        embeds: [
+          {
+            title: `🎯 ${payload.deviceName} — New Personal Best!`,
+            description: `**${payload.deviceName}** just beat its own best share!`,
+            color: 0x06b6d4,
+            fields: [
+              { name: 'Device', value: payload.deviceName ?? 'Unknown Rig', inline: true },
+              { name: 'New Best', value: formatHashrateValue(payload.bestShare as number), inline: true },
+            ],
+            footer: { text: 'Braiins Solo Mining' },
             timestamp: new Date().toISOString(),
           },
         ],
