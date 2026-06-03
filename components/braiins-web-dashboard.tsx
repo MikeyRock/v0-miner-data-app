@@ -32,7 +32,7 @@ export function BraiinsWebDashboard() {
 
   const prevBestShare = useRef<string>('')
 
-  // Fetch Braiins stats directly from the stats page
+  // Fetch Braiins stats from JSON API
   const fetchBraiinsStats = async () => {
     if (!address) {
       setError('No BTC address configured (NEXT_PUBLIC_BRAIINS_ADDRESS)')
@@ -42,32 +42,33 @@ export function BraiinsWebDashboard() {
 
     try {
       console.log('[v0] Fetching Braiins stats for:', address)
-      const res = await fetch(`https://solo.braiins.com/stats/${address}`, {
-        headers: {
-          'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
-          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
-        }
+      const res = await fetch(`https://solo.braiins.com/users/${address}`, {
+        cache: 'no-store',
       })
 
       if (!res.ok) {
         throw new Error(`HTTP ${res.status}`)
       }
 
-      const html = await res.text()
-      const stats = parseStatsFromHTML(html)
-      
-      if (!stats) {
-        throw new Error('Could not parse stats from page')
-      }
+      const data = await res.json()
+      console.log('[v0] Braiins API response:', data)
 
-      console.log('[v0] Parsed stats:', stats)
+      const stats: BraiinsStats = {
+        hashrate1m: data.hashrate1m || 'N/A',
+        hashrate5m: data.hashrate5m || 'N/A',
+        hashrate1hr: data.hashrate1hr || 'N/A',
+        bestshare: data.bestshare?.toFixed(0) || 'N/A',
+        bestever: data.bestever?.toString() || 'N/A',
+        totalshares: (data.shares / 1e9)?.toFixed(2) || 'N/A',
+        workersOnline: data.workers || 0,
+      }
 
       // Check for new best share
-      if (stats.bestshare && stats.bestshare !== prevBestShare.current && prevBestShare.current !== '') {
-        const message = `New best share: ${stats.bestshare}`
+      if (data.bestshare && data.bestshare.toString() !== prevBestShare.current && prevBestShare.current !== '') {
+        const message = `New best share: ${data.bestshare.toFixed(0)}`
         await createAlert('best_share', message)
       }
-      prevBestShare.current = stats.bestshare || ''
+      prevBestShare.current = data.bestshare?.toString() || ''
 
       setBraiinsData(stats)
       setError(null)
@@ -77,37 +78,6 @@ export function BraiinsWebDashboard() {
       setError(e instanceof Error ? e.message : 'Failed to fetch stats')
     } finally {
       setLoading(false)
-    }
-  }
-
-  // Parse stats from HTML
-  const parseStatsFromHTML = (html: string): BraiinsStats | null => {
-    try {
-      // Extract stats from the page - look for data in divs or spans with specific classes
-      // Braiins displays stats like: "Best share: 1.23 GH"
-      
-      // Try to find patterns like "123.45 GH/s", "1.23 TH/s", etc.
-      const hashrate1mMatch = html.match(/(?:1[- ]?min|1m).*?[\s>]([\d.]+\s*[KMGT]H\/s)/i) || 
-                             html.match(/hashrate["\s>]*[:=]*[\s>]*([\d.]+\s*[KMGT]H\/s)/i)
-      const bestshareMatch = html.match(/best["\s>]*(?:share)?["\s>]*[:=]*[\s>]*([\d.]+\s*[KMGT]H)/i) ||
-                            html.match(/bestshare["\s>]*[:=]*[\s>]*([\d.]+\s*[KMGT]H)/i)
-      const totalSharesMatch = html.match(/(?:total|all)\s+shares["\s>]*[:=]*[\s>]*([\d.]+\s*[KMGT]|[\d,]+)/i) ||
-                              html.match(/totalshares["\s>]*[:=]*[\s>]*([\d.]+\s*[KMGT]|[\d,]+)/i)
-
-      const stats: BraiinsStats = {
-        hashrate1m: hashrate1mMatch?.[1] || 'N/A',
-        hashrate5m: 'N/A',
-        hashrate1hr: 'N/A',
-        bestshare: bestshareMatch?.[1] || 'N/A',
-        bestever: 'N/A',
-        totalshares: totalSharesMatch?.[1] || 'N/A',
-        workersOnline: 0,
-      }
-
-      return stats
-    } catch (e) {
-      console.log('[v0] Parse error:', e)
-      return null
     }
   }
 

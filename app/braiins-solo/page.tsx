@@ -1,4 +1,4 @@
-import { DashboardClient } from '@/components/braiins-web-dashboard'
+import { BraiinsWebDashboard } from '@/components/braiins-web-dashboard'
 
 export const metadata = {
   title: 'Braiins Solo Mining Dashboard',
@@ -14,8 +14,8 @@ export default function Page() {
           <p className="text-slate-400">Real-time mining statistics with Discord alerts</p>
         </div>
       </header>
-      <main className="mx-auto max-w-6xl">
-        <DashboardClient />
+      <main className="mx-auto max-w-6xl p-4">
+        <BraiinsWebDashboard />
       </main>
     </div>
   )
