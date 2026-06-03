@@ -50,21 +50,10 @@ function formatNumber(value: string | number | undefined): string {
   return num.toFixed(2)
 }
 
-// Estimate BTC reward based on best share difficulty vs network difficulty
-// Block reward = 3.125 BTC, network difficulty = 138.96T
-function estimateBTCReward(bestShare: number, btcPrice: number): string {
+// Calculate estimated block reward (3.125 BTC) in USD
+function estimateBTCReward(btcPrice: number): string {
   const BLOCK_REWARD = 3.125 // Current BTC block reward
-  const NETWORK_DIFFICULTY = 138.96e12 // Current network difficulty (138.96T)
-  
-  // Calculate probability of finding a block with this difficulty
-  const difficultyRatio = bestShare / NETWORK_DIFFICULTY
-  
-  // Expected BTC reward
-  const expectedBtc = BLOCK_REWARD * difficultyRatio
-  
-  // Convert to USD
-  const usd = expectedBtc * btcPrice
-  
+  const usd = BLOCK_REWARD * btcPrice
   return usd.toLocaleString('en-US', { style: 'currency', currency: 'USD', minimumFractionDigits: 2, maximumFractionDigits: 2 })
 }
 
@@ -79,6 +68,7 @@ export function BraiinsWebDashboard() {
   const [error, setError] = useState<string | null>(null)
   const [lastUpdate, setLastUpdate] = useState<Date | null>(null)
   const [btcPrice, setBtcPrice] = useState<number>(0)
+  const [networkDifficulty, setNetworkDifficulty] = useState<number>(138.96e12)
 
   const prevBestShare = useRef<string>('')
 
@@ -93,6 +83,19 @@ export function BraiinsWebDashboard() {
       }
     } catch (e) {
       console.log('[v0] BTC price fetch error:', e)
+    }
+  }
+
+  const fetchNetworkDifficulty = async () => {
+    try {
+      const res = await fetch('https://mempool.space/api/v1/mining/difficulty-adjustment')
+      if (res.ok) {
+        const data = await res.json()
+        // mempool.space returns difficulty as a number
+        setNetworkDifficulty(data.difficulty || 138.96e12)
+      }
+    } catch (e) {
+      console.log('[v0] Network difficulty fetch error:', e)
     }
   }
 
@@ -189,17 +192,20 @@ export function BraiinsWebDashboard() {
   useEffect(() => {
     fetchBraiinsStats()
     fetchBtcPrice()
+    fetchNetworkDifficulty()
     const interval = setInterval(fetchBraiinsStats, 15000)
     const priceInterval = setInterval(fetchBtcPrice, 60000)
+    const difficultyInterval = setInterval(fetchNetworkDifficulty, 300000) // Every 5 minutes
     return () => {
       clearInterval(interval)
       clearInterval(priceInterval)
+      clearInterval(difficultyInterval)
     }
   }, [address])
 
   const activeMinersList = miners.filter(m => m.lastshare && (Date.now() - m.lastshare * 1000) < 300000)
   const bestShareNum = parseFloat(braiinsData?.bestshare || '0')
-  const usdReward = estimateBTCReward(bestShareNum, btcPrice)
+  const usdReward = estimateBTCReward(btcPrice)
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-950 via-blue-950 to-purple-950 text-white overflow-auto">
@@ -341,7 +347,7 @@ export function BraiinsWebDashboard() {
             </div>
             <div className="group">
               <div className="text-purple-400 text-xs font-bold uppercase tracking-wider mb-2">Network Difficulty</div>
-              <div className="text-2xl font-bold text-white">138.96T</div>
+              <div className="text-2xl font-bold text-white">{formatNumber(networkDifficulty)}T</div>
               <div className="text-slate-400 text-xs mt-1">Bitcoin network</div>
               <div className="mt-2 h-1 bg-gradient-to-r from-purple-500 to-transparent rounded-full group-hover:shadow-lg group-hover:shadow-purple-500/50 transition-all"></div>
             </div>
