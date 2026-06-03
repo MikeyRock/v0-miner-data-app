@@ -20,6 +20,20 @@ interface Alert {
   sent?: boolean
 }
 
+// Format numbers with K, M, G, T suffixes
+function formatNumber(value: string | number | undefined): string {
+  if (!value) return '0'
+  
+  const num = typeof value === 'string' ? parseFloat(value) : value
+  if (isNaN(num)) return '0'
+  
+  if (num >= 1e12) return `${(num / 1e12).toFixed(2)}T`
+  if (num >= 1e9) return `${(num / 1e9).toFixed(2)}G`
+  if (num >= 1e6) return `${(num / 1e6).toFixed(2)}M`
+  if (num >= 1e3) return `${(num / 1e3).toFixed(2)}K`
+  return num.toFixed(2)
+}
+
 export function BraiinsWebDashboard() {
   const address = process.env.NEXT_PUBLIC_BRAIINS_ADDRESS || ''
   const discordWebhook = process.env.NEXT_PUBLIC_DISCORD_WEBHOOK_URL || ''
@@ -189,90 +203,112 @@ export function BraiinsWebDashboard() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between border-b border-cyan-500/30 pb-4">
         <div>
-          <h1 className="text-3xl font-bold">Braiins Solo Dashboard</h1>
-          <p className="text-sm text-gray-500 mt-1">Address: {address.slice(0, 12)}...</p>
+          <h2 className="text-2xl font-bold font-mono text-magenta-400">MINING TELEMETRY</h2>
+          <p className="text-xs text-cyan-400/60 mt-1 font-mono">Wallet: {address.slice(0, 12)}...</p>
         </div>
         <div className="text-right">
           {lastUpdate && (
-            <p className="text-xs text-gray-500">Last update: {lastUpdate.toLocaleTimeString()}</p>
+            <p className="text-xs text-cyan-400/60 font-mono">UPDATE: {lastUpdate.toLocaleTimeString()}</p>
           )}
-          <p className={`text-sm font-semibold ${loading ? 'text-yellow-600' : 'text-green-600'}`}>
-            {loading ? 'Loading...' : 'Live'}
+          <p className={`text-sm font-mono font-bold ${loading ? 'text-yellow-400' : 'text-lime-400'}`}>
+            [{loading ? '●●●' : '●'}] {loading ? 'SYNC...' : 'LIVE'}
           </p>
         </div>
       </div>
 
-      {/* Stats Section */}
+      {/* Error State */}
       {error && (
-        <div className="rounded-lg border border-red-200 bg-red-50 p-4">
-          <p className="text-sm text-red-700 font-semibold">Error</p>
-          <p className="text-xs text-red-600 mt-1">{error}</p>
+        <div className="rounded border border-red-500/50 bg-red-950/30 p-4 backdrop-blur">
+          <p className="text-sm text-red-400 font-mono font-bold">⚠ ERROR</p>
+          <p className="text-xs text-red-300 mt-1 font-mono">{error}</p>
         </div>
       )}
 
       {braiinsData && (
         <>
-          {/* Stats Grid */}
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-            <div className="rounded-lg border border-blue-200 bg-blue-50 p-4">
-              <span className="text-sm text-gray-600">Best Share</span>
-              <p className="text-xl font-bold text-blue-600 mt-1">{braiinsData.bestshare}</p>
+          {/* Main Stats Grid - Cyberpunk Style */}
+          <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-4">
+            {/* Best Share */}
+            <div className="relative group">
+              <div className="absolute inset-0 bg-gradient-to-r from-cyan-500 to-magenta-500 rounded opacity-0 group-hover:opacity-30 blur transition"></div>
+              <div className="relative rounded border border-cyan-500/50 bg-black/60 p-4 backdrop-blur hover:border-magenta-500/50 transition">
+                <p className="text-xs font-mono text-cyan-400/70">BEST_SHARE</p>
+                <p className="text-2xl font-bold font-mono text-cyan-400 mt-2">{formatNumber(braiinsData.bestshare)}</p>
+                <div className="mt-1 h-1 w-full bg-gradient-to-r from-cyan-500 to-transparent rounded"></div>
+              </div>
             </div>
 
-            <div className="rounded-lg border border-purple-200 bg-purple-50 p-4">
-              <span className="text-sm text-gray-600">1m Hashrate</span>
-              <p className="text-xl font-bold text-purple-600 mt-1">{braiinsData.hashrate1m}</p>
+            {/* 1m Hashrate */}
+            <div className="relative group">
+              <div className="absolute inset-0 bg-gradient-to-r from-magenta-500 to-lime-500 rounded opacity-0 group-hover:opacity-30 blur transition"></div>
+              <div className="relative rounded border border-magenta-500/50 bg-black/60 p-4 backdrop-blur hover:border-lime-500/50 transition">
+                <p className="text-xs font-mono text-magenta-400/70">1M_HASHRATE</p>
+                <p className="text-2xl font-bold font-mono text-magenta-400 mt-2">{formatNumber(braiinsData.hashrate1m)}H/s</p>
+                <div className="mt-1 h-1 w-full bg-gradient-to-r from-magenta-500 to-transparent rounded"></div>
+              </div>
             </div>
 
-            <div className="rounded-lg border border-green-200 bg-green-50 p-4">
-              <span className="text-sm text-gray-600">Total Shares</span>
-              <p className="text-xl font-bold text-green-600 mt-1">{braiinsData.totalshares}</p>
+            {/* Total Shares */}
+            <div className="relative group">
+              <div className="absolute inset-0 bg-gradient-to-r from-lime-500 to-cyan-500 rounded opacity-0 group-hover:opacity-30 blur transition"></div>
+              <div className="relative rounded border border-lime-500/50 bg-black/60 p-4 backdrop-blur hover:border-cyan-500/50 transition">
+                <p className="text-xs font-mono text-lime-400/70">TOTAL_SHARES</p>
+                <p className="text-2xl font-bold font-mono text-lime-400 mt-2">{formatNumber(braiinsData.totalshares)}</p>
+                <div className="mt-1 h-1 w-full bg-gradient-to-r from-lime-500 to-transparent rounded"></div>
+              </div>
             </div>
 
-            <div className="rounded-lg border border-orange-200 bg-orange-50 p-4">
-              <span className="text-sm text-gray-600">Best Ever</span>
-              <p className="text-xl font-bold text-orange-600 mt-1">{braiinsData.bestever}</p>
+            {/* Best Ever */}
+            <div className="relative group">
+              <div className="absolute inset-0 bg-gradient-to-r from-yellow-500 to-red-500 rounded opacity-0 group-hover:opacity-30 blur transition"></div>
+              <div className="relative rounded border border-yellow-500/50 bg-black/60 p-4 backdrop-blur hover:border-red-500/50 transition">
+                <p className="text-xs font-mono text-yellow-400/70">BEST_EVER</p>
+                <p className="text-2xl font-bold font-mono text-yellow-400 mt-2">{formatNumber(braiinsData.bestever)}</p>
+                <div className="mt-1 h-1 w-full bg-gradient-to-r from-yellow-500 to-transparent rounded"></div>
+              </div>
             </div>
           </div>
 
-          {/* Hashrate History */}
-          <div className="rounded-lg border border-gray-200 p-4">
-            <h3 className="font-semibold mb-4">Hashrate History</h3>
-            <div className="space-y-2 text-sm">
-              <div className="flex justify-between">
-                <span className="text-gray-600">5m Hashrate:</span>
-                <span className="font-mono">{braiinsData.hashrate5m}</span>
+          {/* Hashrate History Panel */}
+          <div className="rounded border border-cyan-500/30 bg-black/40 p-4 backdrop-blur">
+            <h3 className="font-mono text-sm font-bold text-cyan-400 mb-4">HASHRATE_HISTORY</h3>
+            <div className="space-y-3 text-sm">
+              <div className="flex items-center justify-between p-2 rounded border border-cyan-500/20 bg-cyan-500/5">
+                <span className="font-mono text-cyan-400/70">5M:</span>
+                <span className="font-mono text-cyan-300 font-bold">{formatNumber(braiinsData.hashrate5m)}H/s</span>
               </div>
-              <div className="flex justify-between">
-                <span className="text-gray-600">1h Hashrate:</span>
-                <span className="font-mono">{braiinsData.hashrate1hr}</span>
+              <div className="flex items-center justify-between p-2 rounded border border-magenta-500/20 bg-magenta-500/5">
+                <span className="font-mono text-magenta-400/70">1H:</span>
+                <span className="font-mono text-magenta-300 font-bold">{formatNumber(braiinsData.hashrate1hr)}H/s</span>
               </div>
             </div>
           </div>
         </>
       )}
 
-      {/* Alert Log */}
-      <div className="rounded-lg border border-gray-200 p-4">
-        <h3 className="font-semibold mb-4">Alert Log</h3>
+      {/* Alert Log Panel */}
+      <div className="rounded border border-lime-500/30 bg-black/40 p-4 backdrop-blur">
+        <h3 className="font-mono text-sm font-bold text-lime-400 mb-4">ALERT_LOG</h3>
         {alerts.length === 0 ? (
-          <p className="text-xs text-gray-500">No alerts yet</p>
+          <p className="text-xs font-mono text-lime-400/50">// NO ALERTS - SYSTEM OPTIMAL</p>
         ) : (
-          <div className="max-h-80 overflow-y-auto space-y-2">
+          <div className="max-h-60 overflow-y-auto space-y-2">
             {alerts.map((alert) => (
-              <div key={alert.id} className="rounded border border-gray-100 bg-gray-50 p-3">
-                <div className="flex items-center justify-between">
-                  <span className={`inline-block rounded px-2 py-1 text-xs font-semibold ${alert.type === 'best_share' ? 'bg-blue-100 text-blue-700' : 'bg-red-100 text-red-700'}`}>
-                    {alert.type === 'best_share' ? 'New Best Share' : 'Offline'}
+              <div key={alert.id} className="rounded border border-lime-500/20 bg-lime-500/5 p-2 hover:border-lime-500/50 transition">
+                <div className="flex items-center justify-between mb-1">
+                  <span className={`inline-block px-2 py-0.5 rounded text-xs font-mono font-bold ${
+                    alert.type === 'best_share' 
+                      ? 'bg-cyan-500/20 text-cyan-400' 
+                      : 'bg-red-500/20 text-red-400'
+                  }`}>
+                    [{alert.type === 'best_share' ? '✓' : '!'}]
                   </span>
-                  <span className={`text-xs ${alert.sent ? 'text-green-600' : 'text-gray-400'}`}>
-                    {alert.sent ? '✓ Sent to Discord' : 'Pending'}
-                  </span>
+                  <span className="text-xs font-mono text-lime-400/60">{alert.sent ? '◆' : '◇'}</span>
                 </div>
-                <p className="mt-1 text-xs font-mono text-gray-700">{alert.message}</p>
-                <p className="mt-1 text-xs text-gray-500">{new Date(alert.createdAt).toLocaleString()}</p>
+                <p className="text-xs font-mono text-lime-300">{alert.message}</p>
+                <p className="mt-1 text-xs font-mono text-lime-400/40">{alert.createdAt ? new Date(alert.createdAt).toLocaleTimeString() : 'N/A'}</p>
               </div>
             ))}
           </div>

@@ -7,14 +7,14 @@ export const metadata = {
 
 export default function Page() {
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 to-slate-800">
-      <header className="border-b border-slate-700 bg-slate-800/50 backdrop-blur">
-        <div className="mx-auto max-w-6xl px-4 py-6">
-          <h1 className="text-3xl font-bold text-white">Braiins Solo Miner</h1>
-          <p className="text-slate-400">Real-time mining statistics with Discord alerts</p>
+    <div className="min-h-screen bg-black">
+      <header className="border-b border-cyan-500/30 bg-black/80 backdrop-blur">
+        <div className="mx-auto max-w-7xl px-4 py-8">
+          <h1 className="text-4xl font-bold text-cyan-400 font-mono">⚡ BRAIINS SOLO MINER</h1>
+          <p className="mt-2 text-cyan-300/60 font-mono text-sm">REAL-TIME MINING TELEMETRY // DISCORD ALERT SYSTEM ACTIVE</p>
         </div>
       </header>
-      <main className="mx-auto max-w-6xl p-4">
+      <main className="mx-auto max-w-7xl p-4">
         <BraiinsWebDashboard />
       </main>
     </div>
