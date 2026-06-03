@@ -12,6 +12,15 @@ interface BraiinsStats {
   workersOnline: number
 }
 
+interface Miner {
+  name: string
+  hashrate1m: string
+  hashrate5m: string
+  bestshare: number
+  lastshare: number
+  shares: number
+}
+
 interface Alert {
   id: string
   type: 'best_share' | 'worker_offline'
@@ -39,6 +48,7 @@ export function BraiinsWebDashboard() {
   const discordWebhook = process.env.NEXT_PUBLIC_DISCORD_WEBHOOK_URL || ''
 
   const [braiinsData, setBraiinsData] = useState<BraiinsStats | null>(null)
+  const [miners, setMiners] = useState<Miner[]>([])
   const [alerts, setAlerts] = useState<Alert[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -85,6 +95,20 @@ export function BraiinsWebDashboard() {
       prevBestShare.current = data.bestshare?.toString() || ''
 
       setBraiinsData(stats)
+
+      // Parse miners data
+      if (data.worker && Array.isArray(data.worker)) {
+        const minersList: Miner[] = data.worker.map((w: any) => ({
+          name: w.workername?.split('.').pop() || 'unknown',
+          hashrate1m: w.hashrate1m || '0',
+          hashrate5m: w.hashrate5m || '0',
+          bestshare: w.bestshare || 0,
+          lastshare: w.lastshare || 0,
+          shares: w.shares || 0,
+        }))
+        setMiners(minersList)
+      }
+
       setError(null)
       setLastUpdate(new Date())
     } catch (e) {
@@ -285,6 +309,43 @@ export function BraiinsWebDashboard() {
               </div>
             </div>
           </div>
+
+          {/* Active Miners Panel */}
+          {miners.length > 0 && (
+            <div className="rounded border border-magenta-500/30 bg-black/40 p-4 backdrop-blur">
+              <h3 className="font-mono text-sm font-bold text-magenta-400 mb-4">ACTIVE_MINERS ({miners.length})</h3>
+              <div className="max-h-96 overflow-y-auto space-y-2">
+                {miners.map((miner, idx) => (
+                  <div key={idx} className="rounded border border-magenta-500/20 bg-magenta-500/5 p-3 hover:border-magenta-500/50 transition">
+                    <div className="flex items-center justify-between mb-2">
+                      <span className="font-mono text-sm font-bold text-magenta-300">{miner.name}</span>
+                      <span className={`text-xs font-mono px-2 py-1 rounded ${
+                        miner.lastshare && (Date.now() - miner.lastshare * 1000) < 300000
+                          ? 'bg-lime-500/20 text-lime-400'
+                          : 'bg-yellow-500/20 text-yellow-400'
+                      }`}>
+                        {miner.lastshare && (Date.now() - miner.lastshare * 1000) < 300000 ? 'ACTIVE' : 'IDLE'}
+                      </span>
+                    </div>
+                    <div className="grid grid-cols-3 gap-2 text-xs">
+                      <div className="rounded border border-magenta-500/10 bg-black/40 p-2">
+                        <p className="text-magenta-400/60 font-mono text-xs">1M_RATE</p>
+                        <p className="font-mono font-bold text-magenta-300">{formatNumber(miner.hashrate1m)}H/s</p>
+                      </div>
+                      <div className="rounded border border-cyan-500/10 bg-black/40 p-2">
+                        <p className="text-cyan-400/60 font-mono text-xs">5M_RATE</p>
+                        <p className="font-mono font-bold text-cyan-300">{formatNumber(miner.hashrate5m)}H/s</p>
+                      </div>
+                      <div className="rounded border border-lime-500/10 bg-black/40 p-2">
+                        <p className="text-lime-400/60 font-mono text-xs">BEST_SHARE</p>
+                        <p className="font-mono font-bold text-lime-300">{formatNumber(miner.bestshare)}</p>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
         </>
       )}
 
