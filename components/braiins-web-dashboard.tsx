@@ -229,29 +229,29 @@ export function BraiinsWebDashboard() {
         {activeMinersList.length > 0 && (
           <div className="rounded-lg border border-slate-700/50 bg-gradient-to-br from-slate-800/30 to-slate-900/30 p-6 backdrop-blur">
             <h2 className="text-lg font-bold text-white mb-4">Active Mining Rigs</h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 max-h-96 overflow-y-auto">
+            <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-2">
               {activeMinersList.map((miner, idx) => (
-                <div key={idx} className="group relative rounded-lg border border-slate-700/50 bg-gradient-to-br from-slate-800/50 to-slate-900/50 p-4 hover:border-cyan-500/30 hover:shadow-lg hover:shadow-cyan-500/10 transition-all duration-300">
-                  <div className="flex items-start justify-between mb-3">
+                <div key={idx} className="group relative rounded-lg border border-slate-700/50 bg-gradient-to-br from-slate-800/50 to-slate-900/50 p-3 hover:border-cyan-500/30 hover:shadow-lg hover:shadow-cyan-500/10 transition-all duration-300">
+                  <div className="flex items-start justify-between mb-2">
                     <div className="flex-1">
-                      <div className="text-cyan-400 font-bold text-sm">{miner.name}</div>
-                      <div className="text-slate-400 text-xs mt-1">ID: {idx + 1}</div>
+                      <div className="text-cyan-400 font-bold text-xs">{miner.name}</div>
+                      <div className="text-slate-500 text-xs mt-0.5">#{idx + 1}</div>
                     </div>
-                    <div className="w-2 h-2 rounded-full bg-cyan-400 animate-pulse"></div>
+                    <div className="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-pulse"></div>
                   </div>
                   
-                  <div className="space-y-2 text-xs">
+                  <div className="space-y-1 text-xs">
                     <div className="flex justify-between items-center">
-                      <span className="text-slate-400">1m Rate:</span>
-                      <span className="text-cyan-300 font-mono">{formatHashrate(miner.hashrate1m)}</span>
+                      <span className="text-slate-500">1m:</span>
+                      <span className="text-cyan-300 font-mono text-xs">{formatHashrate(miner.hashrate1m)}</span>
                     </div>
                     <div className="flex justify-between items-center">
-                      <span className="text-slate-400">5m Rate:</span>
-                      <span className="text-purple-300 font-mono">{formatHashrate(miner.hashrate5m)}</span>
+                      <span className="text-slate-500">5m:</span>
+                      <span className="text-purple-300 font-mono text-xs">{formatHashrate(miner.hashrate5m)}</span>
                     </div>
                     <div className="flex justify-between items-center">
-                      <span className="text-slate-400">Best Share:</span>
-                      <span className="text-cyan-300 font-mono">{formatNumber(miner.bestshare)}</span>
+                      <span className="text-slate-500">Best:</span>
+                      <span className="text-cyan-300 font-mono text-xs">{formatNumber(miner.bestshare)}</span>
                     </div>
                   </div>
                 </div>
