@@ -50,12 +50,21 @@ function formatNumber(value: string | number | undefined): string {
   return num.toFixed(2)
 }
 
-// Estimate BTC reward based on best share difficulty and convert to USD
+// Estimate BTC reward based on best share difficulty vs network difficulty
+// Block reward = 3.125 BTC, network difficulty = 138.96T
 function estimateBTCReward(bestShare: number, btcPrice: number): string {
-  // 3.125 BTC block reward = based on difficulty share of total
-  // 1 difficulty ≈ 0.00000001 BTC (approximately)
-  const btc = bestShare * 0.00000001
-  const usd = btc * btcPrice
+  const BLOCK_REWARD = 3.125 // Current BTC block reward
+  const NETWORK_DIFFICULTY = 138.96e12 // Current network difficulty (138.96T)
+  
+  // Calculate probability of finding a block with this difficulty
+  const difficultyRatio = bestShare / NETWORK_DIFFICULTY
+  
+  // Expected BTC reward
+  const expectedBtc = BLOCK_REWARD * difficultyRatio
+  
+  // Convert to USD
+  const usd = expectedBtc * btcPrice
+  
   return usd.toLocaleString('en-US', { style: 'currency', currency: 'USD', minimumFractionDigits: 2, maximumFractionDigits: 2 })
 }
 
@@ -332,7 +341,7 @@ export function BraiinsWebDashboard() {
             </div>
             <div className="group">
               <div className="text-purple-400 text-xs font-bold uppercase tracking-wider mb-2">Network Difficulty</div>
-              <div className="text-2xl font-bold text-white">53.5 EH/s</div>
+              <div className="text-2xl font-bold text-white">138.96T</div>
               <div className="text-slate-400 text-xs mt-1">Bitcoin network</div>
               <div className="mt-2 h-1 bg-gradient-to-r from-purple-500 to-transparent rounded-full group-hover:shadow-lg group-hover:shadow-purple-500/50 transition-all"></div>
             </div>
