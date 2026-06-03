@@ -166,113 +166,186 @@ export function BraiinsWebDashboard() {
   }, [])
 
   if (!address) {
-    return <div className="text-center text-red-400 font-mono">ERROR: No address configured</div>
+    return <div className="text-center text-red-400 font-mono p-4">ERROR: No address configured</div>
   }
 
   return (
-    <div className="w-full h-screen bg-black flex flex-col overflow-hidden">
-      {/* Grid Background Pattern */}
-      <div className="absolute inset-0 opacity-5 pointer-events-none"
-        style={{
-          backgroundImage: 'linear-gradient(0deg, rgba(0,217,255,0.1) 1px, transparent 1px), linear-gradient(90deg, rgba(0,217,255,0.1) 1px, transparent 1px)',
-          backgroundSize: '50px 50px',
-        }}>
-      </div>
-
-      {/* Main Content */}
-      <div className="relative z-10 flex flex-col h-full">
+    <div className="min-h-screen w-full bg-black overflow-hidden" style={{
+      backgroundImage: 'linear-gradient(45deg, rgba(0,100,255,0.03) 1px, transparent 1px), linear-gradient(-45deg, rgba(100,0,255,0.03) 1px, transparent 1px)',
+      backgroundSize: '60px 60px'
+    }}>
+      <div className="relative z-10 min-h-screen flex flex-col">
         {/* Header */}
-        <div className="border-b border-cyan-500/30 px-6 py-4 flex items-center justify-between">
-          <div>
-            <h1 className="text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-magenta-500 font-mono">
-              ⚡ BRAIINS SOLO
-            </h1>
-            <p className="text-xs text-cyan-400/50 font-mono mt-1">{address.slice(0, 16)}...</p>
-          </div>
-          <div className="text-right">
-            <p className={`text-xs font-mono font-bold ${loading ? 'text-yellow-400' : 'text-lime-400'}`}>
-              [{loading ? '●●●' : '●'}] {loading ? 'SYNC' : 'LIVE'}
-            </p>
-            {lastUpdate && <p className="text-xs text-cyan-400/50 font-mono">{lastUpdate.toLocaleTimeString()}</p>}
+        <div className="border-b border-blue-500/20 bg-black/50 backdrop-blur-xl px-8 py-6">
+          <div className="flex items-center justify-between">
+            <div>
+              <h1 className="text-3xl font-light tracking-wider text-blue-300">BRAIINS SOLO</h1>
+              <p className="mt-1 text-xs text-blue-400/60 font-mono">Mining Telemetry • {address.slice(0, 12)}...</p>
+            </div>
+            <div className="text-right">
+              <div className="flex items-center justify-end gap-2 mb-2">
+                <div className={`h-2 w-2 rounded-full ${loading ? 'bg-yellow-400 animate-pulse' : 'bg-emerald-400'}`}></div>
+                <span className="text-sm font-mono text-blue-300">{loading ? 'SYNCING' : 'LIVE'}</span>
+              </div>
+              {lastUpdate && <p className="text-xs text-blue-400/50 font-mono">{lastUpdate.toLocaleTimeString()}</p>}
+            </div>
           </div>
         </div>
 
-        {/* Main Grid Layout */}
-        <div className="flex-1 overflow-hidden px-6 py-4">
-          {error ? (
-            <div className="rounded border border-red-500/50 bg-red-950/30 p-4 text-red-400 font-mono text-sm">⚠ ERROR: {error}</div>
-          ) : braiinsData ? (
-            <div className="grid grid-cols-4 grid-rows-2 gap-3 h-full">
-              {/* Row 1: Main Stats */}
-              <div className="rounded border border-cyan-500/40 bg-black/60 p-3 backdrop-blur flex flex-col justify-center">
-                <p className="text-xs text-cyan-400/60 font-mono">BEST_SHARE</p>
-                <p className="text-2xl font-bold text-cyan-400 font-mono">{formatNumber(braiinsData.bestshare)}</p>
-              </div>
+        {/* Main Content */}
+        <div className="flex-1 flex flex-col px-8 py-6 overflow-hidden">
+          {error && (
+            <div className="mb-4 rounded-lg border border-red-500/30 bg-red-950/20 p-4 backdrop-blur text-red-400 text-sm font-mono">
+              ⚠ {error}
+            </div>
+          )}
 
-              <div className="rounded border border-magenta-500/40 bg-black/60 p-3 backdrop-blur flex flex-col justify-center">
-                <p className="text-xs text-magenta-400/60 font-mono">1M_HASH</p>
-                <p className="text-2xl font-bold text-magenta-400 font-mono">{formatNumber(braiinsData.hashrate1m)}</p>
-              </div>
+          {braiinsData && (
+            <div className="flex flex-col gap-6 h-full overflow-hidden">
+              {/* Key Metrics - 4 Column Grid */}
+              <div className="grid grid-cols-4 gap-4">
+                <div className="group relative rounded-lg border border-blue-500/30 bg-gradient-to-br from-blue-950/20 via-black to-blue-900/5 p-4 backdrop-blur hover:border-blue-500/60 transition overflow-hidden">
+                  <div className="absolute inset-0 bg-gradient-to-br from-blue-600/5 to-transparent opacity-0 group-hover:opacity-100 transition"></div>
+                  <div className="relative">
+                    <p className="text-xs font-mono text-blue-400/70 tracking-wider">BEST SHARE</p>
+                    <p className="mt-2 text-2xl font-light text-blue-300">{formatNumber(braiinsData.bestshare)}</p>
+                  </div>
+                  <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-gradient-to-r from-blue-500 via-blue-600 to-transparent"></div>
+                </div>
 
-              <div className="rounded border border-purple-500/40 bg-black/60 p-3 backdrop-blur flex flex-col justify-center">
-                <p className="text-xs text-purple-400/60 font-mono">TOTAL_SH</p>
-                <p className="text-2xl font-bold text-purple-400 font-mono">{formatNumber(braiinsData.totalshares)}</p>
-              </div>
+                <div className="group relative rounded-lg border border-purple-500/30 bg-gradient-to-br from-purple-950/20 via-black to-purple-900/5 p-4 backdrop-blur hover:border-purple-500/60 transition overflow-hidden">
+                  <div className="absolute inset-0 bg-gradient-to-br from-purple-600/5 to-transparent opacity-0 group-hover:opacity-100 transition"></div>
+                  <div className="relative">
+                    <p className="text-xs font-mono text-purple-400/70 tracking-wider">1M HASHRATE</p>
+                    <p className="mt-2 text-2xl font-light text-purple-300">{formatNumber(braiinsData.hashrate1m)}</p>
+                  </div>
+                  <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-gradient-to-r from-purple-500 via-purple-600 to-transparent"></div>
+                </div>
 
-              <div className="rounded border border-blue-500/40 bg-black/60 p-3 backdrop-blur flex flex-col justify-center">
-                <p className="text-xs text-blue-400/60 font-mono">BEST_EVR</p>
-                <p className="text-2xl font-bold text-blue-400 font-mono">{formatNumber(braiinsData.bestever)}</p>
-              </div>
+                <div className="group relative rounded-lg border border-cyan-500/30 bg-gradient-to-br from-cyan-950/20 via-black to-cyan-900/5 p-4 backdrop-blur hover:border-cyan-500/60 transition overflow-hidden">
+                  <div className="absolute inset-0 bg-gradient-to-br from-cyan-600/5 to-transparent opacity-0 group-hover:opacity-100 transition"></div>
+                  <div className="relative">
+                    <p className="text-xs font-mono text-cyan-400/70 tracking-wider">TOTAL SHARES</p>
+                    <p className="mt-2 text-2xl font-light text-cyan-300">{formatNumber(braiinsData.totalshares)}</p>
+                  </div>
+                  <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-gradient-to-r from-cyan-500 via-cyan-600 to-transparent"></div>
+                </div>
 
-              {/* Row 2: Details + Miners */}
-              <div className="col-span-2 rounded border border-cyan-500/30 bg-black/60 p-3 backdrop-blur overflow-hidden">
-                <p className="text-xs text-cyan-400/60 font-mono mb-2">HASHRATE_HIST</p>
-                <div className="space-y-1 text-xs font-mono">
-                  <div className="flex justify-between text-cyan-300"><span>5M:</span><span>{formatNumber(braiinsData.hashrate5m)}</span></div>
-                  <div className="flex justify-between text-magenta-300"><span>1H:</span><span>{formatNumber(braiinsData.hashrate1hr)}</span></div>
+                <div className="group relative rounded-lg border border-pink-500/30 bg-gradient-to-br from-pink-950/20 via-black to-pink-900/5 p-4 backdrop-blur hover:border-pink-500/60 transition overflow-hidden">
+                  <div className="absolute inset-0 bg-gradient-to-br from-pink-600/5 to-transparent opacity-0 group-hover:opacity-100 transition"></div>
+                  <div className="relative">
+                    <p className="text-xs font-mono text-pink-400/70 tracking-wider">ACTIVE MINERS</p>
+                    <p className="mt-2 text-2xl font-light text-pink-300">{miners.length}</p>
+                  </div>
+                  <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-gradient-to-r from-pink-500 via-pink-600 to-transparent"></div>
                 </div>
               </div>
 
-              <div className="col-span-2 rounded border border-magenta-500/30 bg-black/60 p-3 backdrop-blur overflow-hidden">
-                <p className="text-xs text-magenta-400/60 font-mono mb-2">ALERTS ({alerts.length})</p>
-                <div className="space-y-1 text-xs max-h-16 overflow-hidden">
-                  {alerts.slice(0, 3).map((a) => (
-                    <div key={a.id} className="text-cyan-300 font-mono truncate">
-                      <span className={a.type === 'best_share' ? 'text-lime-400' : 'text-red-400'}>[{a.type === 'best_share' ? '✓' : '!'}]</span> {a.message.slice(0, 30)}
+              {/* Active Miners - Main Section */}
+              {miners.length > 0 && (
+                <div className="flex-1 flex flex-col overflow-hidden">
+                  <h2 className="text-lg font-light tracking-wider text-blue-300 mb-4">ACTIVE MINING RIGS</h2>
+                  <div className="grid grid-cols-3 gap-4 overflow-y-auto pb-2">
+                    {miners.map((miner, idx) => {
+                      const isActive = miner.lastshare && (Date.now() - miner.lastshare * 1000) < 300000
+                      return (
+                        <div key={idx} className="group relative rounded-lg border border-blue-500/30 bg-gradient-to-br from-blue-950/30 via-black to-blue-900/10 p-5 backdrop-blur hover:border-blue-500/70 transition overflow-hidden flex flex-col">
+                          <div className="absolute inset-0 bg-gradient-to-br from-blue-600/10 to-transparent opacity-0 group-hover:opacity-100 transition"></div>
+                          <div className="relative flex-1">
+                            <div className="flex items-center justify-between mb-4">
+                              <h3 className="font-mono text-lg font-semibold text-blue-300">{miner.name}</h3>
+                              <div className={`h-3 w-3 rounded-full ${isActive ? 'bg-emerald-400 shadow-lg shadow-emerald-400/50' : 'bg-yellow-500'}`}></div>
+                            </div>
+
+                            <div className="space-y-3">
+                              <div className="rounded-lg border border-blue-500/20 bg-blue-950/40 p-3">
+                                <p className="text-xs text-blue-400/70 font-mono mb-1">1M HASHRATE</p>
+                                <p className="text-xl font-light text-blue-300 font-mono">{formatNumber(miner.hashrate1m)}H/s</p>
+                              </div>
+
+                              <div className="rounded-lg border border-purple-500/20 bg-purple-950/40 p-3">
+                                <p className="text-xs text-purple-400/70 font-mono mb-1">5M HASHRATE</p>
+                                <p className="text-xl font-light text-purple-300 font-mono">{formatNumber(miner.hashrate5m)}H/s</p>
+                              </div>
+
+                              <div className="rounded-lg border border-cyan-500/20 bg-cyan-950/40 p-3">
+                                <p className="text-xs text-cyan-400/70 font-mono mb-1">BEST SHARE</p>
+                                <p className="text-xl font-light text-cyan-300 font-mono">{formatNumber(miner.bestshare)}</p>
+                              </div>
+                            </div>
+
+                            <div className="mt-4 flex items-center justify-between text-xs">
+                              <span className={`font-mono font-semibold ${isActive ? 'text-emerald-400' : 'text-yellow-400'}`}>
+                                {isActive ? '● ACTIVE' : '○ IDLE'}
+                              </span>
+                              <span className="text-blue-400/60 font-mono">{miner.shares} shares</span>
+                            </div>
+                          </div>
+                          <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-gradient-to-r from-blue-500 to-transparent"></div>
+                        </div>
+                      )
+                    })}
+                  </div>
+                </div>
+              )}
+
+              {/* Bottom Panels */}
+              <div className="grid grid-cols-2 gap-4 flex-shrink-0">
+                <div className="rounded-lg border border-blue-500/30 bg-gradient-to-br from-blue-950/20 via-black to-blue-900/5 p-4 backdrop-blur">
+                  <h3 className="text-sm font-mono text-blue-300 mb-3 tracking-wider">HASHRATE HISTORY</h3>
+                  <div className="space-y-2 text-xs font-mono">
+                    <div className="flex items-center justify-between p-2 rounded border border-blue-500/20 bg-blue-950/20">
+                      <span className="text-blue-400/70">5M</span>
+                      <span className="text-blue-300 font-light">{formatNumber(braiinsData.hashrate5m)}H/s</span>
                     </div>
-                  ))}
+                    <div className="flex items-center justify-between p-2 rounded border border-purple-500/20 bg-purple-950/20">
+                      <span className="text-purple-400/70">1H</span>
+                      <span className="text-purple-300 font-light">{formatNumber(braiinsData.hashrate1hr)}H/s</span>
+                    </div>
+                    <div className="flex items-center justify-between p-2 rounded border border-cyan-500/20 bg-cyan-950/20">
+                      <span className="text-cyan-400/70">BEST EVER</span>
+                      <span className="text-cyan-300 font-light">{formatNumber(braiinsData.bestever)}</span>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="rounded-lg border border-pink-500/30 bg-gradient-to-br from-pink-950/20 via-black to-pink-900/5 p-4 backdrop-blur">
+                  <h3 className="text-sm font-mono text-pink-300 mb-3 tracking-wider">RECENT ALERTS</h3>
+                  {alerts.length === 0 ? (
+                    <p className="text-xs text-pink-400/50 font-mono">No alerts • System optimal</p>
+                  ) : (
+                    <div className="space-y-2 max-h-24 overflow-y-auto text-xs font-mono">
+                      {alerts.slice(0, 3).map((alert) => (
+                        <div key={alert.id} className="rounded border border-pink-500/20 bg-pink-950/20 p-2">
+                          <p className={`font-semibold ${alert.type === 'best_share' ? 'text-emerald-400' : 'text-red-400'}`}>
+                            [{alert.type === 'best_share' ? '✓' : '!'}] {alert.message}
+                          </p>
+                          <p className="text-pink-400/40 text-xs mt-1">{new Date(alert.createdAt).toLocaleTimeString()}</p>
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </div>
               </div>
             </div>
-          ) : (
-            <div className="text-center text-cyan-400/50 font-mono">Loading...</div>
           )}
         </div>
-
-        {/* Miners Bar - Bottom */}
-        {miners.length > 0 && (
-          <div className="border-t border-magenta-500/30 px-6 py-3 overflow-x-auto">
-            <p className="text-xs text-magenta-400/60 font-mono mb-2">ACTIVE_MINERS ({miners.length})</p>
-            <div className="flex gap-2 overflow-x-auto pb-1">
-              {miners.map((m, i) => (
-                <div key={i} className="rounded border border-magenta-500/40 bg-black/60 p-2 backdrop-blur flex-shrink-0 min-w-max text-xs font-mono">
-                  <p className="text-magenta-300 font-bold">{m.name}</p>
-                  <p className="text-cyan-400">1M: {formatNumber(m.hashrate1m)}</p>
-                  <p className="text-blue-400">B: {formatNumber(m.bestshare)}</p>
-                  <p className={m.lastshare && (Date.now() - m.lastshare * 1000) < 300000 ? 'text-lime-400' : 'text-yellow-400'}>
-                    {m.lastshare && (Date.now() - m.lastshare * 1000) < 300000 ? 'ONLINE' : 'IDLE'}
-                  </p>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
       </div>
 
-      {/* Hide scrollbars */}
       <style>{`
-        ::-webkit-scrollbar { display: none; }
-        * { scrollbar-width: none; }
+        ::-webkit-scrollbar {
+          width: 4px;
+        }
+        ::-webkit-scrollbar-track {
+          background: transparent;
+        }
+        ::-webkit-scrollbar-thumb {
+          background: rgba(0, 150, 255, 0.2);
+          border-radius: 2px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+          background: rgba(0, 150, 255, 0.4);
+        }
       `}</style>
     </div>
   )
