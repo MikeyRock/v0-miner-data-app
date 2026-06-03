@@ -484,50 +484,120 @@ export function BraiinsWebDashboard() {
           </div>
         )}
 
-        {/* MIKEYROCKS Footer */}
-        <div className="mt-12 mb-6 flex items-center justify-center">
-          <div className="text-center">
+        {/* MIKEYROCKS Footer - Engraved Cyberpunk */}
+        <div className="mt-16 mb-8 flex items-center justify-center relative">
+          {/* Background glow/engraving effect */}
+          <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+            <div 
+              className="w-80 h-32 rounded-lg"
+              style={{
+                background: 'radial-gradient(ellipse at center, rgba(6, 182, 212, 0.15) 0%, transparent 70%)',
+                filter: 'blur(30px)',
+              }}
+            ></div>
+          </div>
+
+          <div className="text-center relative z-10">
             {/* BTC MINING - Top */}
             <div 
-              className="text-sm font-bold tracking-widest mb-1" 
+              className="text-xs font-bold tracking-[0.25em] mb-2" 
               style={{ 
                 fontFamily: 'var(--font-orbitron), sans-serif',
                 color: '#06b6d4',
-                letterSpacing: '0.15em',
                 textShadow: `
-                  0 0 10px rgba(6, 182, 212, 0.6),
-                  0 0 20px rgba(6, 182, 212, 0.3)
+                  -1px -1px 0 rgba(168, 85, 247, 0.4),
+                  1px -1px 0 rgba(168, 85, 247, 0.4),
+                  -1px 1px 0 rgba(168, 85, 247, 0.4),
+                  1px 1px 0 rgba(168, 85, 247, 0.4),
+                  0 0 8px rgba(6, 182, 212, 0.5),
+                  inset -2px -2px 4px rgba(0, 0, 0, 0.8),
+                  inset 1px 1px 2px rgba(6, 182, 212, 0.3)
                 `,
-                filter: 'drop-shadow(0 0 4px rgba(6, 182, 212, 0.4))',
+                filter: 'drop-shadow(0 0 8px rgba(6, 182, 212, 0.4)) contrast(1.2)',
+                fontWeight: 900,
               }}
             >
               BTC MINING
             </div>
 
-            {/* MIKEYROCKS - Bottom */}
-            <div 
-              className="text-5xl font-black tracking-tighter" 
-              style={{ 
-                fontFamily: 'var(--font-orbitron), sans-serif',
-                color: '#06b6d4',
-                textShadow: `
-                  -2px -2px 0 rgba(6, 182, 212, 0.6),
-                  2px -2px 0 rgba(6, 182, 212, 0.6),
-                  -2px 2px 0 rgba(6, 182, 212, 0.6),
-                  2px 2px 0 rgba(6, 182, 212, 0.6),
-                  -3px 0 0 rgba(168, 85, 247, 0.5),
-                  3px 0 0 rgba(168, 85, 247, 0.5),
-                  0 -3px 0 rgba(168, 85, 247, 0.5),
-                  0 3px 0 rgba(168, 85, 247, 0.5),
-                  0 0 20px rgba(6, 182, 212, 0.6),
-                  0 0 40px rgba(6, 182, 212, 0.3)
-                `,
-                letterSpacing: '-0.05em',
-                transform: 'skewY(-2deg)',
-                filter: 'drop-shadow(0 0 10px rgba(6, 182, 212, 0.6))',
-              }}
-            >
-              MIKEYROCKS
+            {/* MIKEYROCKS - Bottom - Main Layer */}
+            <div className="relative inline-block">
+              {/* Shadow/Engraving Layer 1 - Behind */}
+              <div 
+                className="absolute text-6xl font-black tracking-[-0.08em]" 
+                style={{ 
+                  fontFamily: 'var(--font-orbitron), sans-serif',
+                  color: 'rgba(0, 0, 0, 0.6)',
+                  top: '3px',
+                  left: '2px',
+                  textShadow: `
+                    -4px -4px 0 rgba(168, 85, 247, 0.2),
+                    4px -4px 0 rgba(168, 85, 247, 0.2),
+                    -4px 4px 0 rgba(6, 182, 212, 0.2),
+                    4px 4px 0 rgba(6, 182, 212, 0.2)
+                  `,
+                  letterSpacing: '-0.08em',
+                  transform: 'skewY(-3deg) scaleX(0.98)',
+                  filter: 'blur(0.5px)',
+                  pointerEvents: 'none',
+                }}
+              >
+                MIKEYROCKS
+              </div>
+
+              {/* Main Text Layer - Engraved Effect */}
+              <div 
+                className="text-6xl font-black tracking-[-0.08em] relative" 
+                style={{ 
+                  fontFamily: 'var(--font-orbitron), sans-serif',
+                  background: 'linear-gradient(135deg, #06b6d4 0%, #0891b2 50%, #06d6d4 100%)',
+                  backgroundClip: 'text',
+                  WebkitBackgroundClip: 'text',
+                  WebkitTextFillColor: 'transparent',
+                  textShadow: `
+                    -3px -3px 0 rgba(168, 85, 247, 0.5),
+                    3px -3px 0 rgba(168, 85, 247, 0.5),
+                    -3px 3px 0 rgba(6, 182, 212, 0.5),
+                    3px 3px 0 rgba(6, 182, 212, 0.5),
+                    -5px -5px 8px rgba(0, 0, 0, 0.4),
+                    5px 5px 8px rgba(6, 182, 212, 0.2)
+                  `,
+                  filter: `
+                    drop-shadow(-2px -2px 0 rgba(168, 85, 247, 0.6))
+                    drop-shadow(2px -2px 0 rgba(6, 182, 212, 0.6))
+                    drop-shadow(-2px 2px 0 rgba(6, 182, 212, 0.6))
+                    drop-shadow(2px 2px 0 rgba(168, 85, 247, 0.6))
+                    drop-shadow(0 0 20px rgba(6, 182, 212, 0.8))
+                    drop-shadow(0 0 40px rgba(6, 182, 212, 0.4))
+                  `,
+                  letterSpacing: '-0.08em',
+                  transform: 'skewY(-3deg) scaleX(1.02)',
+                  fontStyle: 'italic',
+                  fontWeight: 900,
+                }}
+              >
+                MIKEYROCKS
+              </div>
+
+              {/* Highlight/Edge Layer - Top Right */}
+              <div 
+                className="absolute text-6xl font-black tracking-[-0.08em]" 
+                style={{ 
+                  fontFamily: 'var(--font-orbitron), sans-serif',
+                  color: 'rgba(6, 182, 212, 0.3)',
+                  top: '-1px',
+                  left: '-1px',
+                  textShadow: `
+                    -1px -1px 0 rgba(6, 182, 212, 0.8)
+                  `,
+                  letterSpacing: '-0.08em',
+                  transform: 'skewY(-3deg) scaleX(1.02)',
+                  pointerEvents: 'none',
+                  mixBlendMode: 'screen',
+                }}
+              >
+                MIKEYROCKS
+              </div>
             </div>
           </div>
         </div>
