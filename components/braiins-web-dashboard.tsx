@@ -487,11 +487,28 @@ export function BraiinsWebDashboard() {
         )}
 
         {/* MIKEYROCKS Footer Image */}
-        <div className="mt-16 mb-8 flex items-center justify-center relative">
+        <div className="mt-16 mb-8 flex flex-col items-center justify-center relative gap-2">
+          {/* BTC MINING Label */}
+          <div 
+            className="text-xs font-bold tracking-[0.25em]" 
+            style={{ 
+              fontFamily: 'var(--font-orbitron), sans-serif',
+              color: '#06b6d4',
+              textShadow: `
+                0 0 8px rgba(6, 182, 212, 0.5),
+                0 0 16px rgba(6, 182, 212, 0.3)
+              `,
+              fontWeight: 900,
+            }}
+          >
+            BTC MINING
+          </div>
+          
+          {/* Footer Image */}
           <img 
             src="/images/mikeyrocks-footer.png" 
             alt="MIKEYROCKS BTC MINING" 
-            className="h-24 w-auto object-contain drop-shadow-lg"
+            className="h-16 w-auto object-contain drop-shadow-lg"
             style={{
               filter: 'drop-shadow(0 0 15px rgba(6, 182, 212, 0.4))',
             }}
