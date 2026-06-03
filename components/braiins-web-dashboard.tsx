@@ -173,7 +173,7 @@ export function DashboardClient() {
                     {alert.type}
                   </span>
                   <p className="mt-1">{alert.message}</p>
-                  <p className="mt-1 text-xs text-gray-500">{new Date(alert.createdAt).toLocaleString()}</p>
+                  <p className="mt-1 text-xs text-gray-500">{alert.createdAt ? new Date(alert.createdAt).toLocaleString() : 'N/A'}</p>
                 </div>
                 {alert.discordSent && <span className="ml-2 text-xs text-green-600">✓ Sent</span>}
               </div>

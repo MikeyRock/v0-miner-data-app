@@ -23,15 +23,22 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Missing address parameter' }, { status: 400 })
     }
 
+    console.log('[v0] Fetching Braiins for address:', address)
+    
     const res = await fetch(`${BRAIINS_API_BASE}/api/accounts/${address}`, {
       cache: 'no-store',
     })
 
+    console.log('[v0] Braiins API response status:', res.status)
+    
     if (!res.ok) {
-      return NextResponse.json({ error: `Braiins API error: ${res.status}` }, { status: res.status })
+      const errorText = await res.text()
+      console.log('[v0] Braiins API error:', errorText)
+      return NextResponse.json({ error: `Braiins API error: ${res.status}`, details: errorText }, { status: res.status })
     }
 
     const data = await res.json()
+    console.log('[v0] Braiins API data:', JSON.stringify(data).slice(0, 200))
 
     // Parse Braiins response
     const stats: BraiinsStats = {

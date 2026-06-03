@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { db } from '@/lib/db'
 import { alerts } from '@/lib/db/schema'
-import { desc, limit } from 'drizzle-orm'
+import { desc, eq } from 'drizzle-orm'
 
 export async function GET() {
   try {
@@ -62,7 +62,7 @@ export async function POST(request: NextRequest) {
           await db
             .update(alerts)
             .set({ discordSent: true })
-            .where({ id: newAlert[0].id })
+            .where(eq(alerts.id, newAlert[0].id))
         }
       } catch (discordError) {
         console.error('[v0] Discord webhook error:', discordError)
