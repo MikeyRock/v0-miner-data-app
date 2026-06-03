@@ -317,6 +317,13 @@ export function BraiinsWebDashboard() {
               {hashRateHistory.length > 0 ? (
                 <ResponsiveContainer width="100%" height="100%">
                   <LineChart data={hashRateHistory} margin={{ top: 5, right: 5, bottom: 0, left: 0 }}>
+                    <defs>
+                      <linearGradient id="hashRateGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+                        <stop offset="0%" stopColor="#06b6d4" stopOpacity={1} />
+                        <stop offset="50%" stopColor="#0891b2" stopOpacity={1} />
+                        <stop offset="100%" stopColor="#06d6d4" stopOpacity={1} />
+                      </linearGradient>
+                    </defs>
                     <CartesianGrid strokeDasharray="3 3" stroke="rgba(6, 182, 212, 0.1)" />
                     <Tooltip 
                       contentStyle={{ backgroundColor: 'rgba(20, 20, 40, 0.95)', border: '1px solid rgba(6, 182, 212, 0.3)', borderRadius: '6px' }}
@@ -327,7 +334,7 @@ export function BraiinsWebDashboard() {
                     <Line 
                       type="monotone" 
                       dataKey="hashrate1m" 
-                      stroke="#06b6d4" 
+                      stroke="url(#hashRateGradient)"
                       dot={false}
                       strokeWidth={2.5}
                       isAnimationActive={false}
@@ -476,6 +483,34 @@ export function BraiinsWebDashboard() {
             <div className="text-red-400 text-sm font-medium">Error: {error}</div>
           </div>
         )}
+
+        {/* MIKEYROCKS Footer */}
+        <div className="mt-8 mb-4 flex items-center justify-center">
+          <div 
+            className="text-4xl font-black tracking-tighter" 
+            style={{ 
+              fontFamily: 'var(--font-orbitron), sans-serif',
+              color: '#FFFF00',
+              textShadow: `
+                -2px -2px 0 rgba(255, 255, 0, 0.8),
+                2px -2px 0 rgba(255, 255, 0, 0.8),
+                -2px 2px 0 rgba(255, 255, 0, 0.8),
+                2px 2px 0 rgba(255, 255, 0, 0.8),
+                -3px 0 0 rgba(6, 182, 212, 0.6),
+                3px 0 0 rgba(168, 85, 247, 0.6),
+                0 -3px 0 rgba(6, 182, 212, 0.6),
+                0 3px 0 rgba(168, 85, 247, 0.6),
+                0 0 20px rgba(255, 255, 0, 0.8),
+                0 0 40px rgba(6, 182, 212, 0.4)
+              `,
+              letterSpacing: '-0.05em',
+              transform: 'skewY(-2deg)',
+              filter: 'drop-shadow(0 0 10px rgba(255, 255, 0, 0.6))',
+            }}
+          >
+            MIKEYROCKS
+          </div>
+        </div>
       </div>
     </div>
   )
