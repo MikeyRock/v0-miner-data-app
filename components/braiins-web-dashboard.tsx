@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useRef, useState } from 'react'
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts'
 
 interface BraiinsStats {
   hashrate1m: string
@@ -69,6 +70,7 @@ export function BraiinsWebDashboard() {
   const [lastUpdate, setLastUpdate] = useState<Date | null>(null)
   const [btcPrice, setBtcPrice] = useState<number>(0)
   const [networkDifficulty, setNetworkDifficulty] = useState<number>(138.96e12)
+  const [bestShareHistory, setBestShareHistory] = useState<{ timestamp: number; bestshare: number }[]>([])
 
   const prevBestShare = useRef<string>('')
 
@@ -130,6 +132,11 @@ export function BraiinsWebDashboard() {
       if (currentBestShare > 0 && previousBestShare > 0 && currentBestShare > previousBestShare) {
         const message = `New Best Share: ${formatNumber(currentBestShare)}`
         await createAlert('best_share', message)
+        // Track to history
+        setBestShareHistory((prev) => [
+          ...prev.slice(-59), // Keep last 60 data points
+          { timestamp: Date.now(), bestshare: currentBestShare }
+        ])
       }
       prevBestShare.current = currentBestShare.toString()
 
@@ -212,7 +219,8 @@ export function BraiinsWebDashboard() {
       {/* Header */}
       <div className="flex items-center justify-between px-4 py-3 border-b border-slate-800/50 bg-slate-900/50">
         <div>
-          <h1 className="text-2xl font-bold">Braiins Solo</h1>
+          <h1 className="text-3xl font-black" style={{ fontFamily: 'var(--font-orbitron), sans-serif', letterSpacing: '-0.02em', textShadow: '0 0 20px rgba(6,182,212,0.6), 0 0 40px rgba(168,85,247,0.4)' }}>BRAIINS</h1>
+          <h2 className="text-lg font-bold text-cyan-300" style={{ fontFamily: 'var(--font-orbitron), sans-serif', letterSpacing: '0.1em', textShadow: '0 0 10px rgba(6,182,212,0.4)' }}>SOLO</h2>
           <p className="text-slate-400 text-xs mt-0.5">Mining Dashboard</p>
         </div>
         <div className="flex items-center gap-2">
@@ -305,40 +313,37 @@ export function BraiinsWebDashboard() {
             </div>
           </div>
 
-          {/* Best Share to Difficulty */}
+          {/* Historical Best Share Progression */}
           <div className="group relative rounded-lg border border-purple-500/40 bg-gradient-to-br from-slate-800/40 to-slate-900/50 p-2 backdrop-blur-lg hover:border-purple-400/70 hover:shadow-xl hover:shadow-purple-500/40 transition-all">
             <div className="absolute inset-0 rounded-lg opacity-0 group-hover:opacity-15 bg-[radial-gradient(ellipse_at_50%_50%,_rgba(168,85,247,0.3),transparent_70%)] blur-lg transition-all duration-300"></div>
-            <h3 className="text-xs font-bold text-purple-300 mb-1 uppercase tracking-widest">Best Share vs Difficulty</h3>
-            <div className="flex items-center justify-center h-20 relative z-10">
-              <div className="relative w-16 h-16">
-                <svg viewBox="0 0 100 100" className="w-full h-full drop-shadow-lg">
-                  {/* Background circle */}
-                  <circle cx="50" cy="50" r="45" fill="none" stroke="rgba(148, 113, 248, 0.15)" strokeWidth="2"/>
-                  {/* Progress circle */}
-                  {(() => {
-                    const ratio = Math.min((bestShareNum / networkDifficulty) * 100, 100)
-                    const circumference = 283
-                    const dashoffset = circumference * (1 - ratio / 100)
-                    return (
-                      <circle cx="50" cy="50" r="45" fill="none" stroke="url(#gradient)" strokeWidth="3" 
-                        strokeDasharray={`${circumference - dashoffset} ${circumference}`}
-                        strokeLinecap="round" transform="rotate(-90 50 50)" filter="drop-shadow(0 0 4px rgba(6,182,212,0.5))" />
-                    )
-                  })()}
-                  <defs>
-                    <linearGradient id="gradient" x1="0%" y1="0%" x2="100%" y2="100%">
-                      <stop offset="0%" stopColor="#06b6d4" />
-                      <stop offset="100%" stopColor="#d946ef" />
-                    </linearGradient>
-                  </defs>
-                </svg>
-                <div className="absolute inset-0 flex items-center justify-center">
-                  <div className="text-center">
-                    <div className="text-sm font-bold text-cyan-300 drop-shadow-lg">{Math.min(Math.round((bestShareNum / networkDifficulty) * 100), 100)}%</div>
-                    <div className="text-xs text-slate-400">difficulty</div>
-                  </div>
+            <h3 className="text-xs font-bold text-purple-300 mb-1 uppercase tracking-widest relative z-10">Best Share Progression</h3>
+            <div className="h-20 relative z-10">
+              {bestShareHistory.length > 0 ? (
+                <ResponsiveContainer width="100%" height="100%">
+                  <LineChart data={bestShareHistory} margin={{ top: 5, right: 5, bottom: 0, left: 0 }}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="rgba(148, 113, 248, 0.1)" />
+                    <Tooltip 
+                      contentStyle={{ backgroundColor: 'rgba(20, 20, 40, 0.95)', border: '1px solid rgba(168, 85, 247, 0.3)', borderRadius: '6px' }}
+                      labelStyle={{ color: '#c084fc' }}
+                      formatter={(value: any) => formatNumber(value)}
+                    />
+                    <YAxis hide domain={['dataMin * 0.95', 'dataMax * 1.05']} />
+                    <Line 
+                      type="monotone" 
+                      dataKey="bestshare" 
+                      stroke="#d946ef" 
+                      dot={false}
+                      strokeWidth={2}
+                      isAnimationActive={false}
+                      filter="drop-shadow(0 0 4px rgba(217, 70, 239, 0.6))"
+                    />
+                  </LineChart>
+                </ResponsiveContainer>
+              ) : (
+                <div className="flex items-center justify-center h-full text-slate-500 text-xs">
+                  Waiting for best share data...
                 </div>
-              </div>
+              )}
             </div>
           </div>
         </div>
