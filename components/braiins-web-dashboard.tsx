@@ -71,6 +71,7 @@ export function BraiinsWebDashboard() {
   const [btcPrice, setBtcPrice] = useState<number>(0)
   const [networkDifficulty, setNetworkDifficulty] = useState<number>(138.96e12)
   const [bestShareHistory, setBestShareHistory] = useState<{ timestamp: number; bestshare: number }[]>([])
+  const [hashRateHistory, setHashRateHistory] = useState<{ timestamp: number; hashrate1m: number; hashrate5m: number; hashrate1hr: number }[]>([])
 
   const prevBestShare = useRef<string>('')
 
@@ -139,6 +140,17 @@ export function BraiinsWebDashboard() {
         ])
       }
       prevBestShare.current = currentBestShare.toString()
+
+      // Track hashrate history
+      setHashRateHistory((prev) => [
+        ...prev.slice(-59), // Keep last 60 data points
+        {
+          timestamp: Date.now(),
+          hashrate1m: parseFloat(data.hashrate1m?.toString() || '0'),
+          hashrate5m: parseFloat(data.hashrate5m?.toString() || '0'),
+          hashrate1hr: parseFloat(data.hashrate1hr?.toString() || '0'),
+        }
+      ])
 
       setBraiinsData(stats)
 
@@ -297,26 +309,44 @@ export function BraiinsWebDashboard() {
 
         {/* Charts Row */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-1">
-          {/* Hashrate Trend Chart */}
+          {/* Hashrate Trend Line Chart */}
           <div className="group relative rounded-lg border border-cyan-500/40 bg-gradient-to-br from-slate-800/40 to-slate-900/50 p-2 backdrop-blur-lg hover:border-cyan-400/70 hover:shadow-xl hover:shadow-cyan-500/40 transition-all">
             <div className="absolute inset-0 rounded-lg opacity-0 group-hover:opacity-15 bg-[radial-gradient(ellipse_at_50%_50%,_rgba(6,182,212,0.3),transparent_70%)] blur-lg transition-all duration-300"></div>
-            <h3 className="text-xs font-bold text-cyan-300 mb-1 uppercase tracking-widest">Hashrate Trend</h3>
-            <div className="h-20 flex items-end justify-between gap-1 relative z-10">
-              <div className="flex-1 h-1/3 bg-gradient-to-t from-cyan-500/60 to-cyan-400/30 rounded hover:shadow-xl hover:shadow-cyan-500/60 transition-all" title={`1m: ${formatHashrate(braiinsData?.hashrate1m)}`}></div>
-              <div className="flex-1 h-1/2 bg-gradient-to-t from-cyan-500/60 to-cyan-400/30 rounded hover:shadow-xl hover:shadow-cyan-500/60 transition-all" title={`5m: ${formatHashrate(braiinsData?.hashrate5m)}`}></div>
-              <div className="flex-1 h-2/3 bg-gradient-to-t from-cyan-500/60 to-cyan-400/30 rounded hover:shadow-xl hover:shadow-cyan-500/60 transition-all" title={`1h: ${formatHashrate(braiinsData?.hashrate1hr)}`}></div>
-            </div>
-            <div className="mt-1 grid grid-cols-3 gap-1 text-xs text-slate-300 relative z-10">
-              <div className="text-cyan-300">1m: {formatHashrate(braiinsData?.hashrate1m)}</div>
-              <div className="text-cyan-300">5m: {formatHashrate(braiinsData?.hashrate5m)}</div>
-              <div className="text-cyan-300">1h: {formatHashrate(braiinsData?.hashrate1hr)}</div>
+            <h3 className="text-xs font-bold text-cyan-300 mb-1 uppercase tracking-widest relative z-10" style={{ fontFamily: 'var(--font-orbitron), sans-serif' }}>Hashrate Trend</h3>
+            <div className="h-20 relative z-10">
+              {hashRateHistory.length > 0 ? (
+                <ResponsiveContainer width="100%" height="100%">
+                  <LineChart data={hashRateHistory} margin={{ top: 5, right: 5, bottom: 0, left: 0 }}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="rgba(6, 182, 212, 0.1)" />
+                    <Tooltip 
+                      contentStyle={{ backgroundColor: 'rgba(20, 20, 40, 0.95)', border: '1px solid rgba(6, 182, 212, 0.3)', borderRadius: '6px' }}
+                      labelStyle={{ color: '#06d6d4' }}
+                      formatter={(value: any) => formatHashrate(value as number)}
+                    />
+                    <YAxis hide domain={['dataMin * 0.95', 'dataMax * 1.05']} />
+                    <Line 
+                      type="monotone" 
+                      dataKey="hashrate1m" 
+                      stroke="#06b6d4" 
+                      dot={false}
+                      strokeWidth={2.5}
+                      isAnimationActive={false}
+                      filter="drop-shadow(0 0 4px rgba(6,182,212,0.6))"
+                    />
+                  </LineChart>
+                </ResponsiveContainer>
+              ) : (
+                <div className="flex items-center justify-center h-full text-slate-500 text-xs">
+                  Waiting for hashrate data...
+                </div>
+              )}
             </div>
           </div>
 
           {/* Historical Best Share Progression */}
           <div className="group relative rounded-lg border border-purple-500/40 bg-gradient-to-br from-slate-800/40 to-slate-900/50 p-2 backdrop-blur-lg hover:border-purple-400/70 hover:shadow-xl hover:shadow-purple-500/40 transition-all">
             <div className="absolute inset-0 rounded-lg opacity-0 group-hover:opacity-15 bg-[radial-gradient(ellipse_at_50%_50%,_rgba(168,85,247,0.3),transparent_70%)] blur-lg transition-all duration-300"></div>
-            <h3 className="text-xs font-bold text-purple-300 mb-1 uppercase tracking-widest relative z-10">Best Share Progression</h3>
+            <h3 className="text-xs font-bold text-purple-300 mb-1 uppercase tracking-widest relative z-10" style={{ fontFamily: 'var(--font-orbitron), sans-serif' }}>Best Share Progression</h3>
             <div className="h-20 relative z-10">
               {bestShareHistory.length > 0 ? (
                 <ResponsiveContainer width="100%" height="100%">
@@ -375,7 +405,7 @@ export function BraiinsWebDashboard() {
         {/* Active Miners Grid */}
         {activeMinersList.length > 0 && (
           <div className="rounded-lg border border-cyan-500/30 bg-gradient-to-br from-slate-800/30 to-slate-900/40 p-2 backdrop-blur">
-            <h2 className="text-xs font-bold text-white mb-1">Active Rigs ({activeMinersList.length})</h2>
+            <h2 className="text-xs font-bold text-white mb-1" style={{ fontFamily: 'var(--font-orbitron), sans-serif' }}>Active Rigs ({activeMinersList.length})</h2>
             <div className="grid grid-cols-4 sm:grid-cols-5 md:grid-cols-6 lg:grid-cols-8 xl:grid-cols-10 gap-0.5">
               {activeMinersList.map((miner, idx) => (
                 <div key={idx} className="group relative rounded border border-slate-700/50 bg-gradient-to-br from-slate-800/50 to-slate-900/50 p-1 hover:border-cyan-500/30 hover:shadow-lg hover:shadow-cyan-500/10 transition-all duration-300 text-xs">
@@ -404,7 +434,7 @@ export function BraiinsWebDashboard() {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
           {/* Hashrate History */}
           <div className="rounded-lg border border-cyan-500/30 bg-gradient-to-br from-slate-800/30 to-slate-900/40 p-5 backdrop-blur hover:border-cyan-400/50 transition-all">
-            <h3 className="text-sm font-bold text-cyan-400 mb-4 uppercase tracking-wider">Hashrate History</h3>
+            <h3 className="text-sm font-bold text-cyan-400 mb-4 uppercase tracking-wider" style={{ fontFamily: 'var(--font-orbitron), sans-serif' }}>Hashrate History</h3>
             <div className="space-y-3">
               <div className="flex items-center justify-between p-3 rounded border border-cyan-500/20 bg-cyan-500/5 hover:bg-cyan-500/10 transition-all">
                 <span className="text-slate-400 text-sm">5m Average</span>
@@ -419,7 +449,7 @@ export function BraiinsWebDashboard() {
 
           {/* Recent Alerts */}
           <div className="rounded-lg border border-purple-500/30 bg-gradient-to-br from-slate-800/30 to-slate-900/40 p-5 backdrop-blur hover:border-purple-400/50 transition-all">
-            <h3 className="text-sm font-bold text-purple-400 mb-4 uppercase tracking-wider">Recent Alerts</h3>
+            <h3 className="text-sm font-bold text-purple-400 mb-4 uppercase tracking-wider" style={{ fontFamily: 'var(--font-orbitron), sans-serif' }}>Recent Alerts</h3>
             <div className="space-y-2 max-h-28">
               {alerts.length === 0 ? (
                 <div className="text-slate-500 text-sm text-center py-4">No alerts yet</div>
