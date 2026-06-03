@@ -507,25 +507,33 @@ export function BraiinsWebDashboard() {
               BTC MINING
             </div>
 
-            {/* MIKEYROCKS - Engraved into background */}
+            {/* MIKEYROCKS - FontBolt Engraved Style */}
             <div 
               className="text-6xl font-black tracking-[-0.08em]" 
               style={{ 
                 fontFamily: 'var(--font-orbitron), sans-serif',
-                color: '#093d45',
-                textShadow: `
-                  inset -2px -2px 4px rgba(0, 0, 0, 0.9),
-                  inset 1px 1px 2px rgba(6, 182, 212, 0.15),
-                  -3px -3px 0 rgba(0, 0, 0, 0.7),
-                  1px 1px 0 rgba(6, 182, 212, 0.1),
-                  -1px 0 0 rgba(0, 0, 0, 0.5),
-                  0 -1px 0 rgba(0, 0, 0, 0.5)
-                `,
+                color: '#0a5a65',
                 letterSpacing: '-0.08em',
-                transform: 'skewY(-2deg)',
                 fontStyle: 'italic',
                 fontWeight: 900,
-                filter: 'contrast(1.3)',
+                textShadow: `
+                  -2px -2px 0 rgba(0, 0, 0, 0.9),
+                  2px -2px 0 rgba(0, 0, 0, 0.9),
+                  -2px 2px 0 rgba(0, 0, 0, 0.9),
+                  2px 2px 0 rgba(0, 0, 0, 0.9),
+                  inset -1px -1px 0 rgba(0, 0, 0, 0.8),
+                  inset 1px 1px 0 rgba(6, 182, 212, 0.1),
+                  -4px 0 0 rgba(0, 0, 0, 0.6),
+                  4px 0 0 rgba(0, 0, 0, 0.6),
+                  0 -4px 0 rgba(0, 0, 0, 0.6),
+                  0 4px 0 rgba(0, 0, 0, 0.6),
+                  -3px -3px 2px rgba(0, 0, 0, 0.7),
+                  3px 3px 2px rgba(6, 182, 212, 0.08)
+                `,
+                filter: 'contrast(1.4) brightness(0.95)',
+                transform: 'skewY(-2deg) scaleX(1.02)',
+                textDecoration: 'none',
+                WebkitTextStroke: '0.5px rgba(0, 0, 0, 0.3)',
               }}
             >
               MIKEYROCKS
