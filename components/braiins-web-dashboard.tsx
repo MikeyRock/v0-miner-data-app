@@ -486,59 +486,16 @@ export function BraiinsWebDashboard() {
           </div>
         )}
 
-        {/* MIKEYROCKS Footer - True Engraved Effect */}
+        {/* MIKEYROCKS Footer Image */}
         <div className="mt-16 mb-8 flex items-center justify-center relative">
-          <div className="text-center relative z-10">
-            {/* BTC MINING - Top */}
-            <div 
-              className="text-xs font-bold tracking-[0.25em] mb-2" 
-              style={{ 
-                fontFamily: 'var(--font-orbitron), sans-serif',
-                color: '#0a5a65',
-                textShadow: `
-                  inset -1px -1px 0 rgba(0, 0, 0, 0.8),
-                  inset 1px 1px 0 rgba(6, 182, 212, 0.2),
-                  -1px -1px 0 rgba(0, 0, 0, 0.5),
-                  1px 1px 0 rgba(6, 182, 212, 0.1)
-                `,
-                fontWeight: 900,
-              }}
-            >
-              BTC MINING
-            </div>
-
-            {/* MIKEYROCKS - FontBolt Engraved Style */}
-            <div 
-              className="text-6xl font-black tracking-[-0.08em]" 
-              style={{ 
-                fontFamily: 'var(--font-orbitron), sans-serif',
-                color: '#0a5a65',
-                letterSpacing: '-0.08em',
-                fontStyle: 'italic',
-                fontWeight: 900,
-                textShadow: `
-                  -2px -2px 0 rgba(0, 0, 0, 0.9),
-                  2px -2px 0 rgba(0, 0, 0, 0.9),
-                  -2px 2px 0 rgba(0, 0, 0, 0.9),
-                  2px 2px 0 rgba(0, 0, 0, 0.9),
-                  inset -1px -1px 0 rgba(0, 0, 0, 0.8),
-                  inset 1px 1px 0 rgba(6, 182, 212, 0.1),
-                  -4px 0 0 rgba(0, 0, 0, 0.6),
-                  4px 0 0 rgba(0, 0, 0, 0.6),
-                  0 -4px 0 rgba(0, 0, 0, 0.6),
-                  0 4px 0 rgba(0, 0, 0, 0.6),
-                  -3px -3px 2px rgba(0, 0, 0, 0.7),
-                  3px 3px 2px rgba(6, 182, 212, 0.08)
-                `,
-                filter: 'contrast(1.4) brightness(0.95)',
-                transform: 'skewY(-2deg) scaleX(1.02)',
-                textDecoration: 'none',
-                WebkitTextStroke: '0.5px rgba(0, 0, 0, 0.3)',
-              }}
-            >
-              MIKEYROCKS
-            </div>
-          </div>
+          <img 
+            src="/images/mikeyrocks-footer.png" 
+            alt="MIKEYROCKS BTC MINING" 
+            className="h-24 w-auto object-contain drop-shadow-lg"
+            style={{
+              filter: 'drop-shadow(0 0 15px rgba(6, 182, 212, 0.4))',
+            }}
+          />
         </div>
       </div>
     </div>
