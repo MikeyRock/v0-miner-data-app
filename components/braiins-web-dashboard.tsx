@@ -50,12 +50,13 @@ function formatNumber(value: string | number | undefined): string {
   return num.toFixed(2)
 }
 
-// Estimate BTC reward based on best share difficulty
-function estimateBTCReward(bestShare: number): string {
-  // This is a rough estimate: higher difficulty = higher reward
+// Estimate BTC reward based on best share difficulty and convert to USD
+function estimateBTCReward(bestShare: number, btcPrice: number): string {
+  // 3.125 BTC block reward = based on difficulty share of total
   // 1 difficulty ≈ 0.00000001 BTC (approximately)
   const btc = bestShare * 0.00000001
-  return btc.toFixed(8)
+  const usd = btc * btcPrice
+  return usd.toLocaleString('en-US', { style: 'currency', currency: 'USD', minimumFractionDigits: 2, maximumFractionDigits: 2 })
 }
 
 export function BraiinsWebDashboard() {
@@ -68,8 +69,23 @@ export function BraiinsWebDashboard() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [lastUpdate, setLastUpdate] = useState<Date | null>(null)
+  const [btcPrice, setBtcPrice] = useState<number>(0)
 
   const prevBestShare = useRef<string>('')
+
+  const fetchBtcPrice = async () => {
+    try {
+      const res = await fetch('https://api.coingecko.com/api/v3/simple/price?ids=bitcoin&vs_currencies=usd', {
+        cache: 'no-store',
+      })
+      if (res.ok) {
+        const data = await res.json()
+        setBtcPrice(data.bitcoin.usd || 0)
+      }
+    } catch (e) {
+      console.log('[v0] BTC price fetch error:', e)
+    }
+  }
 
   const fetchBraiinsStats = async () => {
     if (!address) {
@@ -163,13 +179,18 @@ export function BraiinsWebDashboard() {
 
   useEffect(() => {
     fetchBraiinsStats()
+    fetchBtcPrice()
     const interval = setInterval(fetchBraiinsStats, 15000)
-    return () => clearInterval(interval)
+    const priceInterval = setInterval(fetchBtcPrice, 60000)
+    return () => {
+      clearInterval(interval)
+      clearInterval(priceInterval)
+    }
   }, [address])
 
   const activeMinersList = miners.filter(m => m.lastshare && (Date.now() - m.lastshare * 1000) < 300000)
   const bestShareNum = parseFloat(braiinsData?.bestshare || '0')
-  const btcReward = estimateBTCReward(bestShareNum)
+  const usdReward = estimateBTCReward(bestShareNum, btcPrice)
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-950 via-blue-950 to-purple-950 text-white overflow-auto">
@@ -298,9 +319,9 @@ export function BraiinsWebDashboard() {
         <div className="rounded-lg border border-purple-500/30 bg-gradient-to-r from-purple-950/40 via-slate-900/40 to-cyan-950/40 p-6 backdrop-blur hover:border-purple-400/50 transition-all">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div className="group">
-              <div className="text-purple-400 text-xs font-bold uppercase tracking-wider mb-2">Estimated BTC Reward</div>
-              <div className="text-2xl font-bold text-white">₿ {btcReward}</div>
-              <div className="text-slate-400 text-xs mt-1">For best share</div>
+              <div className="text-purple-400 text-xs font-bold uppercase tracking-wider mb-2">Estimated USD Reward</div>
+              <div className="text-2xl font-bold text-white">{usdReward}</div>
+              <div className="text-slate-400 text-xs mt-1">For best share at ${btcPrice.toLocaleString()}/BTC</div>
               <div className="mt-2 h-1 bg-gradient-to-r from-purple-500 to-transparent rounded-full group-hover:shadow-lg group-hover:shadow-purple-500/50 transition-all"></div>
             </div>
             <div className="group">
