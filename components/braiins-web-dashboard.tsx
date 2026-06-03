@@ -485,30 +485,50 @@ export function BraiinsWebDashboard() {
         )}
 
         {/* MIKEYROCKS Footer */}
-        <div className="mt-8 mb-4 flex items-center justify-center">
-          <div 
-            className="text-4xl font-black tracking-tighter" 
-            style={{ 
-              fontFamily: 'var(--font-orbitron), sans-serif',
-              color: '#FFFF00',
-              textShadow: `
-                -2px -2px 0 rgba(255, 255, 0, 0.8),
-                2px -2px 0 rgba(255, 255, 0, 0.8),
-                -2px 2px 0 rgba(255, 255, 0, 0.8),
-                2px 2px 0 rgba(255, 255, 0, 0.8),
-                -3px 0 0 rgba(6, 182, 212, 0.6),
-                3px 0 0 rgba(168, 85, 247, 0.6),
-                0 -3px 0 rgba(6, 182, 212, 0.6),
-                0 3px 0 rgba(168, 85, 247, 0.6),
-                0 0 20px rgba(255, 255, 0, 0.8),
-                0 0 40px rgba(6, 182, 212, 0.4)
-              `,
-              letterSpacing: '-0.05em',
-              transform: 'skewY(-2deg)',
-              filter: 'drop-shadow(0 0 10px rgba(255, 255, 0, 0.6))',
-            }}
-          >
-            MIKEYROCKS
+        <div className="mt-12 mb-6 flex items-center justify-center">
+          <div className="text-center">
+            {/* BTC MINING - Top */}
+            <div 
+              className="text-sm font-bold tracking-widest mb-1" 
+              style={{ 
+                fontFamily: 'var(--font-orbitron), sans-serif',
+                color: '#06b6d4',
+                letterSpacing: '0.15em',
+                textShadow: `
+                  0 0 10px rgba(6, 182, 212, 0.6),
+                  0 0 20px rgba(6, 182, 212, 0.3)
+                `,
+                filter: 'drop-shadow(0 0 4px rgba(6, 182, 212, 0.4))',
+              }}
+            >
+              BTC MINING
+            </div>
+
+            {/* MIKEYROCKS - Bottom */}
+            <div 
+              className="text-5xl font-black tracking-tighter" 
+              style={{ 
+                fontFamily: 'var(--font-orbitron), sans-serif',
+                color: '#06b6d4',
+                textShadow: `
+                  -2px -2px 0 rgba(6, 182, 212, 0.6),
+                  2px -2px 0 rgba(6, 182, 212, 0.6),
+                  -2px 2px 0 rgba(6, 182, 212, 0.6),
+                  2px 2px 0 rgba(6, 182, 212, 0.6),
+                  -3px 0 0 rgba(168, 85, 247, 0.5),
+                  3px 0 0 rgba(168, 85, 247, 0.5),
+                  0 -3px 0 rgba(168, 85, 247, 0.5),
+                  0 3px 0 rgba(168, 85, 247, 0.5),
+                  0 0 20px rgba(6, 182, 212, 0.6),
+                  0 0 40px rgba(6, 182, 212, 0.3)
+                `,
+                letterSpacing: '-0.05em',
+                transform: 'skewY(-2deg)',
+                filter: 'drop-shadow(0 0 10px rgba(6, 182, 212, 0.6))',
+              }}
+            >
+              MIKEYROCKS
+            </div>
           </div>
         </div>
       </div>
