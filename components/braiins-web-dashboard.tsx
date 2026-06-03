@@ -252,7 +252,7 @@ export function BraiinsWebDashboard() {
             <div className="absolute inset-0 rounded-lg opacity-0 group-hover:opacity-20 bg-[radial-gradient(ellipse_at_50%_50%,_rgba(6,182,212,0.4),transparent_70%)] blur-xl transition-all duration-300"></div>
             <div className="relative z-10">
               <div className="flex items-start justify-between mb-1">
-                <div className="text-cyan-300 text-xs font-bold uppercase tracking-widest">Best Share</div>
+                <div className="text-cyan-300 text-xs font-bold uppercase tracking-widest" style={{ fontFamily: 'var(--font-orbitron), sans-serif' }}>Best Share</div>
                 <div className="w-4 h-4 rounded-full bg-gradient-to-br from-cyan-400 to-cyan-600 flex items-center justify-center text-cyan-900 text-xs shadow-lg shadow-cyan-500/50 animate-pulse">📊</div>
               </div>
               <div className="text-lg font-black text-cyan-100 drop-shadow-lg">{formatNumber(braiinsData?.bestshare)}</div>
@@ -267,7 +267,7 @@ export function BraiinsWebDashboard() {
             <div className="absolute inset-0 rounded-lg opacity-0 group-hover:opacity-20 bg-[radial-gradient(ellipse_at_50%_50%,_rgba(168,85,247,0.4),transparent_70%)] blur-xl transition-all duration-300"></div>
             <div className="relative z-10">
               <div className="flex items-start justify-between mb-1">
-                <div className="text-purple-300 text-xs font-bold uppercase tracking-widest">1m Rate</div>
+                <div className="text-purple-300 text-xs font-bold uppercase tracking-widest" style={{ fontFamily: 'var(--font-orbitron), sans-serif' }}>1m Rate</div>
                 <div className="w-4 h-4 rounded-full bg-gradient-to-br from-purple-400 to-purple-600 flex items-center justify-center text-purple-900 text-xs shadow-lg shadow-purple-500/50 animate-pulse">⚡</div>
               </div>
               <div className="text-lg font-black text-purple-100 drop-shadow-lg">{formatHashrate(braiinsData?.hashrate1m)}</div>
@@ -282,7 +282,7 @@ export function BraiinsWebDashboard() {
             <div className="absolute inset-0 rounded-lg opacity-0 group-hover:opacity-20 bg-[radial-gradient(ellipse_at_50%_50%,_rgba(6,182,212,0.4),transparent_70%)] blur-xl transition-all duration-300"></div>
             <div className="relative z-10">
               <div className="flex items-start justify-between mb-1">
-                <div className="text-cyan-300 text-xs font-bold uppercase tracking-widest">Total Shares</div>
+                <div className="text-cyan-300 text-xs font-bold uppercase tracking-widest" style={{ fontFamily: 'var(--font-orbitron), sans-serif' }}>Total Shares</div>
                 <div className="w-4 h-4 rounded-full bg-gradient-to-br from-teal-400 to-cyan-600 flex items-center justify-center text-cyan-900 text-xs shadow-lg shadow-cyan-500/50 animate-pulse">✓</div>
               </div>
               <div className="text-lg font-black text-cyan-100 drop-shadow-lg">{formatNumber(braiinsData?.totalshares)}G</div>
@@ -297,7 +297,7 @@ export function BraiinsWebDashboard() {
             <div className="absolute inset-0 rounded-lg opacity-0 group-hover:opacity-20 bg-[radial-gradient(ellipse_at_50%_50%,_rgba(249,115,22,0.4),transparent_70%)] blur-xl transition-all duration-300"></div>
             <div className="relative z-10">
               <div className="flex items-start justify-between mb-1">
-                <div className="text-orange-300 text-xs font-bold uppercase tracking-widest">Active</div>
+                <div className="text-orange-300 text-xs font-bold uppercase tracking-widest" style={{ fontFamily: 'var(--font-orbitron), sans-serif' }}>Active</div>
                 <div className="w-4 h-4 rounded-full bg-gradient-to-br from-orange-400 to-red-600 flex items-center justify-center text-orange-900 text-xs shadow-lg shadow-orange-500/50 animate-bounce">🖥</div>
               </div>
               <div className="text-lg font-black text-orange-100 drop-shadow-lg">{activeMinersList.length}</div>
@@ -382,19 +382,19 @@ export function BraiinsWebDashboard() {
         <div className="rounded-lg border border-purple-500/30 bg-gradient-to-r from-purple-950/40 via-slate-900/40 to-cyan-950/40 p-2 backdrop-blur hover:border-purple-400/50 transition-all">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
             <div className="group">
-              <div className="text-purple-400 text-xs font-bold uppercase tracking-wider mb-0.5">USD Reward</div>
+              <div className="text-purple-400 text-xs font-bold uppercase tracking-wider mb-0.5" style={{ fontFamily: 'var(--font-orbitron), sans-serif' }}>USD Reward</div>
               <div className="text-lg font-bold text-white">{usdReward}</div>
               <div className="text-slate-400 text-xs mt-0.5">@ ${btcPrice.toLocaleString()}/BTC</div>
               <div className="mt-1 h-0.5 bg-gradient-to-r from-purple-500 to-transparent rounded-full group-hover:shadow-lg group-hover:shadow-purple-500/50 transition-all"></div>
             </div>
             <div className="group">
-              <div className="text-cyan-400 text-xs font-bold uppercase tracking-wider mb-0.5">Best Share</div>
+              <div className="text-cyan-400 text-xs font-bold uppercase tracking-wider mb-0.5" style={{ fontFamily: 'var(--font-orbitron), sans-serif' }}>Best Share</div>
               <div className="text-lg font-bold text-white">{formatNumber(braiinsData?.bestshare)}</div>
               <div className="text-slate-400 text-xs mt-0.5">Current peak</div>
               <div className="mt-1 h-0.5 bg-gradient-to-r from-cyan-500 to-transparent rounded-full group-hover:shadow-lg group-hover:shadow-cyan-500/50 transition-all"></div>
             </div>
             <div className="group">
-              <div className="text-purple-400 text-xs font-bold uppercase tracking-wider mb-0.5">Network Diff</div>
+              <div className="text-purple-400 text-xs font-bold uppercase tracking-wider mb-0.5" style={{ fontFamily: 'var(--font-orbitron), sans-serif' }}>Network Diff</div>
               <div className="text-lg font-bold text-white">{(networkDifficulty / 1e12).toFixed(2)}T</div>
               <div className="text-slate-400 text-xs mt-0.5">Bitcoin network</div>
               <div className="mt-1 h-0.5 bg-gradient-to-r from-purple-500 to-transparent rounded-full group-hover:shadow-lg group-hover:shadow-purple-500/50 transition-all"></div>
