@@ -361,7 +361,7 @@ export function DashboardClient({ initialApiUrl = '', initialDiscordUrl = '' }: 
     
     data.workers?.forEach((w) => {
       // Consider worker offline if hashrate is 0
-      const isOnline = w.hashrate > 0
+      const isOnline = (w.hashRate ?? 0) > 0
       
       if (isOnline) {
         blitzpoolSeenOnline.current.add(w.name)
