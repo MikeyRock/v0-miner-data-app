@@ -1,20 +1,32 @@
 import { NextRequest, NextResponse } from 'next/server'
 
 interface BraiinsWorker {
-  name: string
-  hashrate: number
+  workername: string
+  hashrate1m: string
+  hashrate5m: string
   lastshare: number
+  shares: number
+  bestshare: number
 }
 
 export interface BraiinsStats {
-  bestDifficulty: number
-  totalHashrate: string
+  totalHashrate1m: string
+  totalHashrate5m: string
+  totalHashrate1hr: string
+  bestshare: number
+  bestever: number
   totalShares: number
-  workersCount: number
-  workers: BraiinsWorker[]
+  workers: number
+  workerList: Array<{
+    name: string
+    hashrate1m: string
+    lastshare: number
+    shares: number
+    bestshare: number
+  }>
 }
 
-const BRAIINS_API_BASE = 'https://braiins.com/pool'
+const BRAIINS_API_BASE = 'https://solo.braiins.com'
 
 export async function GET(request: NextRequest) {
   try {
@@ -25,7 +37,7 @@ export async function GET(request: NextRequest) {
 
     console.log('[v0] Fetching Braiins for address:', address)
     
-    const res = await fetch(`${BRAIINS_API_BASE}/api/accounts/${address}`, {
+    const res = await fetch(`${BRAIINS_API_BASE}/users/${address}`, {
       cache: 'no-store',
     })
 
@@ -42,14 +54,19 @@ export async function GET(request: NextRequest) {
 
     // Parse Braiins response
     const stats: BraiinsStats = {
-      bestDifficulty: data.bestDifficulty || 0,
-      totalHashrate: data.totalHashrate || '0',
-      totalShares: data.totalShares || 0,
-      workersCount: data.workersCount || 0,
-      workers: (data.workers || []).map((w: any) => ({
-        name: w.name || 'unknown',
-        hashrate: w.hashrate || 0,
+      totalHashrate1m: data.hashrate1m || '0',
+      totalHashrate5m: data.hashrate5m || '0',
+      totalHashrate1hr: data.hashrate1hr || '0',
+      bestshare: data.bestshare || 0,
+      bestever: data.bestever || 0,
+      totalShares: data.shares || 0,
+      workers: data.workers || 0,
+      workerList: (data.worker || []).map((w: any) => ({
+        name: w.workername?.split('.').pop() || 'unknown',
+        hashrate1m: w.hashrate1m || '0',
         lastshare: w.lastshare || 0,
+        shares: w.shares || 0,
+        bestshare: w.bestshare || 0,
       })),
     }
 

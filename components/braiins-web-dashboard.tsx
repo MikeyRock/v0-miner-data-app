@@ -33,22 +33,16 @@ export function DashboardClient() {
       setBraiinsData(data)
       setError(null)
 
-      // Check for best difficulty alert
-      if (data.bestDifficulty > 0 && data.bestDifficulty > prevBestDiff.current && prevBestDiff.current > 0) {
-        const message = `New best difficulty: ${data.bestDifficulty}`
-        await createAlert('best_difficulty', message, data.bestDifficulty)
+      // Check for best share alert
+      if (data.bestshare > 0 && data.bestshare > prevBestDiff.current && prevBestDiff.current > 0) {
+        const message = `New best share: ${(data.bestshare / 1e9).toFixed(2)}B`
+        await createAlert('best_share', message, data.bestshare)
       }
-      prevBestDiff.current = data.bestDifficulty
+      prevBestDiff.current = data.bestshare
 
-      // Check for worker offline
-      data.workers?.forEach((w: any) => {
-        if (w.hashrate > 0) {
-          seenOnlineWorkers.current.add(w.name)
-          offlineAlerted.current.delete(w.name)
-        } else if (seenOnlineWorkers.current.has(w.name) && !offlineAlerted.current.has(w.name)) {
-          offlineAlerted.current.add(w.name)
-          createAlert('worker_offline', `Worker ${w.name} offline`, null)
-        }
+      // Check for worker offline (workerList shows online workers)
+      data.workerList?.forEach((w: any) => {
+        seenOnlineWorkers.current.add(w.name)
       })
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to fetch Braiins data')
@@ -116,41 +110,69 @@ export function DashboardClient() {
             </span>
           </div>
 
-          <div className="grid gap-4 md:grid-cols-2">
-            {/* Best Difficulty */}
+          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+            {/* Best Share */}
             <div className="rounded-lg border border-blue-200 bg-blue-50 p-4">
-              <span className="text-sm text-gray-600">Best Difficulty</span>
-              <p className="text-2xl font-bold text-blue-600">{braiinsData.bestDifficulty.toLocaleString()}</p>
+              <span className="text-sm text-gray-600">Best Share</span>
+              <p className="text-xl font-bold text-blue-600">{(braiinsData.bestshare / 1e9).toFixed(2)}B</p>
             </div>
 
-            {/* Hashrate */}
+            {/* 1m Hashrate */}
             <div className="rounded-lg border border-purple-200 bg-purple-50 p-4">
-              <span className="text-sm text-gray-600">Total Hashrate</span>
-              <p className="text-2xl font-bold text-purple-600">{braiinsData.totalHashrate}</p>
+              <span className="text-sm text-gray-600">1m Hashrate</span>
+              <p className="text-xl font-bold text-purple-600">{braiinsData.totalHashrate1m}</p>
             </div>
 
-            {/* Shares */}
+            {/* Total Shares */}
             <div className="rounded-lg border border-green-200 bg-green-50 p-4">
               <span className="text-sm text-gray-600">Total Shares</span>
-              <p className="text-2xl font-bold text-green-600">{braiinsData.totalShares.toLocaleString()}</p>
+              <p className="text-xl font-bold text-green-600">{(braiinsData.totalShares / 1e9).toFixed(2)}B</p>
             </div>
 
-            {/* Workers */}
+            {/* Active Workers */}
             <div className="rounded-lg border border-orange-200 bg-orange-50 p-4">
               <span className="text-sm text-gray-600">Active Workers</span>
-              <p className="text-2xl font-bold text-orange-600">{braiinsData.workersCount}</p>
+              <p className="text-xl font-bold text-orange-600">{braiinsData.workers}</p>
+            </div>
+          </div>
+
+          {/* Detailed Stats */}
+          <div className="rounded-lg border border-gray-200 p-4">
+            <h3 className="mb-4 font-semibold">Hashrate History</h3>
+            <div className="space-y-2 text-sm">
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">5m Hashrate:</span>
+                <span className="font-mono">{braiinsData.totalHashrate5m}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">1h Hashrate:</span>
+                <span className="font-mono">{braiinsData.totalHashrate1hr}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">Best Ever:</span>
+                <span className="font-mono">{(braiinsData.bestever / 1e9).toFixed(2)}B</span>
+              </div>
             </div>
           </div>
 
           {/* Workers List */}
-          {braiinsData.workers && braiinsData.workers.length > 0 && (
+          {braiinsData.workerList && braiinsData.workerList.length > 0 && (
             <div className="rounded-lg border border-gray-200 p-4">
-              <h3 className="mb-4 font-semibold">Workers</h3>
-              <div className="space-y-2">
-                {braiinsData.workers.map((w) => (
-                  <div key={w.name} className="flex items-center justify-between text-sm">
-                    <span className={w.hashrate > 0 ? 'text-green-700' : 'text-red-700'}>{w.name}</span>
-                    <span className={w.hashrate > 0 ? 'text-green-600' : 'text-red-600'}>{w.hashrate === 0 ? 'Offline' : w.hashrate}</span>
+              <h3 className="mb-4 font-semibold">Miners ({braiinsData.workerList.length})</h3>
+              <div className="max-h-60 overflow-y-auto space-y-2">
+                {braiinsData.workerList.map((w) => (
+                  <div key={w.name} className="flex items-center justify-between rounded border border-gray-100 bg-gray-50 p-2 text-sm">
+                    <span className="font-mono text-xs">{w.name}</span>
+                    <div className="flex gap-4 text-xs">
+                      <div>
+                        <span className="text-gray-600">1m: </span>
+                        <span className="font-mono">{w.hashrate1m}</span>
+                      </div>
+                      <div>
+                        <span className="text-gray-600">Best: </span>
+                        <span className="font-mono">{(w.bestshare / 1e9).toFixed(2)}B</span>
+                      </div>
+                    </div>
                   </div>
                 ))}
               </div>
@@ -169,7 +191,7 @@ export function DashboardClient() {
             alerts.map((alert) => (
               <div key={alert.id} className="flex items-start justify-between rounded-lg border border-gray-200 p-3 text-sm">
                 <div className="flex-1">
-                  <span className={`inline-block rounded px-2 py-1 text-xs font-semibold ${alert.type === 'best_difficulty' ? 'bg-blue-100 text-blue-700' : 'bg-red-100 text-red-700'}`}>
+                  <span className={`inline-block rounded px-2 py-1 text-xs font-semibold ${alert.type === 'best_share' ? 'bg-blue-100 text-blue-700' : 'bg-red-100 text-red-700'}`}>
                     {alert.type}
                   </span>
                   <p className="mt-1">{alert.message}</p>
