@@ -132,6 +132,7 @@ export function DashboardClient({ initialApiUrl = '', initialDiscordUrl = '' }: 
   // Braiins Solo alert refs
   const braiinsPrevBestShare = useRef<number>(0)
   const braiinsPrevBestEver = useRef<number>(0)
+  const braiinsRigBestShares = useRef<Map<string, number>>(new Map())
   const braiinsOfflineAlerted = useRef<Set<string>>(new Set())
   const braiinsSeenOnline = useRef<Set<string>>(new Set())
 
@@ -286,7 +287,31 @@ export function DashboardClient({ initialApiUrl = '', initialDiscordUrl = '' }: 
     }
     braiinsPrevBestEver.current = data.bestever
 
-    // 3. Worker offline detection
+    // 3. Per-device best share tracking
+    data.worker?.forEach((w) => {
+      const prevRigBest = braiinsRigBestShares.current.get(w.workername) ?? 0
+      // Check if this rig beat its own best share
+      if (as.newBest && w.bestshare > 0 && w.bestshare > prevRigBest) {
+        braiinsRigBestShares.current.set(w.workername, w.bestshare)
+        // Only send alert if rig already had a previous best (not on first detection)
+        if (prevRigBest > 0) {
+          addAlert({
+            type: 'best_share',
+            message: `[Braiins] ${w.workername} new best: ${formatHashrate(w.bestshare)}`,
+            timestamp: Date.now(),
+            sent: false,
+          })
+          sendDiscordAlert({
+            type: 'braiins_rig_best',
+            deviceName: w.workername,
+            bestShare: w.bestshare,
+            discordWebhookUrl: discordUrl,
+          })
+        }
+      }
+    })
+
+    // 4. Worker offline detection
     const offlineThresholdS = (as.offlineThresholdMin ?? 10) * 60
     const now = Math.floor(Date.now() / 1000)
     
