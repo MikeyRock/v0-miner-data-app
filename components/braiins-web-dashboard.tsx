@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useRef, useState } from 'react'
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts'
 
 interface BraiinsStats {
   hashrate1m: string
@@ -58,9 +59,10 @@ function estimateBTCReward(btcPrice: number): string {
 }
 
 export function BraiinsWebDashboard() {
-  const address = process.env.NEXT_PUBLIC_BRAIINS_ADDRESS || ''
+  const defaultAddress = process.env.NEXT_PUBLIC_BRAIINS_ADDRESS || ''
   const discordWebhook = process.env.NEXT_PUBLIC_DISCORD_WEBHOOK_URL || ''
 
+  const [address, setAddress] = useState(defaultAddress)
   const [braiinsData, setBraiinsData] = useState<BraiinsStats | null>(null)
   const [miners, setMiners] = useState<Miner[]>([])
   const [alerts, setAlerts] = useState<Alert[]>([])
@@ -69,6 +71,10 @@ export function BraiinsWebDashboard() {
   const [lastUpdate, setLastUpdate] = useState<Date | null>(null)
   const [btcPrice, setBtcPrice] = useState<number>(0)
   const [networkDifficulty, setNetworkDifficulty] = useState<number>(138.96e12)
+  const [bestShareHistory, setBestShareHistory] = useState<{ timestamp: number; bestshare: number }[]>([])
+  const [hashRateHistory, setHashRateHistory] = useState<{ timestamp: number; hashrate1m: number; hashrate5m: number; hashrate1hr: number }[]>([])
+  const [showSettings, setShowSettings] = useState(false)
+  const [settingsAddress, setSettingsAddress] = useState(address)
 
   const prevBestShare = useRef<string>('')
 
@@ -130,8 +136,24 @@ export function BraiinsWebDashboard() {
       if (currentBestShare > 0 && previousBestShare > 0 && currentBestShare > previousBestShare) {
         const message = `New Best Share: ${formatNumber(currentBestShare)}`
         await createAlert('best_share', message)
+        // Track to history
+        setBestShareHistory((prev) => [
+          ...prev.slice(-59), // Keep last 60 data points
+          { timestamp: Date.now(), bestshare: currentBestShare }
+        ])
       }
       prevBestShare.current = currentBestShare.toString()
+
+      // Track hashrate history
+      setHashRateHistory((prev) => [
+        ...prev.slice(-59), // Keep last 60 data points
+        {
+          timestamp: Date.now(),
+          hashrate1m: parseFloat(data.hashrate1m?.toString() || '0'),
+          hashrate5m: parseFloat(data.hashrate5m?.toString() || '0'),
+          hashrate1hr: parseFloat(data.hashrate1hr?.toString() || '0'),
+        }
+      ])
 
       setBraiinsData(stats)
 
@@ -212,14 +234,30 @@ export function BraiinsWebDashboard() {
       {/* Header */}
       <div className="flex items-center justify-between px-4 py-3 border-b border-slate-800/50 bg-slate-900/50">
         <div>
-          <h1 className="text-2xl font-bold">Braiins Solo</h1>
+          <h1 className="text-3xl font-black" style={{ fontFamily: 'var(--font-orbitron), sans-serif', letterSpacing: '-0.02em', textShadow: '0 0 20px rgba(6,182,212,0.6), 0 0 40px rgba(168,85,247,0.4)' }}>BRAIINS</h1>
+          <h2 className="text-lg font-bold text-cyan-300" style={{ fontFamily: 'var(--font-orbitron), sans-serif', letterSpacing: '0.1em', textShadow: '0 0 10px rgba(6,182,212,0.4)' }}>SOLO</h2>
           <p className="text-slate-400 text-xs mt-0.5">Mining Dashboard</p>
         </div>
-        <div className="flex items-center gap-2">
-          <div className={`w-2 h-2 rounded-full ${loading ? 'bg-yellow-500 animate-pulse' : 'bg-cyan-400'}`}></div>
-          <span className={`text-xs font-medium ${loading ? 'text-yellow-400' : 'text-cyan-400'}`}>
-            {loading ? 'Updating...' : 'Live'}
-          </span>
+        <div className="flex flex-col items-center gap-1">
+          <div className="flex items-center gap-2">
+            <div className={`w-2 h-2 rounded-full ${loading ? 'bg-yellow-500 animate-pulse' : 'bg-cyan-400'}`}></div>
+            <span className={`text-xs font-medium ${loading ? 'text-yellow-400' : 'text-cyan-400'}`}>
+              {loading ? 'Updating...' : 'Live'}
+            </span>
+          </div>
+          <button
+            onClick={() => {
+              setShowSettings(true)
+              setSettingsAddress(address)
+            }}
+            className="p-1 rounded hover:bg-slate-800/50 transition-colors"
+            title="Settings"
+          >
+            <svg className="w-4 h-4 text-cyan-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+            </svg>
+          </button>
         </div>
       </div>
 
@@ -232,7 +270,7 @@ export function BraiinsWebDashboard() {
             <div className="absolute inset-0 rounded-lg opacity-0 group-hover:opacity-20 bg-[radial-gradient(ellipse_at_50%_50%,_rgba(6,182,212,0.4),transparent_70%)] blur-xl transition-all duration-300"></div>
             <div className="relative z-10">
               <div className="flex items-start justify-between mb-1">
-                <div className="text-cyan-300 text-xs font-bold uppercase tracking-widest">Best Share</div>
+                <div className="text-cyan-300 text-xs font-bold uppercase tracking-widest" style={{ fontFamily: 'var(--font-orbitron), sans-serif' }}>Best Share</div>
                 <div className="w-4 h-4 rounded-full bg-gradient-to-br from-cyan-400 to-cyan-600 flex items-center justify-center text-cyan-900 text-xs shadow-lg shadow-cyan-500/50 animate-pulse">📊</div>
               </div>
               <div className="text-lg font-black text-cyan-100 drop-shadow-lg">{formatNumber(braiinsData?.bestshare)}</div>
@@ -247,7 +285,7 @@ export function BraiinsWebDashboard() {
             <div className="absolute inset-0 rounded-lg opacity-0 group-hover:opacity-20 bg-[radial-gradient(ellipse_at_50%_50%,_rgba(168,85,247,0.4),transparent_70%)] blur-xl transition-all duration-300"></div>
             <div className="relative z-10">
               <div className="flex items-start justify-between mb-1">
-                <div className="text-purple-300 text-xs font-bold uppercase tracking-widest">1m Rate</div>
+                <div className="text-purple-300 text-xs font-bold uppercase tracking-widest" style={{ fontFamily: 'var(--font-orbitron), sans-serif' }}>1m Rate</div>
                 <div className="w-4 h-4 rounded-full bg-gradient-to-br from-purple-400 to-purple-600 flex items-center justify-center text-purple-900 text-xs shadow-lg shadow-purple-500/50 animate-pulse">⚡</div>
               </div>
               <div className="text-lg font-black text-purple-100 drop-shadow-lg">{formatHashrate(braiinsData?.hashrate1m)}</div>
@@ -262,7 +300,7 @@ export function BraiinsWebDashboard() {
             <div className="absolute inset-0 rounded-lg opacity-0 group-hover:opacity-20 bg-[radial-gradient(ellipse_at_50%_50%,_rgba(6,182,212,0.4),transparent_70%)] blur-xl transition-all duration-300"></div>
             <div className="relative z-10">
               <div className="flex items-start justify-between mb-1">
-                <div className="text-cyan-300 text-xs font-bold uppercase tracking-widest">Total Shares</div>
+                <div className="text-cyan-300 text-xs font-bold uppercase tracking-widest" style={{ fontFamily: 'var(--font-orbitron), sans-serif' }}>Total Shares</div>
                 <div className="w-4 h-4 rounded-full bg-gradient-to-br from-teal-400 to-cyan-600 flex items-center justify-center text-cyan-900 text-xs shadow-lg shadow-cyan-500/50 animate-pulse">✓</div>
               </div>
               <div className="text-lg font-black text-cyan-100 drop-shadow-lg">{formatNumber(braiinsData?.totalshares)}G</div>
@@ -277,7 +315,7 @@ export function BraiinsWebDashboard() {
             <div className="absolute inset-0 rounded-lg opacity-0 group-hover:opacity-20 bg-[radial-gradient(ellipse_at_50%_50%,_rgba(249,115,22,0.4),transparent_70%)] blur-xl transition-all duration-300"></div>
             <div className="relative z-10">
               <div className="flex items-start justify-between mb-1">
-                <div className="text-orange-300 text-xs font-bold uppercase tracking-widest">Active</div>
+                <div className="text-orange-300 text-xs font-bold uppercase tracking-widest" style={{ fontFamily: 'var(--font-orbitron), sans-serif' }}>Active</div>
                 <div className="w-4 h-4 rounded-full bg-gradient-to-br from-orange-400 to-red-600 flex items-center justify-center text-orange-900 text-xs shadow-lg shadow-orange-500/50 animate-bounce">🖥</div>
               </div>
               <div className="text-lg font-black text-orange-100 drop-shadow-lg">{activeMinersList.length}</div>
@@ -289,56 +327,80 @@ export function BraiinsWebDashboard() {
 
         {/* Charts Row */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-1">
-          {/* Hashrate Trend Chart */}
+          {/* Hashrate Trend Line Chart */}
           <div className="group relative rounded-lg border border-cyan-500/40 bg-gradient-to-br from-slate-800/40 to-slate-900/50 p-2 backdrop-blur-lg hover:border-cyan-400/70 hover:shadow-xl hover:shadow-cyan-500/40 transition-all">
             <div className="absolute inset-0 rounded-lg opacity-0 group-hover:opacity-15 bg-[radial-gradient(ellipse_at_50%_50%,_rgba(6,182,212,0.3),transparent_70%)] blur-lg transition-all duration-300"></div>
-            <h3 className="text-xs font-bold text-cyan-300 mb-1 uppercase tracking-widest">Hashrate Trend</h3>
-            <div className="h-20 flex items-end justify-between gap-1 relative z-10">
-              <div className="flex-1 h-1/3 bg-gradient-to-t from-cyan-500/60 to-cyan-400/30 rounded hover:shadow-xl hover:shadow-cyan-500/60 transition-all" title={`1m: ${formatHashrate(braiinsData?.hashrate1m)}`}></div>
-              <div className="flex-1 h-1/2 bg-gradient-to-t from-cyan-500/60 to-cyan-400/30 rounded hover:shadow-xl hover:shadow-cyan-500/60 transition-all" title={`5m: ${formatHashrate(braiinsData?.hashrate5m)}`}></div>
-              <div className="flex-1 h-2/3 bg-gradient-to-t from-cyan-500/60 to-cyan-400/30 rounded hover:shadow-xl hover:shadow-cyan-500/60 transition-all" title={`1h: ${formatHashrate(braiinsData?.hashrate1hr)}`}></div>
-            </div>
-            <div className="mt-1 grid grid-cols-3 gap-1 text-xs text-slate-300 relative z-10">
-              <div className="text-cyan-300">1m: {formatHashrate(braiinsData?.hashrate1m)}</div>
-              <div className="text-cyan-300">5m: {formatHashrate(braiinsData?.hashrate5m)}</div>
-              <div className="text-cyan-300">1h: {formatHashrate(braiinsData?.hashrate1hr)}</div>
+            <h3 className="text-xs font-bold text-cyan-300 mb-1 uppercase tracking-widest relative z-10" style={{ fontFamily: 'var(--font-orbitron), sans-serif' }}>Hashrate Trend</h3>
+            <div className="h-20 relative z-10">
+              {hashRateHistory.length > 0 ? (
+                <ResponsiveContainer width="100%" height="100%">
+                  <LineChart data={hashRateHistory} margin={{ top: 5, right: 5, bottom: 0, left: 0 }}>
+                    <defs>
+                      <linearGradient id="hashRateGradient" x1="0%" y1="100%" x2="100%" y2="100%">
+                        <stop offset="0%" stopColor="#06b6d4" stopOpacity={1} />
+                        <stop offset="50%" stopColor="#0891b2" stopOpacity={1} />
+                        <stop offset="100%" stopColor="#06d6d4" stopOpacity={1} />
+                      </linearGradient>
+                    </defs>
+                    <CartesianGrid strokeDasharray="3 3" stroke="rgba(6, 182, 212, 0.1)" />
+                    <Tooltip 
+                      contentStyle={{ backgroundColor: 'rgba(20, 20, 40, 0.95)', border: '1px solid rgba(6, 182, 212, 0.3)', borderRadius: '6px' }}
+                      labelStyle={{ color: '#06d6d4' }}
+                      formatter={(value: any) => formatHashrate(value as number)}
+                    />
+                    <YAxis hide domain={['dataMin * 0.95', 'dataMax * 1.05']} />
+                    <Line 
+                      type="linear" 
+                      dataKey="hashrate1m" 
+                      stroke="url(#hashRateGradient)"
+                      dot={false}
+                      strokeWidth={3}
+                      isAnimationActive={false}
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      filter="drop-shadow(0 0 6px rgba(6,182,212,0.8))"
+                    />
+                  </LineChart>
+                </ResponsiveContainer>
+              ) : (
+                <div className="flex items-center justify-center h-full text-slate-500 text-xs">
+                  Waiting for hashrate data...
+                </div>
+              )}
             </div>
           </div>
 
-          {/* Best Share to Difficulty */}
+          {/* Historical Best Share Progression */}
           <div className="group relative rounded-lg border border-purple-500/40 bg-gradient-to-br from-slate-800/40 to-slate-900/50 p-2 backdrop-blur-lg hover:border-purple-400/70 hover:shadow-xl hover:shadow-purple-500/40 transition-all">
             <div className="absolute inset-0 rounded-lg opacity-0 group-hover:opacity-15 bg-[radial-gradient(ellipse_at_50%_50%,_rgba(168,85,247,0.3),transparent_70%)] blur-lg transition-all duration-300"></div>
-            <h3 className="text-xs font-bold text-purple-300 mb-1 uppercase tracking-widest">Best Share vs Difficulty</h3>
-            <div className="flex items-center justify-center h-20 relative z-10">
-              <div className="relative w-16 h-16">
-                <svg viewBox="0 0 100 100" className="w-full h-full drop-shadow-lg">
-                  {/* Background circle */}
-                  <circle cx="50" cy="50" r="45" fill="none" stroke="rgba(148, 113, 248, 0.15)" strokeWidth="2"/>
-                  {/* Progress circle */}
-                  {(() => {
-                    const ratio = Math.min((bestShareNum / networkDifficulty) * 100, 100)
-                    const circumference = 283
-                    const dashoffset = circumference * (1 - ratio / 100)
-                    return (
-                      <circle cx="50" cy="50" r="45" fill="none" stroke="url(#gradient)" strokeWidth="3" 
-                        strokeDasharray={`${circumference - dashoffset} ${circumference}`}
-                        strokeLinecap="round" transform="rotate(-90 50 50)" filter="drop-shadow(0 0 4px rgba(6,182,212,0.5))" />
-                    )
-                  })()}
-                  <defs>
-                    <linearGradient id="gradient" x1="0%" y1="0%" x2="100%" y2="100%">
-                      <stop offset="0%" stopColor="#06b6d4" />
-                      <stop offset="100%" stopColor="#d946ef" />
-                    </linearGradient>
-                  </defs>
-                </svg>
-                <div className="absolute inset-0 flex items-center justify-center">
-                  <div className="text-center">
-                    <div className="text-sm font-bold text-cyan-300 drop-shadow-lg">{Math.min(Math.round((bestShareNum / networkDifficulty) * 100), 100)}%</div>
-                    <div className="text-xs text-slate-400">difficulty</div>
-                  </div>
+            <h3 className="text-xs font-bold text-purple-300 mb-1 uppercase tracking-widest relative z-10" style={{ fontFamily: 'var(--font-orbitron), sans-serif' }}>Best Share Progression</h3>
+            <div className="h-20 relative z-10">
+              {bestShareHistory.length > 0 ? (
+                <ResponsiveContainer width="100%" height="100%">
+                  <LineChart data={bestShareHistory} margin={{ top: 5, right: 5, bottom: 0, left: 0 }}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="rgba(148, 113, 248, 0.1)" />
+                    <Tooltip 
+                      contentStyle={{ backgroundColor: 'rgba(20, 20, 40, 0.95)', border: '1px solid rgba(168, 85, 247, 0.3)', borderRadius: '6px' }}
+                      labelStyle={{ color: '#c084fc' }}
+                      formatter={(value: any) => formatNumber(value)}
+                    />
+                    <YAxis hide domain={['dataMin * 0.95', 'dataMax * 1.05']} />
+                    <Line 
+                      type="monotone" 
+                      dataKey="bestshare" 
+                      stroke="#d946ef" 
+                      dot={false}
+                      strokeWidth={2}
+                      isAnimationActive={false}
+                      filter="drop-shadow(0 0 4px rgba(217, 70, 239, 0.6))"
+                    />
+                  </LineChart>
+                </ResponsiveContainer>
+              ) : (
+                <div className="flex items-center justify-center h-full text-slate-500 text-xs">
+                  Waiting for best share data...
                 </div>
-              </div>
+              )}
             </div>
           </div>
         </div>
@@ -347,19 +409,19 @@ export function BraiinsWebDashboard() {
         <div className="rounded-lg border border-purple-500/30 bg-gradient-to-r from-purple-950/40 via-slate-900/40 to-cyan-950/40 p-2 backdrop-blur hover:border-purple-400/50 transition-all">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
             <div className="group">
-              <div className="text-purple-400 text-xs font-bold uppercase tracking-wider mb-0.5">USD Reward</div>
+              <div className="text-purple-400 text-xs font-bold uppercase tracking-wider mb-0.5" style={{ fontFamily: 'var(--font-orbitron), sans-serif' }}>USD Reward</div>
               <div className="text-lg font-bold text-white">{usdReward}</div>
               <div className="text-slate-400 text-xs mt-0.5">@ ${btcPrice.toLocaleString()}/BTC</div>
               <div className="mt-1 h-0.5 bg-gradient-to-r from-purple-500 to-transparent rounded-full group-hover:shadow-lg group-hover:shadow-purple-500/50 transition-all"></div>
             </div>
             <div className="group">
-              <div className="text-cyan-400 text-xs font-bold uppercase tracking-wider mb-0.5">Best Share</div>
+              <div className="text-cyan-400 text-xs font-bold uppercase tracking-wider mb-0.5" style={{ fontFamily: 'var(--font-orbitron), sans-serif' }}>Best Share</div>
               <div className="text-lg font-bold text-white">{formatNumber(braiinsData?.bestshare)}</div>
               <div className="text-slate-400 text-xs mt-0.5">Current peak</div>
               <div className="mt-1 h-0.5 bg-gradient-to-r from-cyan-500 to-transparent rounded-full group-hover:shadow-lg group-hover:shadow-cyan-500/50 transition-all"></div>
             </div>
             <div className="group">
-              <div className="text-purple-400 text-xs font-bold uppercase tracking-wider mb-0.5">Network Diff</div>
+              <div className="text-purple-400 text-xs font-bold uppercase tracking-wider mb-0.5" style={{ fontFamily: 'var(--font-orbitron), sans-serif' }}>Network Diff</div>
               <div className="text-lg font-bold text-white">{(networkDifficulty / 1e12).toFixed(2)}T</div>
               <div className="text-slate-400 text-xs mt-0.5">Bitcoin network</div>
               <div className="mt-1 h-0.5 bg-gradient-to-r from-purple-500 to-transparent rounded-full group-hover:shadow-lg group-hover:shadow-purple-500/50 transition-all"></div>
@@ -370,7 +432,7 @@ export function BraiinsWebDashboard() {
         {/* Active Miners Grid */}
         {activeMinersList.length > 0 && (
           <div className="rounded-lg border border-cyan-500/30 bg-gradient-to-br from-slate-800/30 to-slate-900/40 p-2 backdrop-blur">
-            <h2 className="text-xs font-bold text-white mb-1">Active Rigs ({activeMinersList.length})</h2>
+            <h2 className="text-xs font-bold text-white mb-1" style={{ fontFamily: 'var(--font-orbitron), sans-serif' }}>Active Rigs ({activeMinersList.length})</h2>
             <div className="grid grid-cols-4 sm:grid-cols-5 md:grid-cols-6 lg:grid-cols-8 xl:grid-cols-10 gap-0.5">
               {activeMinersList.map((miner, idx) => (
                 <div key={idx} className="group relative rounded border border-slate-700/50 bg-gradient-to-br from-slate-800/50 to-slate-900/50 p-1 hover:border-cyan-500/30 hover:shadow-lg hover:shadow-cyan-500/10 transition-all duration-300 text-xs">
@@ -399,7 +461,7 @@ export function BraiinsWebDashboard() {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
           {/* Hashrate History */}
           <div className="rounded-lg border border-cyan-500/30 bg-gradient-to-br from-slate-800/30 to-slate-900/40 p-5 backdrop-blur hover:border-cyan-400/50 transition-all">
-            <h3 className="text-sm font-bold text-cyan-400 mb-4 uppercase tracking-wider">Hashrate History</h3>
+            <h3 className="text-sm font-bold text-cyan-400 mb-4 uppercase tracking-wider" style={{ fontFamily: 'var(--font-orbitron), sans-serif' }}>Hashrate History</h3>
             <div className="space-y-3">
               <div className="flex items-center justify-between p-3 rounded border border-cyan-500/20 bg-cyan-500/5 hover:bg-cyan-500/10 transition-all">
                 <span className="text-slate-400 text-sm">5m Average</span>
@@ -414,7 +476,7 @@ export function BraiinsWebDashboard() {
 
           {/* Recent Alerts */}
           <div className="rounded-lg border border-purple-500/30 bg-gradient-to-br from-slate-800/30 to-slate-900/40 p-5 backdrop-blur hover:border-purple-400/50 transition-all">
-            <h3 className="text-sm font-bold text-purple-400 mb-4 uppercase tracking-wider">Recent Alerts</h3>
+            <h3 className="text-sm font-bold text-purple-400 mb-4 uppercase tracking-wider" style={{ fontFamily: 'var(--font-orbitron), sans-serif' }}>Recent Alerts</h3>
             <div className="space-y-2 max-h-28">
               {alerts.length === 0 ? (
                 <div className="text-slate-500 text-sm text-center py-4">No alerts yet</div>
@@ -441,7 +503,94 @@ export function BraiinsWebDashboard() {
             <div className="text-red-400 text-sm font-medium">Error: {error}</div>
           </div>
         )}
+
+        {/* MIKEYROCKS Footer Image */}
+        <div className="mt-16 mb-8 flex flex-col items-center justify-center relative gap-2">
+          {/* BTC MINING Label */}
+          <div 
+            className="text-xs font-bold tracking-[0.25em]" 
+            style={{ 
+              fontFamily: 'var(--font-orbitron), sans-serif',
+              color: '#06b6d4',
+              textShadow: `
+                0 0 8px rgba(6, 182, 212, 0.5),
+                0 0 16px rgba(6, 182, 212, 0.3)
+              `,
+              fontWeight: 900,
+            }}
+          >
+            BTC MINING
+          </div>
+          
+          {/* Footer Image */}
+          <img 
+            src="/images/mikeyrocks-footer.png" 
+            alt="MIKEYROCKS BTC MINING" 
+            className="h-16 w-auto object-contain drop-shadow-lg"
+            style={{
+              filter: 'drop-shadow(0 0 15px rgba(6, 182, 212, 0.4))',
+            }}
+          />
+        </div>
       </div>
+
+      {/* Settings Modal */}
+      {showSettings && (
+        <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 backdrop-blur-sm">
+          <div className="bg-slate-900 border border-cyan-500/50 rounded-lg p-6 max-w-md w-full mx-4 shadow-2xl shadow-cyan-500/20">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-bold text-cyan-300" style={{ fontFamily: 'var(--font-orbitron), sans-serif' }}>Settings</h3>
+              <button
+                onClick={() => setShowSettings(false)}
+                className="text-slate-400 hover:text-cyan-400 transition-colors"
+              >
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+
+            <div className="mb-4">
+              <label className="block text-xs font-bold text-cyan-300 mb-2 uppercase tracking-widest" style={{ fontFamily: 'var(--font-orbitron), sans-serif' }}>
+                BTC Address
+              </label>
+              <input
+                type="text"
+                value={settingsAddress}
+                onChange={(e) => setSettingsAddress(e.target.value)}
+                placeholder="Enter BTC address"
+                className="w-full bg-slate-800/50 border border-cyan-500/30 rounded px-3 py-2 text-cyan-300 placeholder-slate-500 focus:outline-none focus:border-cyan-400 transition-colors"
+              />
+              <p className="text-xs text-slate-400 mt-1">Current address: {address}</p>
+            </div>
+
+            <div className="flex gap-2">
+              <button
+                onClick={() => setShowSettings(false)}
+                className="flex-1 px-4 py-2 rounded border border-slate-600 text-slate-300 hover:bg-slate-800 transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={() => {
+                  if (settingsAddress.trim()) {
+                    setAddress(settingsAddress.trim())
+                    setBraiinsData(null)
+                    setMiners([])
+                    setBestShareHistory([])
+                    setHashRateHistory([])
+                    prevBestShare.current = ''
+                    setShowSettings(false)
+                  }
+                }}
+                className="flex-1 px-4 py-2 rounded bg-gradient-to-r from-cyan-600 to-cyan-500 text-white font-medium hover:from-cyan-500 hover:to-cyan-400 transition-all shadow-lg shadow-cyan-500/50"
+              >
+                Save &amp; Refresh
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

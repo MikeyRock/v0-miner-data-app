@@ -99,6 +99,7 @@ export function DashboardClient({ initialApiUrl = '', initialDiscordUrl = '' }: 
   const [settingsLoaded, setSettingsLoaded] = useState(false)
   const [isRefreshing, setIsRefreshing]     = useState(false)
   const [celebrationCoin, setCelebrationCoin] = useState<'BCH' | 'BTC' | 'XEC' | null>(null)
+  const [bestShareHistory, setBestShareHistory] = useState<{ timestamp: number; bestshare: number }[]>([])
 
   // Load persisted settings from server on mount
   useEffect(() => {
@@ -260,6 +261,11 @@ export function DashboardClient({ initialApiUrl = '', initialDiscordUrl = '' }: 
         timestamp: Date.now(),
         sent: false,
       })
+      // Record to history
+      setBestShareHistory((prev) => [
+        ...prev.slice(-59), // Keep last 60 data points
+        { timestamp: Date.now(), bestshare: data.bestshare }
+      ])
       // Send to Discord
       sendDiscordAlert({
         type: 'braiins_best_share',
@@ -399,7 +405,7 @@ export function DashboardClient({ initialApiUrl = '', initialDiscordUrl = '' }: 
         blitzpoolOfflineAlerted.current.add(w.name)
         const alert = addAlert({
           type: 'worker_offline',
-          message: `[Blitzpool] ${w.name} offline — hashrate is 0`,
+          message: `[Blitzpool] ${w.name} offline �� hashrate is 0`,
           workerName: w.name,
           timestamp: Date.now(),
           sent: false,
