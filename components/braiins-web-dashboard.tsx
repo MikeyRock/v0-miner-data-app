@@ -235,18 +235,23 @@ export function BraiinsWebDashboard() {
                   <div className="absolute inset-0 bg-gradient-to-br from-pink-600/5 to-transparent opacity-0 group-hover:opacity-100 transition"></div>
                   <div className="relative">
                     <p className="text-xs font-mono text-pink-400/70 tracking-wider">ACTIVE MINERS</p>
-                    <p className="mt-2 text-2xl font-light text-pink-300">{miners.length}</p>
+                    <p className="mt-2 text-2xl font-light text-pink-300">{miners.filter(m => m.lastshare && (Date.now() - m.lastshare * 1000) < 300000).length}</p>
                   </div>
                   <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-gradient-to-r from-pink-500 via-pink-600 to-transparent"></div>
                 </div>
               </div>
 
               {/* Active Miners - Main Section */}
-              {miners.length > 0 && (
+              {(() => {
+                const activeMinersList = miners.filter(miner => {
+                  const isActive = miner.lastshare && (Date.now() - miner.lastshare * 1000) < 300000
+                  return isActive
+                })
+                return activeMinersList.length > 0 && (
                 <div className="flex-1 flex flex-col overflow-hidden">
-                  <h2 className="text-lg font-light tracking-wider text-blue-300 mb-4">ACTIVE MINING RIGS</h2>
+                  <h2 className="text-lg font-light tracking-wider text-blue-300 mb-4">ACTIVE MINING RIGS ({activeMinersList.length})</h2>
                   <div className="grid grid-cols-3 gap-4 overflow-y-auto pb-2">
-                    {miners.map((miner, idx) => {
+                    {activeMinersList.map((miner, idx) => {
                       const isActive = miner.lastshare && (Date.now() - miner.lastshare * 1000) < 300000
                       return (
                         <div key={idx} className="group relative rounded-lg border border-blue-500/30 bg-gradient-to-br from-blue-950/30 via-black to-blue-900/10 p-5 backdrop-blur hover:border-blue-500/70 transition overflow-hidden flex flex-col">
@@ -287,7 +292,8 @@ export function BraiinsWebDashboard() {
                     })}
                   </div>
                 </div>
-              )}
+                )
+              })()}
 
               {/* Bottom Panels */}
               <div className="grid grid-cols-2 gap-4 flex-shrink-0">
