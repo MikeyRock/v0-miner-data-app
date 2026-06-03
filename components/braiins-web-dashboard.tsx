@@ -59,9 +59,10 @@ function estimateBTCReward(btcPrice: number): string {
 }
 
 export function BraiinsWebDashboard() {
-  const address = process.env.NEXT_PUBLIC_BRAIINS_ADDRESS || ''
+  const defaultAddress = process.env.NEXT_PUBLIC_BRAIINS_ADDRESS || ''
   const discordWebhook = process.env.NEXT_PUBLIC_DISCORD_WEBHOOK_URL || ''
 
+  const [address, setAddress] = useState(defaultAddress)
   const [braiinsData, setBraiinsData] = useState<BraiinsStats | null>(null)
   const [miners, setMiners] = useState<Miner[]>([])
   const [alerts, setAlerts] = useState<Alert[]>([])
@@ -72,6 +73,8 @@ export function BraiinsWebDashboard() {
   const [networkDifficulty, setNetworkDifficulty] = useState<number>(138.96e12)
   const [bestShareHistory, setBestShareHistory] = useState<{ timestamp: number; bestshare: number }[]>([])
   const [hashRateHistory, setHashRateHistory] = useState<{ timestamp: number; hashrate1m: number; hashrate5m: number; hashrate1hr: number }[]>([])
+  const [showSettings, setShowSettings] = useState(false)
+  const [settingsAddress, setSettingsAddress] = useState(address)
 
   const prevBestShare = useRef<string>('')
 
@@ -235,11 +238,26 @@ export function BraiinsWebDashboard() {
           <h2 className="text-lg font-bold text-cyan-300" style={{ fontFamily: 'var(--font-orbitron), sans-serif', letterSpacing: '0.1em', textShadow: '0 0 10px rgba(6,182,212,0.4)' }}>SOLO</h2>
           <p className="text-slate-400 text-xs mt-0.5">Mining Dashboard</p>
         </div>
-        <div className="flex items-center gap-2">
-          <div className={`w-2 h-2 rounded-full ${loading ? 'bg-yellow-500 animate-pulse' : 'bg-cyan-400'}`}></div>
-          <span className={`text-xs font-medium ${loading ? 'text-yellow-400' : 'text-cyan-400'}`}>
-            {loading ? 'Updating...' : 'Live'}
-          </span>
+        <div className="flex flex-col items-center gap-1">
+          <div className="flex items-center gap-2">
+            <div className={`w-2 h-2 rounded-full ${loading ? 'bg-yellow-500 animate-pulse' : 'bg-cyan-400'}`}></div>
+            <span className={`text-xs font-medium ${loading ? 'text-yellow-400' : 'text-cyan-400'}`}>
+              {loading ? 'Updating...' : 'Live'}
+            </span>
+          </div>
+          <button
+            onClick={() => {
+              setShowSettings(true)
+              setSettingsAddress(address)
+            }}
+            className="p-1 rounded hover:bg-slate-800/50 transition-colors"
+            title="Settings"
+          >
+            <svg className="w-4 h-4 text-cyan-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+            </svg>
+          </button>
         </div>
       </div>
 
@@ -515,6 +533,64 @@ export function BraiinsWebDashboard() {
           />
         </div>
       </div>
+
+      {/* Settings Modal */}
+      {showSettings && (
+        <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 backdrop-blur-sm">
+          <div className="bg-slate-900 border border-cyan-500/50 rounded-lg p-6 max-w-md w-full mx-4 shadow-2xl shadow-cyan-500/20">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-bold text-cyan-300" style={{ fontFamily: 'var(--font-orbitron), sans-serif' }}>Settings</h3>
+              <button
+                onClick={() => setShowSettings(false)}
+                className="text-slate-400 hover:text-cyan-400 transition-colors"
+              >
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+
+            <div className="mb-4">
+              <label className="block text-xs font-bold text-cyan-300 mb-2 uppercase tracking-widest" style={{ fontFamily: 'var(--font-orbitron), sans-serif' }}>
+                BTC Address
+              </label>
+              <input
+                type="text"
+                value={settingsAddress}
+                onChange={(e) => setSettingsAddress(e.target.value)}
+                placeholder="Enter BTC address"
+                className="w-full bg-slate-800/50 border border-cyan-500/30 rounded px-3 py-2 text-cyan-300 placeholder-slate-500 focus:outline-none focus:border-cyan-400 transition-colors"
+              />
+              <p className="text-xs text-slate-400 mt-1">Current address: {address}</p>
+            </div>
+
+            <div className="flex gap-2">
+              <button
+                onClick={() => setShowSettings(false)}
+                className="flex-1 px-4 py-2 rounded border border-slate-600 text-slate-300 hover:bg-slate-800 transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={() => {
+                  if (settingsAddress.trim()) {
+                    setAddress(settingsAddress.trim())
+                    setBraiinsData(null)
+                    setMiners([])
+                    setBestShareHistory([])
+                    setHashRateHistory([])
+                    prevBestShare.current = ''
+                    setShowSettings(false)
+                  }
+                }}
+                className="flex-1 px-4 py-2 rounded bg-gradient-to-r from-cyan-600 to-cyan-500 text-white font-medium hover:from-cyan-500 hover:to-cyan-400 transition-all shadow-lg shadow-cyan-500/50"
+              >
+                Save &amp; Refresh
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
