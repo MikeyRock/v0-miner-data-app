@@ -93,6 +93,16 @@ export function BraiinsWebDashboard() {
         workersOnline: data.workers || 0,
       }
 
+      // Check for new best share alert
+      const currentBestShare = parseFloat(data.bestshare?.toString() || '0')
+      const previousBestShare = parseFloat(prevBestShare.current || '0')
+      
+      if (currentBestShare > 0 && previousBestShare > 0 && currentBestShare > previousBestShare) {
+        const message = `New Best Share: ${formatNumber(currentBestShare)}`
+        await createAlert('best_share', message)
+      }
+      prevBestShare.current = currentBestShare.toString()
+
       setBraiinsData(stats)
 
       if (data.worker && Array.isArray(data.worker)) {
@@ -117,21 +127,24 @@ export function BraiinsWebDashboard() {
   }
 
   const sendDiscordAlert = async (message: string, type: 'best_share' | 'worker_offline') => {
-    if (!discordWebhook) return
+    if (!discordWebhook) {
+      return
+    }
     try {
-      await fetch(discordWebhook, {
+      const res = await fetch(discordWebhook, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           embeds: [{
-            title: type === 'best_share' ? 'New Best Share!' : 'Worker Offline',
+            title: type === 'best_share' ? '⚡ New Best Share!' : '⚠ Worker Offline',
             description: message,
             color: type === 'best_share' ? 3066993 : 15158332,
-            footer: { text: 'Braiins Solo' },
+            footer: { text: 'Braiins Solo Mining' },
             timestamp: new Date().toISOString(),
           }],
         }),
       })
+      if (!res.ok) console.log('[v0] Discord alert failed:', res.status)
     } catch (e) {
       console.log('[v0] Discord error:', e)
     }
@@ -143,7 +156,7 @@ export function BraiinsWebDashboard() {
       type,
       message,
       createdAt: new Date().toISOString(),
-      sent: false,
+      sent: true,
     }
     setAlerts((prev) => [alert, ...prev.slice(0, 19)])
     await sendDiscordAlert(message, type)
