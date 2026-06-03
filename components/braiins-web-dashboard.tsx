@@ -162,103 +162,97 @@ export function BraiinsWebDashboard() {
   const activeMinersList = miners.filter(m => m.lastshare && (Date.now() - m.lastshare * 1000) < 300000)
 
   return (
-    <div className="min-h-screen bg-black text-white font-mono overflow-hidden" style={{
-      backgroundImage: `repeating-linear-gradient(
-        0deg,
-        rgba(0, 255, 255, 0.03) 0px,
-        rgba(0, 255, 255, 0.03) 1px,
-        transparent 1px,
-        transparent 2px
-      ),
-      repeating-linear-gradient(
-        90deg,
-        rgba(0, 255, 255, 0.03) 0px,
-        rgba(0, 255, 255, 0.03) 1px,
-        transparent 1px,
-        transparent 2px
-      )`
-    }}>
-      {/* Scanlines effect */}
-      <div className="fixed inset-0 pointer-events-none" style={{
-        backgroundImage: `repeating-linear-gradient(
-          0deg,
-          rgba(0, 0, 0, 0.15) 0px,
-          rgba(0, 0, 0, 0.15) 1px,
-          transparent 1px,
-          transparent 2px
-        )`
-      }}></div>
+    <div className="min-h-screen bg-gradient-to-br from-slate-950 via-blue-950 to-slate-900 text-white overflow-auto">
+      {/* Header */}
+      <div className="flex items-center justify-between p-6 border-b border-slate-800/50">
+        <div>
+          <h1 className="text-3xl font-bold">Braiins Solo</h1>
+          <p className="text-slate-400 text-sm mt-1">Mining Dashboard</p>
+        </div>
+        <div className="flex items-center gap-3">
+          <div className={`w-2 h-2 rounded-full ${loading ? 'bg-yellow-500 animate-pulse' : 'bg-cyan-400'}`}></div>
+          <span className={`text-sm font-medium ${loading ? 'text-yellow-400' : 'text-cyan-400'}`}>
+            {loading ? 'Updating...' : 'Live'}
+          </span>
+        </div>
+      </div>
 
-      <div className="relative z-10 p-4">
-        {/* Header */}
-        <div className="border-2 border-yellow-400 bg-black/80 p-3 mb-4 relative" style={{
-          boxShadow: '0 0 20px rgba(255, 255, 0, 0.3), inset 0 0 20px rgba(255, 255, 0, 0.1)'
-        }}>
-          <div className="flex items-center justify-between mb-2">
-            <div className="text-yellow-400 text-sm font-bold tracking-widest">⚠ CYBERPUNK MINER ⚠</div>
-            <div className="flex gap-2">
-              <div className={`w-2 h-2 ${loading ? 'bg-yellow-400 animate-pulse' : 'bg-cyan-400'}`}></div>
-              <span className="text-cyan-400 text-xs">{loading ? 'SYNC' : 'LIVE'}</span>
+      <div className="p-6 max-w-7xl mx-auto space-y-6">
+        {/* Top Stats Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          {/* Best Share Card */}
+          <div className="group relative rounded-lg border border-slate-700/50 bg-gradient-to-br from-slate-800/50 to-slate-900/50 p-5 hover:border-cyan-500/50 hover:shadow-lg hover:shadow-cyan-500/20 transition-all duration-300 backdrop-blur">
+            <div className="flex items-start justify-between mb-3">
+              <div className="text-cyan-400 text-xs font-bold uppercase tracking-wider">Best Share</div>
+              <div className="w-8 h-8 rounded-full bg-gradient-to-br from-cyan-500/20 to-blue-500/20 flex items-center justify-center text-cyan-400">📊</div>
             </div>
-          </div>
-          <div className="text-cyan-300 text-xs">WALLET: {address.slice(0, 10)}...</div>
-        </div>
-
-        {/* Main Stats Grid */}
-        <div className="grid grid-cols-4 gap-2 mb-4">
-          {/* Best Share */}
-          <div className="border-2 border-cyan-400 bg-black/80 p-3 relative group" style={{
-            boxShadow: '0 0 15px rgba(0, 255, 255, 0.3), inset 0 0 15px rgba(0, 255, 255, 0.05)'
-          }}>
-            <div className="text-yellow-400 text-xs font-bold mb-1">▐ BEST_SHARE</div>
-            <div className="text-cyan-300 text-lg font-bold">{formatNumber(braiinsData?.bestshare)}</div>
-            <div className="mt-1 h-0.5 w-full bg-gradient-to-r from-cyan-400 via-cyan-300 to-transparent"></div>
+            <div className="text-2xl font-bold text-white">{formatNumber(braiinsData?.bestshare)}</div>
+            <div className="text-slate-400 text-xs mt-2">Peak difficulty reached</div>
+            <div className="mt-3 h-1 bg-gradient-to-r from-cyan-500 to-transparent rounded-full"></div>
           </div>
 
-          {/* 1M Hashrate */}
-          <div className="border-2 border-yellow-400 bg-black/80 p-3 relative" style={{
-            boxShadow: '0 0 15px rgba(255, 255, 0, 0.3), inset 0 0 15px rgba(255, 255, 0, 0.05)'
-          }}>
-            <div className="text-cyan-400 text-xs font-bold mb-1">▌ 1M_RATE</div>
-            <div className="text-yellow-300 text-lg font-bold">{formatHashrate(braiinsData?.hashrate1m)}</div>
-            <div className="mt-1 h-0.5 w-full bg-gradient-to-r from-yellow-400 via-yellow-300 to-transparent"></div>
+          {/* 1M Hashrate Card */}
+          <div className="group relative rounded-lg border border-slate-700/50 bg-gradient-to-br from-slate-800/50 to-slate-900/50 p-5 hover:border-purple-500/50 hover:shadow-lg hover:shadow-purple-500/20 transition-all duration-300 backdrop-blur">
+            <div className="flex items-start justify-between mb-3">
+              <div className="text-purple-400 text-xs font-bold uppercase tracking-wider">1m Hashrate</div>
+              <div className="w-8 h-8 rounded-full bg-gradient-to-br from-purple-500/20 to-pink-500/20 flex items-center justify-center text-purple-400">⚡</div>
+            </div>
+            <div className="text-2xl font-bold text-white">{formatHashrate(braiinsData?.hashrate1m)}</div>
+            <div className="text-slate-400 text-xs mt-2">Current rate</div>
+            <div className="mt-3 h-1 bg-gradient-to-r from-purple-500 to-transparent rounded-full"></div>
           </div>
 
-          {/* Total Shares */}
-          <div className="border-2 border-cyan-500 bg-black/80 p-3 relative" style={{
-            boxShadow: '0 0 15px rgba(0, 255, 200, 0.3), inset 0 0 15px rgba(0, 255, 200, 0.05)'
-          }}>
-            <div className="text-yellow-400 text-xs font-bold mb-1">▐ TOT_SHARES</div>
-            <div className="text-cyan-300 text-lg font-bold">{formatNumber(braiinsData?.totalshares)}G</div>
-            <div className="mt-1 h-0.5 w-full bg-gradient-to-r from-cyan-500 via-cyan-400 to-transparent"></div>
+          {/* Total Shares Card */}
+          <div className="group relative rounded-lg border border-slate-700/50 bg-gradient-to-br from-slate-800/50 to-slate-900/50 p-5 hover:border-cyan-500/50 hover:shadow-lg hover:shadow-cyan-500/20 transition-all duration-300 backdrop-blur">
+            <div className="flex items-start justify-between mb-3">
+              <div className="text-cyan-400 text-xs font-bold uppercase tracking-wider">Total Shares</div>
+              <div className="w-8 h-8 rounded-full bg-gradient-to-br from-cyan-500/20 to-teal-500/20 flex items-center justify-center text-cyan-400">✓</div>
+            </div>
+            <div className="text-2xl font-bold text-white">{formatNumber(braiinsData?.totalshares)}G</div>
+            <div className="text-slate-400 text-xs mt-2">Cumulative</div>
+            <div className="mt-3 h-1 bg-gradient-to-r from-cyan-500 to-transparent rounded-full"></div>
           </div>
 
-          {/* Active Miners */}
-          <div className="border-2 border-yellow-500 bg-black/80 p-3 relative" style={{
-            boxShadow: '0 0 15px rgba(255, 200, 0, 0.3), inset 0 0 15px rgba(255, 200, 0, 0.05)'
-          }}>
-            <div className="text-cyan-400 text-xs font-bold mb-1">▌ ACTIVE</div>
-            <div className="text-yellow-300 text-lg font-bold">{activeMinersList.length}</div>
-            <div className="mt-1 h-0.5 w-full bg-gradient-to-r from-yellow-500 via-yellow-400 to-transparent"></div>
+          {/* Active Miners Card */}
+          <div className="group relative rounded-lg border border-slate-700/50 bg-gradient-to-br from-slate-800/50 to-slate-900/50 p-5 hover:border-purple-500/50 hover:shadow-lg hover:shadow-purple-500/20 transition-all duration-300 backdrop-blur">
+            <div className="flex items-start justify-between mb-3">
+              <div className="text-purple-400 text-xs font-bold uppercase tracking-wider">Active Rigs</div>
+              <div className="w-8 h-8 rounded-full bg-gradient-to-br from-purple-500/20 to-pink-500/20 flex items-center justify-center text-purple-400">🖥</div>
+            </div>
+            <div className="text-2xl font-bold text-white">{activeMinersList.length}</div>
+            <div className="text-slate-400 text-xs mt-2">Currently mining</div>
+            <div className="mt-3 h-1 bg-gradient-to-r from-purple-500 to-transparent rounded-full"></div>
           </div>
         </div>
 
-        {/* Miners Grid */}
+        {/* Active Miners Grid */}
         {activeMinersList.length > 0 && (
-          <div className="border-2 border-cyan-400 bg-black/80 p-3 mb-4" style={{
-            boxShadow: '0 0 20px rgba(0, 255, 255, 0.2), inset 0 0 20px rgba(0, 255, 255, 0.05)'
-          }}>
-            <div className="text-yellow-400 text-xs font-bold mb-3 tracking-widest">▐▐ ACTIVE_MINING_RIGS ({activeMinersList.length}) ▐▐</div>
-            <div className="grid grid-cols-2 gap-2 max-h-64 overflow-y-auto">
+          <div className="rounded-lg border border-slate-700/50 bg-gradient-to-br from-slate-800/30 to-slate-900/30 p-6 backdrop-blur">
+            <h2 className="text-lg font-bold text-white mb-4">Active Mining Rigs</h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 max-h-96 overflow-y-auto">
               {activeMinersList.map((miner, idx) => (
-                <div key={idx} className="border border-cyan-500/60 bg-black/60 p-2 text-xs" style={{
-                  boxShadow: 'inset 0 0 10px rgba(0, 255, 255, 0.1)'
-                }}>
-                  <div className="text-cyan-300 font-bold mb-1">{miner.name}</div>
-                  <div className="grid grid-cols-2 gap-1 text-cyan-400/80">
-                    <div>1M: <span className="text-yellow-400">{formatHashrate(miner.hashrate1m)}</span></div>
-                    <div>5M: <span className="text-yellow-400">{formatHashrate(miner.hashrate5m)}</span></div>
-                    <div className="col-span-2">Best: <span className="text-cyan-300">{formatNumber(miner.bestshare)}</span></div>
+                <div key={idx} className="group relative rounded-lg border border-slate-700/50 bg-gradient-to-br from-slate-800/50 to-slate-900/50 p-4 hover:border-cyan-500/30 hover:shadow-lg hover:shadow-cyan-500/10 transition-all duration-300">
+                  <div className="flex items-start justify-between mb-3">
+                    <div className="flex-1">
+                      <div className="text-cyan-400 font-bold text-sm">{miner.name}</div>
+                      <div className="text-slate-400 text-xs mt-1">ID: {idx + 1}</div>
+                    </div>
+                    <div className="w-2 h-2 rounded-full bg-cyan-400 animate-pulse"></div>
+                  </div>
+                  
+                  <div className="space-y-2 text-xs">
+                    <div className="flex justify-between items-center">
+                      <span className="text-slate-400">1m Rate:</span>
+                      <span className="text-cyan-300 font-mono">{formatHashrate(miner.hashrate1m)}</span>
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <span className="text-slate-400">5m Rate:</span>
+                      <span className="text-purple-300 font-mono">{formatHashrate(miner.hashrate5m)}</span>
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <span className="text-slate-400">Best Share:</span>
+                      <span className="text-cyan-300 font-mono">{formatNumber(miner.bestshare)}</span>
+                    </div>
                   </div>
                 </div>
               ))}
@@ -266,37 +260,39 @@ export function BraiinsWebDashboard() {
           </div>
         )}
 
-        {/* Bottom Panels */}
-        <div className="grid grid-cols-2 gap-2">
+        {/* Bottom Info Panels */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
           {/* Hashrate History */}
-          <div className="border-2 border-yellow-400 bg-black/80 p-3" style={{
-            boxShadow: '0 0 15px rgba(255, 255, 0, 0.2), inset 0 0 15px rgba(255, 255, 0, 0.05)'
-          }}>
-            <div className="text-cyan-400 text-xs font-bold mb-2">▌ HASHRATE_HISTORY</div>
-            <div className="space-y-1 text-xs">
-              <div className="flex justify-between text-cyan-400">
-                <span>5M:</span>
-                <span className="text-yellow-400">{formatHashrate(braiinsData?.hashrate5m)}</span>
+          <div className="rounded-lg border border-slate-700/50 bg-gradient-to-br from-slate-800/30 to-slate-900/30 p-5 backdrop-blur">
+            <h3 className="text-sm font-bold text-white mb-4 uppercase tracking-wider">Hashrate History</h3>
+            <div className="space-y-3">
+              <div className="flex items-center justify-between p-3 rounded border border-slate-700/30 bg-slate-800/20">
+                <span className="text-slate-400 text-sm">5m Average</span>
+                <span className="text-cyan-400 font-mono font-bold">{formatHashrate(braiinsData?.hashrate5m)}</span>
               </div>
-              <div className="flex justify-between text-cyan-400">
-                <span>1H:</span>
-                <span className="text-yellow-400">{formatHashrate(braiinsData?.hashrate1hr)}</span>
+              <div className="flex items-center justify-between p-3 rounded border border-slate-700/30 bg-slate-800/20">
+                <span className="text-slate-400 text-sm">1h Average</span>
+                <span className="text-purple-400 font-mono font-bold">{formatHashrate(braiinsData?.hashrate1hr)}</span>
               </div>
             </div>
           </div>
 
-          {/* Alerts */}
-          <div className="border-2 border-cyan-500 bg-black/80 p-3" style={{
-            boxShadow: '0 0 15px rgba(0, 255, 255, 0.2), inset 0 0 15px rgba(0, 255, 255, 0.05)'
-          }}>
-            <div className="text-yellow-400 text-xs font-bold mb-2">▐ ALERT_LOG ({alerts.length})</div>
-            <div className="space-y-1 text-xs max-h-20 overflow-y-auto">
+          {/* Recent Alerts */}
+          <div className="rounded-lg border border-slate-700/50 bg-gradient-to-br from-slate-800/30 to-slate-900/30 p-5 backdrop-blur">
+            <h3 className="text-sm font-bold text-white mb-4 uppercase tracking-wider">Recent Alerts</h3>
+            <div className="space-y-2 max-h-28 overflow-y-auto">
               {alerts.length === 0 ? (
-                <div className="text-cyan-400/60">[ NO ALERTS ]</div>
+                <div className="text-slate-500 text-sm text-center py-4">No alerts yet</div>
               ) : (
-                alerts.slice(0, 3).map(alert => (
-                  <div key={alert.id} className="text-cyan-300 border-l-2 border-yellow-400 pl-1">
-                    <span className="text-yellow-400">[{alert.type === 'best_share' ? '✓' : '!'}]</span> {alert.message}
+                alerts.slice(0, 5).map(alert => (
+                  <div key={alert.id} className="p-2 rounded border-l-2 border-cyan-500 bg-cyan-500/5 text-xs">
+                    <div className="flex items-start gap-2">
+                      <span className="text-cyan-400 mt-0.5">→</span>
+                      <div>
+                        <div className="text-cyan-300 font-medium">{alert.message}</div>
+                        <div className="text-slate-500 text-xs mt-1">{new Date(alert.createdAt).toLocaleTimeString()}</div>
+                      </div>
+                    </div>
                   </div>
                 ))
               )}
@@ -304,12 +300,10 @@ export function BraiinsWebDashboard() {
           </div>
         </div>
 
-        {/* Error Display */}
+        {/* Error State */}
         {error && (
-          <div className="mt-4 border-2 border-red-500 bg-red-900/20 p-3" style={{
-            boxShadow: '0 0 20px rgba(255, 0, 0, 0.3)'
-          }}>
-            <div className="text-red-400 text-xs font-bold">ERROR: {error}</div>
+          <div className="rounded-lg border border-red-500/50 bg-red-500/5 p-4 backdrop-blur">
+            <div className="text-red-400 text-sm font-medium">Error: {error}</div>
           </div>
         )}
       </div>
