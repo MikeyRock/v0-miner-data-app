@@ -223,64 +223,9 @@ export function BraiinsWebDashboard() {
         </div>
       </div>
 
-      <div className="p-4 max-w-full mx-auto h-[calc(100vh-80px)] overflow-y-auto space-y-4">
-        {/* Top Stats Cards - Responsive grid */}
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-2">
-          {/* Best Share Card */}
-          <div className="group relative rounded-lg border border-slate-700/50 bg-gradient-to-br from-slate-800/50 to-slate-900/50 p-3 hover:border-cyan-500/50 hover:shadow-lg hover:shadow-cyan-500/20 transition-all duration-300 backdrop-blur">
-            <div className="flex items-start justify-between mb-2">
-              <div className="text-cyan-400 text-xs font-bold uppercase tracking-wider">Best Share</div>
-              <div className="w-6 h-6 rounded-full bg-gradient-to-br from-cyan-500/20 to-blue-500/20 flex items-center justify-center text-cyan-400 text-xs">📊</div>
-            </div>
-            <div className="text-xl font-bold text-white">{formatNumber(braiinsData?.bestshare)}</div>
-            <div className="text-slate-400 text-xs mt-1">Peak difficulty</div>
-            <div className="mt-2 h-0.5 bg-gradient-to-r from-cyan-500 to-transparent rounded-full"></div>
-          </div>
-
-          {/* 1M Hashrate Card */}
-          <div className="group relative rounded-lg border border-slate-700/50 bg-gradient-to-br from-slate-800/50 to-slate-900/50 p-3 hover:border-purple-500/50 hover:shadow-lg hover:shadow-purple-500/20 transition-all duration-300 backdrop-blur">
-            <div className="flex items-start justify-between mb-2">
-              <div className="text-purple-400 text-xs font-bold uppercase tracking-wider">1m Rate</div>
-              <div className="w-6 h-6 rounded-full bg-gradient-to-br from-purple-500/20 to-pink-500/20 flex items-center justify-center text-purple-400 text-xs">⚡</div>
-            </div>
-            <div className="text-xl font-bold text-white">{formatHashrate(braiinsData?.hashrate1m)}</div>
-            <div className="text-slate-400 text-xs mt-1">Current</div>
-            <div className="mt-2 h-0.5 bg-gradient-to-r from-purple-500 to-transparent rounded-full"></div>
-          </div>
-
-          {/* Total Shares Card */}
-          <div className="group relative rounded-lg border border-slate-700/50 bg-gradient-to-br from-slate-800/50 to-slate-900/50 p-3 hover:border-cyan-500/50 hover:shadow-lg hover:shadow-cyan-500/20 transition-all duration-300 backdrop-blur">
-            <div className="flex items-start justify-between mb-2">
-              <div className="text-cyan-400 text-xs font-bold uppercase tracking-wider">Total Shares</div>
-              <div className="w-6 h-6 rounded-full bg-gradient-to-br from-cyan-500/20 to-teal-500/20 flex items-center justify-center text-cyan-400 text-xs">✓</div>
-            </div>
-            <div className="text-xl font-bold text-white">{formatNumber(braiinsData?.totalshares)}G</div>
-            <div className="text-slate-400 text-xs mt-1">Cumulative</div>
-            <div className="mt-2 h-0.5 bg-gradient-to-r from-cyan-500 to-transparent rounded-full"></div>
-          </div>
-
-          {/* Active Miners Card */}
-          <div className="group relative rounded-lg border border-slate-700/50 bg-gradient-to-br from-slate-800/50 to-slate-900/50 p-3 hover:border-purple-500/50 hover:shadow-lg hover:shadow-purple-500/20 transition-all duration-300 backdrop-blur">
-            <div className="flex items-start justify-between mb-2">
-              <div className="text-purple-400 text-xs font-bold uppercase tracking-wider">Active</div>
-              <div className="w-6 h-6 rounded-full bg-gradient-to-br from-purple-500/20 to-pink-500/20 flex items-center justify-center text-purple-400 text-xs">🖥</div>
-            </div>
-            <div className="text-xl font-bold text-white">{activeMinersList.length}</div>
-            <div className="text-slate-400 text-xs mt-1">Mining</div>
-            <div className="mt-2 h-0.5 bg-gradient-to-r from-purple-500 to-transparent rounded-full"></div>
-          </div>
-        </div>
-        <div className="flex items-center gap-3">
-          <div className={`w-2 h-2 rounded-full ${loading ? 'bg-yellow-500 animate-pulse' : 'bg-cyan-400'}`}></div>
-          <span className={`text-sm font-medium ${loading ? 'text-yellow-400' : 'text-cyan-400'}`}>
-            {loading ? 'Updating...' : 'Live'}
-          </span>
-        </div>
-      </div>
-
-      <div className="p-2 max-w-full mx-auto overflow-y-auto space-y-1.5">
-        {/* Top Stats Cards with Gradient */}
-        <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-1">
+      <div className="p-3 max-w-full mx-auto overflow-y-auto space-y-2">
+        {/* Top Stats Cards */}
+        <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-2">
           {/* Best Share Card */}
           <div className="group relative rounded-lg border border-cyan-500/30 bg-gradient-to-br from-cyan-950/40 via-slate-900/50 to-slate-950/60 p-2 hover:border-cyan-400/60 hover:shadow-lg hover:shadow-cyan-500/30 transition-all duration-300 backdrop-blur overflow-hidden">
             <div className="absolute inset-0 bg-gradient-to-br from-cyan-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
