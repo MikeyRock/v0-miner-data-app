@@ -397,77 +397,79 @@ export function BraiinsWebDashboard() {
             <h3 className="text-xs font-bold text-cyan-300 mb-1 uppercase tracking-widest relative z-10" style={{ fontFamily: 'var(--font-orbitron), sans-serif' }}>Hashrate Trend</h3>
             <div className="h-20 relative z-10">
               {hashRateHistory.length > 0 ? (
-                <>
-                  <ResponsiveContainer width="100%" height="100%">
-                    <LineChart data={hashRateHistory} margin={{ top: 5, right: 5, bottom: 0, left: 0 }}>
-                      <defs>
-                        <linearGradient id="hashRateGradient" x1="0%" y1="100%" x2="100%" y2="100%">
-                          <stop offset="0%" stopColor="#06b6d4" stopOpacity={1} />
-                          <stop offset="50%" stopColor="#0891b2" stopOpacity={1} />
-                          <stop offset="100%" stopColor="#06d6d4" stopOpacity={1} />
-                        </linearGradient>
-                      </defs>
-                      <CartesianGrid strokeDasharray="3 3" stroke="rgba(6, 182, 212, 0.1)" />
-                      <Tooltip 
-                        contentStyle={{ backgroundColor: 'rgba(20, 20, 40, 0.95)', border: '1px solid rgba(6, 182, 212, 0.3)', borderRadius: '6px' }}
-                        labelStyle={{ color: '#06d6d4' }}
-                        formatter={(value: any) => formatHashrate(value as number)}
-                      />
-                      <YAxis hide domain={['dataMin * 0.95', 'dataMax * 1.05']} />
-                      <Line 
-                        type="linear" 
-                        dataKey="hashrate1m" 
-                        stroke="url(#hashRateGradient)"
-                        dot={false}
-                        strokeWidth={3}
-                        isAnimationActive={false}
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        filter="drop-shadow(0 0 6px rgba(6,182,212,0.8))"
-                      />
-                    </LineChart>
-                  </ResponsiveContainer>
-                  {/* Laser etching head — pinned to the tip of the trend line */}
-                  {(() => {
-                    // Chart inner height: container 80px, margin top 5 + bottom 0 = 5px padding
-                    const chartH = 80
-                    const marginTop = 5
-                    const marginBottom = 0
-                    const plotH = chartH - marginTop - marginBottom
-
-                    const values = hashRateHistory.map(d => d.hashrate1m)
-                    const minV = Math.min(...values) * 0.95
-                    const maxV = Math.max(...values) * 1.05
-                    const lastV = values[values.length - 1]
-                    // Y grows downward: highest value → top of plot
-                    const ratio = maxV === minV ? 0.5 : (maxV - lastV) / (maxV - minV)
-                    const dotTop = marginTop + ratio * plotH
-
-                    return (
-                      <div className="pointer-events-none absolute right-[4px] top-0 bottom-0" style={{ width: '14px' }}>
-                        {/* Laser head pinned to line tip */}
-                        <div
-                          className="absolute left-1/2 -translate-x-1/2 -translate-y-1/2"
-                          style={{ top: dotTop, transition: 'top 1s ease-out' }}
-                        >
-                          {/* Outer glow ring */}
-                          <div className="absolute -inset-3 rounded-full" style={{ background: 'radial-gradient(circle, rgba(6,182,212,0.4) 0%, transparent 70%)', animation: 'laserGlow 1.5s ease-in-out infinite' }} />
-                          {/* Inner bright dot */}
-                          <div className="relative w-2.5 h-2.5 rounded-full bg-white"
-                            style={{ boxShadow: '0 0 3px 1px #fff, 0 0 8px 3px rgba(6,182,212,1), 0 0 18px 5px rgba(6,182,212,0.65)' }} />
-                          {/* Horizontal etch ray shooting left across the chart */}
-                          <div className="absolute top-1/2 -translate-y-1/2 right-full h-px"
-                            style={{ background: 'linear-gradient(to left, rgba(6,182,212,1), rgba(6,182,212,0.35), transparent)', animation: 'laserRay 1.5s ease-in-out infinite' }} />
-                          {/* Spark particles */}
-                          <div className="absolute top-1/2 -translate-y-1/2 right-full flex gap-1" style={{ animation: 'laserSparks 1.5s ease-in-out infinite' }}>
-                            <div className="w-0.5 h-0.5 rounded-full bg-cyan-200 opacity-80" style={{ transform: 'translateY(-2px)' }} />
-                            <div className="w-0.5 h-0.5 rounded-full bg-cyan-400 opacity-60" style={{ transform: 'translateY(2px)' }} />
-                          </div>
-                        </div>
-                      </div>
-                    )
-                  })()}
-                </>
+                <ResponsiveContainer width="100%" height="100%">
+                  <LineChart data={hashRateHistory} margin={{ top: 5, right: 18, bottom: 0, left: 0 }}>
+                    <defs>
+                      <linearGradient id="hashRateGradient" x1="0%" y1="100%" x2="100%" y2="100%">
+                        <stop offset="0%" stopColor="#06b6d4" stopOpacity={1} />
+                        <stop offset="50%" stopColor="#0891b2" stopOpacity={1} />
+                        <stop offset="100%" stopColor="#06d6d4" stopOpacity={1} />
+                      </linearGradient>
+                      {/* Laser beam gradient: bright white core fading left */}
+                      <linearGradient id="laserBeam" x1="100%" y1="0%" x2="0%" y2="0%">
+                        <stop offset="0%" stopColor="#ffffff" stopOpacity={0} />
+                        <stop offset="60%" stopColor="#06b6d4" stopOpacity={0.5} />
+                        <stop offset="90%" stopColor="#06b6d4" stopOpacity={0.9} />
+                        <stop offset="100%" stopColor="#ffffff" stopOpacity={1} />
+                      </linearGradient>
+                      <filter id="laserGlowFilter">
+                        <feGaussianBlur stdDeviation="2.5" result="blur" />
+                        <feMerge><feMergeNode in="blur" /><feMergeNode in="SourceGraphic" /></feMerge>
+                      </filter>
+                      <filter id="coreGlowFilter">
+                        <feGaussianBlur stdDeviation="1.5" result="blur" />
+                        <feMerge><feMergeNode in="blur" /><feMergeNode in="SourceGraphic" /></feMerge>
+                      </filter>
+                    </defs>
+                    <CartesianGrid strokeDasharray="3 3" stroke="rgba(6, 182, 212, 0.1)" />
+                    <Tooltip
+                      contentStyle={{ backgroundColor: 'rgba(20, 20, 40, 0.95)', border: '1px solid rgba(6, 182, 212, 0.3)', borderRadius: '6px' }}
+                      labelStyle={{ color: '#06d6d4' }}
+                      formatter={(value: any) => formatHashrate(value as number)}
+                    />
+                    <YAxis hide domain={['dataMin * 0.95', 'dataMax * 1.05']} />
+                    <Line
+                      type="linear"
+                      dataKey="hashrate1m"
+                      stroke="url(#hashRateGradient)"
+                      dot={(props: any) => {
+                        const { cx, cy, index } = props
+                        if (index !== hashRateHistory.length - 1) return <g key={index} />
+                        return (
+                          <g key={index}>
+                            {/* Long beam shooting left from the tip */}
+                            <line
+                              x1={cx - 160} y1={cy} x2={cx} y2={cy}
+                              stroke="url(#laserBeam)"
+                              strokeWidth={1.5}
+                              filter="url(#laserGlowFilter)"
+                            />
+                            {/* Thin bright core beam */}
+                            <line
+                              x1={cx - 80} y1={cy} x2={cx} y2={cy}
+                              stroke="#ffffff"
+                              strokeWidth={0.6}
+                              opacity={0.7}
+                            />
+                            {/* Outer soft glow corona */}
+                            <circle cx={cx} cy={cy} r={10} fill="rgba(6,182,212,0.15)" filter="url(#laserGlowFilter)" />
+                            {/* Mid glow */}
+                            <circle cx={cx} cy={cy} r={5} fill="rgba(6,182,212,0.4)" filter="url(#coreGlowFilter)" />
+                            {/* Bright white hot core */}
+                            <circle cx={cx} cy={cy} r={2.5} fill="#ffffff" filter="url(#coreGlowFilter)" />
+                            {/* Tiny pure white center */}
+                            <circle cx={cx} cy={cy} r={1} fill="#ffffff" />
+                          </g>
+                        )
+                      }}
+                      strokeWidth={2.5}
+                      isAnimationActive={false}
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      filter="drop-shadow(0 0 6px rgba(6,182,212,0.8))"
+                    />
+                  </LineChart>
+                </ResponsiveContainer>
               ) : (
                 <div className="flex items-center justify-center h-full text-slate-500 text-xs">
                   Waiting for hashrate data...
@@ -768,18 +770,6 @@ export function BraiinsWebDashboard() {
 
       {/* Global keyframe animations */}
       <style>{`
-        @keyframes laserGlow {
-          0%, 100% { transform: scale(0.8); opacity: 0.4; }
-          50%       { transform: scale(1.4); opacity: 1;   }
-        }
-        @keyframes laserRay {
-          0%, 100% { width: 20px; opacity: 0.4; }
-          40%, 60% { width: 64px; opacity: 1;   }
-        }
-        @keyframes laserSparks {
-          0%, 100% { opacity: 0;   transform: translateX(0px);  }
-          40%, 60% { opacity: 0.9; transform: translateX(-8px); }
-        }
         @keyframes blockFlash {
           from { opacity: 0.4; }
           to   { opacity: 1;   }
