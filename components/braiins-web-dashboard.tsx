@@ -89,6 +89,7 @@ export function BraiinsWebDashboard() {
   const [settingsAddress, setSettingsAddress] = useState(address)
   const [blockFound, setBlockFound] = useState(false)
   const blockFoundTimeout = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const confettiRainInterval = useRef<ReturnType<typeof setInterval> | null>(null)
 
   const prevBestShare = useRef<string>('')
 
@@ -153,21 +154,9 @@ export function BraiinsWebDashboard() {
       }
       prevBestShare.current = currentBestShare.toString()
 
-      // Block found — share meets or exceeds network difficulty
+        // Block found — share meets or exceeds network difficulty
       if (currentBestShare > 0 && networkDifficulty > 0 && currentBestShare >= networkDifficulty) {
-        setBlockFound(true)
-        // Wave 1 — center explosion
-        confetti({ particleCount: 250, spread: 160, origin: { x: 0.5, y: 0.5 }, startVelocity: 55, colors: ['#facc15', '#fbbf24', '#f97316', '#06b6d4', '#a855f7', '#ffffff'] })
-        // Wave 2 — left cannon
-        setTimeout(() => confetti({ particleCount: 180, angle: 60, spread: 80, origin: { x: 0, y: 0.6 }, startVelocity: 60, colors: ['#facc15', '#06b6d4', '#ffffff', '#a855f7'] }), 200)
-        // Wave 3 — right cannon
-        setTimeout(() => confetti({ particleCount: 180, angle: 120, spread: 80, origin: { x: 1, y: 0.6 }, startVelocity: 60, colors: ['#facc15', '#f97316', '#ffffff', '#06b6d4'] }), 400)
-        // Wave 4 — gold shower from top
-        setTimeout(() => confetti({ particleCount: 300, spread: 200, origin: { x: 0.5, y: 0 }, startVelocity: 20, gravity: 0.8, drift: 0.3, colors: ['#facc15', '#fbbf24', '#fde68a', '#ffffff'] }), 600)
-        // Wave 5 — final burst
-        setTimeout(() => confetti({ particleCount: 200, spread: 140, origin: { x: 0.5, y: 0.4 }, startVelocity: 70, colors: ['#06b6d4', '#a855f7', '#facc15', '#f97316', '#ffffff'] }), 1000)
-        if (blockFoundTimeout.current) clearTimeout(blockFoundTimeout.current)
-        blockFoundTimeout.current = setTimeout(() => setBlockFound(false), 9000)
+        triggerBlockFound()
       }
 
       // Track estimated reward history every fetch
@@ -262,6 +251,33 @@ export function BraiinsWebDashboard() {
     }
   }, [address])
 
+  const dismissBlockFound = useCallback(() => {
+    setBlockFound(false)
+    if (blockFoundTimeout.current) clearTimeout(blockFoundTimeout.current)
+    if (confettiRainInterval.current) { clearInterval(confettiRainInterval.current); confettiRainInterval.current = null }
+  }, [])
+
+  const triggerBlockFound = useCallback(() => {
+    setBlockFound(true)
+    // Initial multi-cannon burst
+    confetti({ particleCount: 250, spread: 160, origin: { x: 0.5, y: 0.5 }, startVelocity: 55, colors: ['#facc15', '#fbbf24', '#f97316', '#06b6d4', '#a855f7', '#ffffff'] })
+    setTimeout(() => confetti({ particleCount: 180, angle: 60,  spread: 80, origin: { x: 0,   y: 0.6 }, startVelocity: 60, colors: ['#facc15', '#06b6d4', '#ffffff', '#a855f7'] }), 200)
+    setTimeout(() => confetti({ particleCount: 180, angle: 120, spread: 80, origin: { x: 1,   y: 0.6 }, startVelocity: 60, colors: ['#facc15', '#f97316', '#ffffff', '#06b6d4'] }), 400)
+    setTimeout(() => confetti({ particleCount: 300, spread: 200, origin: { x: 0.5, y: 0 }, startVelocity: 20, gravity: 0.8, colors: ['#facc15', '#fbbf24', '#fde68a', '#ffffff'] }), 600)
+    setTimeout(() => confetti({ particleCount: 200, spread: 140, origin: { x: 0.5, y: 0.4 }, startVelocity: 70, colors: ['#06b6d4', '#a855f7', '#facc15', '#f97316', '#ffffff'] }), 1000)
+    // Continuous rain — steady stream of gold from top while overlay is visible
+    if (confettiRainInterval.current) clearInterval(confettiRainInterval.current)
+    confettiRainInterval.current = setInterval(() => {
+      confetti({ particleCount: 18, spread: 180, origin: { x: Math.random(), y: -0.05 }, startVelocity: 14, gravity: 0.55, drift: (Math.random() - 0.5) * 0.6, colors: ['#facc15', '#fbbf24', '#fde68a', '#ffffff', '#06b6d4', '#a855f7'], scalar: 0.9 })
+    }, 220)
+    // Auto-dismiss after 12 s
+    if (blockFoundTimeout.current) clearTimeout(blockFoundTimeout.current)
+    blockFoundTimeout.current = setTimeout(() => {
+      setBlockFound(false)
+      if (confettiRainInterval.current) { clearInterval(confettiRainInterval.current); confettiRainInterval.current = null }
+    }, 12000)
+  }, [])
+
   const activeMinersList = miners.filter(m => m.lastshare && (Date.now() - m.lastshare * 1000) < 300000)
   const bestShareNum = parseFloat(braiinsData?.bestshare || '0')
   const usdReward = estimateBTCReward(btcPrice)
@@ -282,19 +298,30 @@ export function BraiinsWebDashboard() {
               {loading ? 'Updating...' : 'Live'}
             </span>
           </div>
-          <button
-            onClick={() => {
-              setShowSettings(true)
-              setSettingsAddress(address)
-            }}
-            className="p-1 rounded hover:bg-slate-800/50 transition-colors"
-            title="Settings"
-          >
-            <svg className="w-4 h-4 text-cyan-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-            </svg>
-          </button>
+          <div className="flex items-center gap-1">
+            <button
+              onClick={() => {
+                setShowSettings(true)
+                setSettingsAddress(address)
+              }}
+              className="p-1 rounded hover:bg-slate-800/50 transition-colors"
+              title="Settings"
+            >
+              <svg className="w-4 h-4 text-cyan-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+              </svg>
+            </button>
+            <button
+              onClick={() => triggerBlockFound()}
+              className="p-1 rounded hover:bg-slate-800/50 transition-colors"
+              title="Preview Block Found"
+            >
+              <svg className="w-4 h-4 text-yellow-400" fill="currentColor" viewBox="0 0 24 24">
+                <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z" />
+              </svg>
+            </button>
+          </div>
         </div>
       </div>
 
@@ -673,46 +700,51 @@ export function BraiinsWebDashboard() {
 
       {/* BLOCK FOUND overlay */}
       {blockFound && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center pointer-events-none" style={{ animation: 'screenShake 0.15s ease-in-out 3' }}>
+        <div className="fixed inset-0 z-[100] flex flex-col items-center justify-center" style={{ animation: 'screenShake 0.15s ease-in-out 3' }}>
+          {/* Dark backdrop */}
+          <div className="absolute inset-0 bg-black/75 pointer-events-none" />
           {/* Full-screen flash */}
-          <div className="absolute inset-0 bg-yellow-300/10" style={{ animation: 'blockFlash 0.5s ease-in-out infinite alternate' }} />
-          {/* Scanlines overlay */}
-          <div className="absolute inset-0 pointer-events-none" style={{ backgroundImage: 'repeating-linear-gradient(0deg, transparent, transparent 3px, rgba(0,0,0,0.15) 3px, rgba(0,0,0,0.15) 4px)', opacity: 0.6 }} />
+          <div className="absolute inset-0 pointer-events-none" style={{ background: 'radial-gradient(ellipse at center, rgba(250,204,21,0.12) 0%, transparent 70%)', animation: 'blockFlash 0.5s ease-in-out infinite alternate' }} />
+          {/* Scanlines */}
+          <div className="absolute inset-0 pointer-events-none" style={{ backgroundImage: 'repeating-linear-gradient(0deg, transparent, transparent 3px, rgba(0,0,0,0.2) 3px, rgba(0,0,0,0.2) 4px)' }} />
           {/* Outer border ring */}
-          <div className="absolute inset-2 rounded-2xl border-2 border-yellow-300/80" style={{ boxShadow: '0 0 40px 8px rgba(250,204,21,0.4), inset 0 0 40px 8px rgba(250,204,21,0.1)', animation: 'blockFlash 0.5s ease-in-out infinite alternate' }} />
+          <div className="absolute inset-3 rounded-2xl border-2 border-yellow-300/80 pointer-events-none" style={{ boxShadow: '0 0 50px 10px rgba(250,204,21,0.35), inset 0 0 50px 10px rgba(250,204,21,0.08)', animation: 'blockFlash 0.5s ease-in-out infinite alternate' }} />
           {/* Corner brackets */}
-          {['top-4 left-4', 'top-4 right-4 rotate-90', 'bottom-4 left-4 -rotate-90', 'bottom-4 right-4 rotate-180'].map((pos, i) => (
-            <div key={i} className={`absolute ${pos} w-8 h-8 border-t-2 border-l-2 border-yellow-300`} style={{ boxShadow: '0 0 8px rgba(250,204,21,0.8)' }} />
+          {(['top-5 left-5', 'top-5 right-5 rotate-90', 'bottom-5 left-5 -rotate-90', 'bottom-5 right-5 rotate-180'] as const).map((pos, i) => (
+            <div key={i} className={`absolute ${pos} w-10 h-10 border-t-2 border-l-2 border-yellow-300 pointer-events-none`} style={{ boxShadow: '0 0 10px rgba(250,204,21,0.8)' }} />
           ))}
+
           {/* Main content */}
-          <div className="relative flex flex-col items-center gap-4" style={{ animation: 'blockTextPulse 0.45s ease-in-out infinite alternate' }}>
-            {/* BTC icon row */}
-            <div className="text-yellow-300 text-4xl font-black tracking-widest" style={{ fontFamily: 'var(--font-orbitron), sans-serif', textShadow: '0 0 20px rgba(250,204,21,0.9)', letterSpacing: '0.4em' }}>
+          <div className="relative flex flex-col items-center gap-4 px-8 text-center" style={{ animation: 'blockTextPulse 0.45s ease-in-out infinite alternate' }}>
+            {/* BTC icons */}
+            <div className="text-5xl font-black" style={{ fontFamily: 'var(--font-orbitron), sans-serif', color: '#facc15', textShadow: '0 0 20px rgba(250,204,21,0.9)', letterSpacing: '0.4em' }}>
               ₿ ₿ ₿
             </div>
-            {/* Main headline */}
-            <div className="text-6xl md:text-8xl font-black tracking-tight leading-none"
+            {/* Headline — single line */}
+            <div className="font-black leading-none whitespace-nowrap"
               style={{
                 fontFamily: 'var(--font-orbitron), sans-serif',
+                fontSize: 'clamp(2.5rem, 8vw, 6rem)',
                 color: '#facc15',
-                textShadow: '0 0 20px rgba(250,204,21,1), 0 0 50px rgba(250,204,21,0.7), 0 0 90px rgba(250,204,21,0.4), -2px -2px 0 rgba(251,146,60,0.6), 2px 2px 0 rgba(251,146,60,0.6)',
+                textShadow: '0 0 20px rgba(250,204,21,1), 0 0 50px rgba(250,204,21,0.7), 0 0 90px rgba(250,204,21,0.4), -2px -2px 0 rgba(251,146,60,0.7), 2px 2px 0 rgba(251,146,60,0.7)',
               }}>
-              BLOCK
-            </div>
-            <div className="text-6xl md:text-8xl font-black tracking-tight leading-none"
-              style={{
-                fontFamily: 'var(--font-orbitron), sans-serif',
-                color: '#facc15',
-                textShadow: '0 0 20px rgba(250,204,21,1), 0 0 50px rgba(250,204,21,0.7), 0 0 90px rgba(250,204,21,0.4), -2px -2px 0 rgba(251,146,60,0.6), 2px 2px 0 rgba(251,146,60,0.6)',
-              }}>
-              FOUND!
+              BTC BLOCK FOUND!
             </div>
             {/* Sub-line */}
-            <div className="text-base md:text-lg font-bold tracking-[0.35em] text-cyan-300 mt-2"
-              style={{ fontFamily: 'var(--font-orbitron), sans-serif', textShadow: '0 0 12px rgba(6,182,212,0.9)' }}>
+            <div className="font-bold tracking-[0.3em] text-cyan-300"
+              style={{ fontFamily: 'var(--font-orbitron), sans-serif', fontSize: 'clamp(0.7rem, 2vw, 1.1rem)', textShadow: '0 0 12px rgba(6,182,212,0.9)' }}>
               YOU SOLVED THE BLOCK
             </div>
           </div>
+
+          {/* Dismiss button */}
+          <button
+            onClick={dismissBlockFound}
+            className="relative mt-12 px-10 py-3 rounded border-2 border-yellow-400/60 font-bold tracking-widest text-sm text-yellow-300 transition-all hover:bg-yellow-400/10 hover:border-yellow-300 active:scale-95"
+            style={{ fontFamily: 'var(--font-orbitron), sans-serif', boxShadow: '0 0 20px rgba(250,204,21,0.25)' }}
+          >
+            DISMISS
+          </button>
         </div>
       )}
 
