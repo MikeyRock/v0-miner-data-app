@@ -71,7 +71,7 @@ export function BraiinsWebDashboard() {
   const [lastUpdate, setLastUpdate] = useState<Date | null>(null)
   const [btcPrice, setBtcPrice] = useState<number>(0)
   const [networkDifficulty, setNetworkDifficulty] = useState<number>(138.96e12)
-  const [bestShareHistory, setBestShareHistory] = useState<{ timestamp: number; bestshare: number }[]>([])
+  const [rewardHistory, setRewardHistory] = useState<{ timestamp: number; usd: number }[]>([])
   const [hashRateHistory, setHashRateHistory] = useState<{ timestamp: number; hashrate1m: number; hashrate5m: number; hashrate1hr: number }[]>([])
   const [showSettings, setShowSettings] = useState(false)
   const [settingsAddress, setSettingsAddress] = useState(address)
@@ -136,13 +136,19 @@ export function BraiinsWebDashboard() {
       if (currentBestShare > 0 && previousBestShare > 0 && currentBestShare > previousBestShare) {
         const message = `New Best Share: ${formatNumber(currentBestShare)}`
         await createAlert('best_share', message)
-        // Track to history
-        setBestShareHistory((prev) => [
-          ...prev.slice(-59), // Keep last 60 data points
-          { timestamp: Date.now(), bestshare: currentBestShare }
-        ])
       }
       prevBestShare.current = currentBestShare.toString()
+
+      // Track estimated reward history every fetch
+      const hr1hr = parseFloat(data.hashrate1hr?.toString() || '0')
+      if (hr1hr > 0 && networkDifficulty > 0) {
+        const BLOCK_REWARD = 3.125
+        const estimatedBtc = (hr1hr / networkDifficulty) * BLOCK_REWARD
+        setRewardHistory((prev) => [
+          ...prev.slice(-59),
+          { timestamp: Date.now(), usd: estimatedBtc * btcPrice }
+        ])
+      }
 
       // Track hashrate history
       setHashRateHistory((prev) => [
@@ -370,35 +376,46 @@ export function BraiinsWebDashboard() {
             </div>
           </div>
 
-          {/* Historical Best Share Progression */}
+          {/* Estimated Reward Trend */}
           <div className="group relative rounded-lg border border-purple-500/40 bg-gradient-to-br from-slate-800/40 to-slate-900/50 p-2 backdrop-blur-lg hover:border-purple-400/70 hover:shadow-xl hover:shadow-purple-500/40 transition-all">
             <div className="absolute inset-0 rounded-lg opacity-0 group-hover:opacity-15 bg-[radial-gradient(ellipse_at_50%_50%,_rgba(168,85,247,0.3),transparent_70%)] blur-lg transition-all duration-300"></div>
-            <h3 className="text-xs font-bold text-purple-300 mb-1 uppercase tracking-widest relative z-10" style={{ fontFamily: 'var(--font-orbitron), sans-serif' }}>Best Share Progression</h3>
+            <h3 className="text-xs font-bold text-purple-300 mb-1 uppercase tracking-widest relative z-10" style={{ fontFamily: 'var(--font-orbitron), sans-serif' }}>Est. Reward Trend</h3>
             <div className="h-20 relative z-10">
-              {bestShareHistory.length > 0 ? (
+              {rewardHistory.length > 1 ? (
                 <ResponsiveContainer width="100%" height="100%">
-                  <LineChart data={bestShareHistory} margin={{ top: 5, right: 5, bottom: 0, left: 0 }}>
+                  <LineChart data={rewardHistory} margin={{ top: 5, right: 5, bottom: 0, left: 0 }}>
+                    <defs>
+                      <linearGradient id="rewardGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+                        <stop offset="0%"   stopColor="#a855f7" stopOpacity={1} />
+                        <stop offset="50%"  stopColor="#d946ef" stopOpacity={1} />
+                        <stop offset="100%" stopColor="#06b6d4" stopOpacity={1} />
+                      </linearGradient>
+                    </defs>
                     <CartesianGrid strokeDasharray="3 3" stroke="rgba(148, 113, 248, 0.1)" />
-                    <Tooltip 
+                    <Tooltip
                       contentStyle={{ backgroundColor: 'rgba(20, 20, 40, 0.95)', border: '1px solid rgba(168, 85, 247, 0.3)', borderRadius: '6px' }}
                       labelStyle={{ color: '#c084fc' }}
-                      formatter={(value: any) => formatNumber(value)}
+                      formatter={(value: any) =>
+                        [`$${Number(value).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 4 })}`, 'Est. Reward']
+                      }
                     />
-                    <YAxis hide domain={['dataMin * 0.95', 'dataMax * 1.05']} />
-                    <Line 
-                      type="monotone" 
-                      dataKey="bestshare" 
-                      stroke="#d946ef" 
+                    <YAxis hide domain={['dataMin * 0.98', 'dataMax * 1.02']} />
+                    <Line
+                      type="monotone"
+                      dataKey="usd"
+                      stroke="url(#rewardGradient)"
                       dot={false}
-                      strokeWidth={2}
+                      strokeWidth={2.5}
                       isAnimationActive={false}
-                      filter="drop-shadow(0 0 4px rgba(217, 70, 239, 0.6))"
+                      strokeLinecap="round"
+                      filter="drop-shadow(0 0 5px rgba(168, 85, 247, 0.7))"
                     />
                   </LineChart>
                 </ResponsiveContainer>
               ) : (
-                <div className="flex items-center justify-center h-full text-slate-500 text-xs">
-                  Waiting for best share data...
+                <div className="flex flex-col items-center justify-center h-full gap-1">
+                  <div className="w-4 h-4 border-2 border-purple-500/50 border-t-purple-400 rounded-full animate-spin"></div>
+                  <span className="text-slate-500 text-xs">Collecting reward data...</span>
                 </div>
               )}
             </div>
@@ -577,7 +594,7 @@ export function BraiinsWebDashboard() {
                     setAddress(settingsAddress.trim())
                     setBraiinsData(null)
                     setMiners([])
-                    setBestShareHistory([])
+                    setRewardHistory([])
                     setHashRateHistory([])
                     prevBestShare.current = ''
                     setShowSettings(false)
