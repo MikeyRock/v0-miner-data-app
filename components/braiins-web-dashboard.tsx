@@ -156,11 +156,18 @@ export function BraiinsWebDashboard() {
       // Block found — share meets or exceeds network difficulty
       if (currentBestShare > 0 && networkDifficulty > 0 && currentBestShare >= networkDifficulty) {
         setBlockFound(true)
-        // Cannon confetti burst
-        confetti({ particleCount: 200, spread: 120, origin: { y: 0.5 }, colors: ['#06b6d4', '#a855f7', '#f97316', '#facc15', '#ffffff'] })
-        confetti({ particleCount: 150, spread: 160, origin: { y: 0.3 }, startVelocity: 45, colors: ['#06b6d4', '#a855f7', '#f97316', '#facc15'] })
+        // Wave 1 — center explosion
+        confetti({ particleCount: 250, spread: 160, origin: { x: 0.5, y: 0.5 }, startVelocity: 55, colors: ['#facc15', '#fbbf24', '#f97316', '#06b6d4', '#a855f7', '#ffffff'] })
+        // Wave 2 — left cannon
+        setTimeout(() => confetti({ particleCount: 180, angle: 60, spread: 80, origin: { x: 0, y: 0.6 }, startVelocity: 60, colors: ['#facc15', '#06b6d4', '#ffffff', '#a855f7'] }), 200)
+        // Wave 3 — right cannon
+        setTimeout(() => confetti({ particleCount: 180, angle: 120, spread: 80, origin: { x: 1, y: 0.6 }, startVelocity: 60, colors: ['#facc15', '#f97316', '#ffffff', '#06b6d4'] }), 400)
+        // Wave 4 — gold shower from top
+        setTimeout(() => confetti({ particleCount: 300, spread: 200, origin: { x: 0.5, y: 0 }, startVelocity: 20, gravity: 0.8, drift: 0.3, colors: ['#facc15', '#fbbf24', '#fde68a', '#ffffff'] }), 600)
+        // Wave 5 — final burst
+        setTimeout(() => confetti({ particleCount: 200, spread: 140, origin: { x: 0.5, y: 0.4 }, startVelocity: 70, colors: ['#06b6d4', '#a855f7', '#facc15', '#f97316', '#ffffff'] }), 1000)
         if (blockFoundTimeout.current) clearTimeout(blockFoundTimeout.current)
-        blockFoundTimeout.current = setTimeout(() => setBlockFound(false), 8000)
+        blockFoundTimeout.current = setTimeout(() => setBlockFound(false), 9000)
       }
 
       // Track estimated reward history every fetch
@@ -394,16 +401,26 @@ export function BraiinsWebDashboard() {
                     </LineChart>
                   </ResponsiveContainer>
                   {/* Laser etching head — rides the right edge of the chart */}
-                  <div className="pointer-events-none absolute right-[5px] top-0 bottom-0 flex flex-col items-center justify-center gap-0.5" style={{ width: '10px' }}>
-                    {/* Vertical scan beam */}
+                  <div className="pointer-events-none absolute right-[4px] top-0 bottom-0" style={{ width: '14px' }}>
+                    {/* Vertical track rail */}
                     <div className="absolute inset-y-0 left-1/2 -translate-x-1/2 w-px"
-                      style={{ background: 'linear-gradient(to bottom, transparent 0%, rgba(6,182,212,0.15) 30%, rgba(6,182,212,0.6) 50%, rgba(6,182,212,0.15) 70%, transparent 100%)' }} />
-                    {/* Laser head dot */}
-                    <div className="relative w-2 h-2 rounded-full bg-cyan-300"
-                      style={{ boxShadow: '0 0 6px 2px rgba(6,182,212,0.9), 0 0 14px 4px rgba(6,182,212,0.5)', animation: 'laserBounce 1.8s ease-in-out infinite' }} />
-                    {/* Horizontal etch ray */}
-                    <div className="absolute top-1/2 right-full -translate-y-1/2 h-px w-14 pointer-events-none"
-                      style={{ background: 'linear-gradient(to left, rgba(6,182,212,0.9), rgba(6,182,212,0.3), transparent)', animation: 'laserPulse 1.8s ease-in-out infinite' }} />
+                      style={{ background: 'linear-gradient(to bottom, transparent 0%, rgba(6,182,212,0.08) 20%, rgba(6,182,212,0.25) 50%, rgba(6,182,212,0.08) 80%, transparent 100%)' }} />
+                    {/* Moving laser head */}
+                    <div className="absolute left-1/2 -translate-x-1/2" style={{ animation: 'laserBounce 2.2s ease-in-out infinite' }}>
+                      {/* Outer glow ring */}
+                      <div className="absolute -inset-2 rounded-full" style={{ background: 'radial-gradient(circle, rgba(6,182,212,0.35) 0%, transparent 70%)', animation: 'laserGlow 2.2s ease-in-out infinite' }} />
+                      {/* Inner dot */}
+                      <div className="relative w-2.5 h-2.5 rounded-full bg-white"
+                        style={{ boxShadow: '0 0 4px 1px #fff, 0 0 10px 3px rgba(6,182,212,1), 0 0 22px 6px rgba(6,182,212,0.6)' }} />
+                      {/* Horizontal etch ray shooting left */}
+                      <div className="absolute top-1/2 -translate-y-1/2 right-full h-px"
+                        style={{ background: 'linear-gradient(to left, #06b6d4, rgba(6,182,212,0.4), transparent)', animation: 'laserRay 2.2s ease-in-out infinite' }} />
+                      {/* Small spark trails */}
+                      <div className="absolute top-1/2 -translate-y-1/2 right-full flex gap-1 pointer-events-none" style={{ animation: 'laserSparks 2.2s ease-in-out infinite' }}>
+                        <div className="w-0.5 h-0.5 rounded-full bg-cyan-200 opacity-80" style={{ transform: 'translateY(-2px)' }} />
+                        <div className="w-0.5 h-0.5 rounded-full bg-cyan-400 opacity-60" style={{ transform: 'translateY(2px)' }} />
+                      </div>
+                    </div>
                   </div>
                 </>
               ) : (
@@ -656,24 +673,43 @@ export function BraiinsWebDashboard() {
 
       {/* BLOCK FOUND overlay */}
       {blockFound && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center pointer-events-none">
-          {/* Dark vignette flash */}
-          <div className="absolute inset-0 bg-black/60 animate-pulse" />
-          {/* Border flash ring */}
-          <div className="absolute inset-4 rounded-2xl border-4 border-yellow-300" style={{ boxShadow: '0 0 60px 10px rgba(250,204,21,0.5), inset 0 0 60px 10px rgba(250,204,21,0.15)', animation: 'blockFlash 0.6s ease-in-out infinite alternate' }} />
-          {/* Main text */}
-          <div className="relative flex flex-col items-center gap-3">
-            <div className="text-6xl md:text-8xl font-black tracking-tight"
+        <div className="fixed inset-0 z-[100] flex items-center justify-center pointer-events-none" style={{ animation: 'screenShake 0.15s ease-in-out 3' }}>
+          {/* Full-screen flash */}
+          <div className="absolute inset-0 bg-yellow-300/10" style={{ animation: 'blockFlash 0.5s ease-in-out infinite alternate' }} />
+          {/* Scanlines overlay */}
+          <div className="absolute inset-0 pointer-events-none" style={{ backgroundImage: 'repeating-linear-gradient(0deg, transparent, transparent 3px, rgba(0,0,0,0.15) 3px, rgba(0,0,0,0.15) 4px)', opacity: 0.6 }} />
+          {/* Outer border ring */}
+          <div className="absolute inset-2 rounded-2xl border-2 border-yellow-300/80" style={{ boxShadow: '0 0 40px 8px rgba(250,204,21,0.4), inset 0 0 40px 8px rgba(250,204,21,0.1)', animation: 'blockFlash 0.5s ease-in-out infinite alternate' }} />
+          {/* Corner brackets */}
+          {['top-4 left-4', 'top-4 right-4 rotate-90', 'bottom-4 left-4 -rotate-90', 'bottom-4 right-4 rotate-180'].map((pos, i) => (
+            <div key={i} className={`absolute ${pos} w-8 h-8 border-t-2 border-l-2 border-yellow-300`} style={{ boxShadow: '0 0 8px rgba(250,204,21,0.8)' }} />
+          ))}
+          {/* Main content */}
+          <div className="relative flex flex-col items-center gap-4" style={{ animation: 'blockTextPulse 0.45s ease-in-out infinite alternate' }}>
+            {/* BTC icon row */}
+            <div className="text-yellow-300 text-4xl font-black tracking-widest" style={{ fontFamily: 'var(--font-orbitron), sans-serif', textShadow: '0 0 20px rgba(250,204,21,0.9)', letterSpacing: '0.4em' }}>
+              ₿ ₿ ₿
+            </div>
+            {/* Main headline */}
+            <div className="text-6xl md:text-8xl font-black tracking-tight leading-none"
               style={{
                 fontFamily: 'var(--font-orbitron), sans-serif',
                 color: '#facc15',
-                textShadow: '0 0 30px rgba(250,204,21,0.9), 0 0 60px rgba(250,204,21,0.6), 0 0 100px rgba(250,204,21,0.3)',
-                animation: 'blockTextPulse 0.4s ease-in-out infinite alternate',
+                textShadow: '0 0 20px rgba(250,204,21,1), 0 0 50px rgba(250,204,21,0.7), 0 0 90px rgba(250,204,21,0.4), -2px -2px 0 rgba(251,146,60,0.6), 2px 2px 0 rgba(251,146,60,0.6)',
               }}>
-              BLOCK FOUND!
+              BLOCK
             </div>
-            <div className="text-lg font-bold tracking-[0.3em] text-cyan-300"
-              style={{ fontFamily: 'var(--font-orbitron), sans-serif', textShadow: '0 0 10px rgba(6,182,212,0.8)' }}>
+            <div className="text-6xl md:text-8xl font-black tracking-tight leading-none"
+              style={{
+                fontFamily: 'var(--font-orbitron), sans-serif',
+                color: '#facc15',
+                textShadow: '0 0 20px rgba(250,204,21,1), 0 0 50px rgba(250,204,21,0.7), 0 0 90px rgba(250,204,21,0.4), -2px -2px 0 rgba(251,146,60,0.6), 2px 2px 0 rgba(251,146,60,0.6)',
+              }}>
+              FOUND!
+            </div>
+            {/* Sub-line */}
+            <div className="text-base md:text-lg font-bold tracking-[0.35em] text-cyan-300 mt-2"
+              style={{ fontFamily: 'var(--font-orbitron), sans-serif', textShadow: '0 0 12px rgba(6,182,212,0.9)' }}>
               YOU SOLVED THE BLOCK
             </div>
           </div>
@@ -683,20 +719,36 @@ export function BraiinsWebDashboard() {
       {/* Global keyframe animations */}
       <style>{`
         @keyframes laserBounce {
-          0%, 100% { transform: translateY(-30px); opacity: 0.7; }
-          50%       { transform: translateY(30px);  opacity: 1;   }
+          0%   { transform: translateY(-28px); opacity: 0.6; }
+          40%  { transform: translateY(0px);   opacity: 1;   }
+          100% { transform: translateY(28px);  opacity: 0.6; }
         }
-        @keyframes laserPulse {
-          0%, 100% { opacity: 0.3; width: 24px; }
-          50%       { opacity: 1;   width: 56px; }
+        @keyframes laserGlow {
+          0%, 100% { transform: scale(0.8); opacity: 0.4; }
+          50%       { transform: scale(1.4); opacity: 1;   }
+        }
+        @keyframes laserRay {
+          0%, 100% { width: 20px; opacity: 0.4; }
+          40%, 60% { width: 64px; opacity: 1;   }
+        }
+        @keyframes laserSparks {
+          0%, 100% { opacity: 0;   transform: translateX(0px);  }
+          40%, 60% { opacity: 0.9; transform: translateX(-8px); }
         }
         @keyframes blockFlash {
-          from { opacity: 0.5; }
+          from { opacity: 0.4; }
           to   { opacity: 1;   }
         }
         @keyframes blockTextPulse {
-          from { transform: scale(0.97); }
-          to   { transform: scale(1.03); }
+          from { transform: scale(0.96) skewX(-1deg); filter: brightness(0.9); }
+          to   { transform: scale(1.04) skewX(1deg);  filter: brightness(1.2); }
+        }
+        @keyframes screenShake {
+          0%, 100% { transform: translate(0, 0);       }
+          20%      { transform: translate(-4px, 2px);  }
+          40%      { transform: translate(4px, -2px);  }
+          60%      { transform: translate(-3px, 3px);  }
+          80%      { transform: translate(3px, -1px);  }
         }
       `}</style>
     </div>
