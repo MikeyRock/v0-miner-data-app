@@ -427,28 +427,46 @@ export function BraiinsWebDashboard() {
                       />
                     </LineChart>
                   </ResponsiveContainer>
-                  {/* Laser etching head — rides the right edge of the chart */}
-                  <div className="pointer-events-none absolute right-[4px] top-0 bottom-0" style={{ width: '14px' }}>
-                    {/* Vertical track rail */}
-                    <div className="absolute inset-y-0 left-1/2 -translate-x-1/2 w-px"
-                      style={{ background: 'linear-gradient(to bottom, transparent 0%, rgba(6,182,212,0.08) 20%, rgba(6,182,212,0.25) 50%, rgba(6,182,212,0.08) 80%, transparent 100%)' }} />
-                    {/* Moving laser head */}
-                    <div className="absolute left-1/2 -translate-x-1/2" style={{ animation: 'laserBounce 2.2s ease-in-out infinite' }}>
-                      {/* Outer glow ring */}
-                      <div className="absolute -inset-2 rounded-full" style={{ background: 'radial-gradient(circle, rgba(6,182,212,0.35) 0%, transparent 70%)', animation: 'laserGlow 2.2s ease-in-out infinite' }} />
-                      {/* Inner dot */}
-                      <div className="relative w-2.5 h-2.5 rounded-full bg-white"
-                        style={{ boxShadow: '0 0 4px 1px #fff, 0 0 10px 3px rgba(6,182,212,1), 0 0 22px 6px rgba(6,182,212,0.6)' }} />
-                      {/* Horizontal etch ray shooting left */}
-                      <div className="absolute top-1/2 -translate-y-1/2 right-full h-px"
-                        style={{ background: 'linear-gradient(to left, #06b6d4, rgba(6,182,212,0.4), transparent)', animation: 'laserRay 2.2s ease-in-out infinite' }} />
-                      {/* Small spark trails */}
-                      <div className="absolute top-1/2 -translate-y-1/2 right-full flex gap-1 pointer-events-none" style={{ animation: 'laserSparks 2.2s ease-in-out infinite' }}>
-                        <div className="w-0.5 h-0.5 rounded-full bg-cyan-200 opacity-80" style={{ transform: 'translateY(-2px)' }} />
-                        <div className="w-0.5 h-0.5 rounded-full bg-cyan-400 opacity-60" style={{ transform: 'translateY(2px)' }} />
+                  {/* Laser etching head — pinned to the tip of the trend line */}
+                  {(() => {
+                    // Chart inner height: container 80px, margin top 5 + bottom 0 = 5px padding
+                    const chartH = 80
+                    const marginTop = 5
+                    const marginBottom = 0
+                    const plotH = chartH - marginTop - marginBottom
+
+                    const values = hashRateHistory.map(d => d.hashrate1m)
+                    const minV = Math.min(...values) * 0.95
+                    const maxV = Math.max(...values) * 1.05
+                    const lastV = values[values.length - 1]
+                    // Y grows downward: highest value → top of plot
+                    const ratio = maxV === minV ? 0.5 : (maxV - lastV) / (maxV - minV)
+                    const dotTop = marginTop + ratio * plotH
+
+                    return (
+                      <div className="pointer-events-none absolute right-[4px] top-0 bottom-0" style={{ width: '14px' }}>
+                        {/* Laser head pinned to line tip */}
+                        <div
+                          className="absolute left-1/2 -translate-x-1/2 -translate-y-1/2"
+                          style={{ top: dotTop, transition: 'top 1s ease-out' }}
+                        >
+                          {/* Outer glow ring */}
+                          <div className="absolute -inset-3 rounded-full" style={{ background: 'radial-gradient(circle, rgba(6,182,212,0.4) 0%, transparent 70%)', animation: 'laserGlow 1.5s ease-in-out infinite' }} />
+                          {/* Inner bright dot */}
+                          <div className="relative w-2.5 h-2.5 rounded-full bg-white"
+                            style={{ boxShadow: '0 0 3px 1px #fff, 0 0 8px 3px rgba(6,182,212,1), 0 0 18px 5px rgba(6,182,212,0.65)' }} />
+                          {/* Horizontal etch ray shooting left across the chart */}
+                          <div className="absolute top-1/2 -translate-y-1/2 right-full h-px"
+                            style={{ background: 'linear-gradient(to left, rgba(6,182,212,1), rgba(6,182,212,0.35), transparent)', animation: 'laserRay 1.5s ease-in-out infinite' }} />
+                          {/* Spark particles */}
+                          <div className="absolute top-1/2 -translate-y-1/2 right-full flex gap-1" style={{ animation: 'laserSparks 1.5s ease-in-out infinite' }}>
+                            <div className="w-0.5 h-0.5 rounded-full bg-cyan-200 opacity-80" style={{ transform: 'translateY(-2px)' }} />
+                            <div className="w-0.5 h-0.5 rounded-full bg-cyan-400 opacity-60" style={{ transform: 'translateY(2px)' }} />
+                          </div>
+                        </div>
                       </div>
-                    </div>
-                  </div>
+                    )
+                  })()}
                 </>
               ) : (
                 <div className="flex items-center justify-center h-full text-slate-500 text-xs">
@@ -750,11 +768,6 @@ export function BraiinsWebDashboard() {
 
       {/* Global keyframe animations */}
       <style>{`
-        @keyframes laserBounce {
-          0%   { transform: translateY(-28px); opacity: 0.6; }
-          40%  { transform: translateY(0px);   opacity: 1;   }
-          100% { transform: translateY(28px);  opacity: 0.6; }
-        }
         @keyframes laserGlow {
           0%, 100% { transform: scale(0.8); opacity: 0.4; }
           50%       { transform: scale(1.4); opacity: 1;   }
