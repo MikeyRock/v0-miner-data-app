@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useRef, useState, useCallback } from 'react'
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts'
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Customized } from 'recharts'
 import confetti from 'canvas-confetti'
 
 interface BraiinsStats {
@@ -483,42 +483,44 @@ export function BraiinsWebDashboard() {
                       type="linear"
                       dataKey="hashrate1m"
                       stroke="url(#hashRateGradient)"
-                      dot={(props: any) => {
-                        const { cx, cy, index } = props
-                        if (index !== hashRateHistory.length - 1) return <g key={index} />
-                        return (
-                          <g key={index}>
-                            {/* Long beam shooting left from the tip */}
-                            <line
-                              x1={cx - 160} y1={cy} x2={cx} y2={cy}
-                              stroke="url(#laserBeam)"
-                              strokeWidth={1.5}
-                              filter="url(#laserGlowFilter)"
-                            />
-                            {/* Thin bright core beam */}
-                            <line
-                              x1={cx - 80} y1={cy} x2={cx} y2={cy}
-                              stroke="#ffffff"
-                              strokeWidth={0.6}
-                              opacity={0.7}
-                            />
-                            {/* Outer soft glow corona */}
-                            <circle cx={cx} cy={cy} r={10} fill="rgba(6,182,212,0.15)" filter="url(#laserGlowFilter)" />
-                            {/* Mid glow */}
-                            <circle cx={cx} cy={cy} r={5} fill="rgba(6,182,212,0.4)" filter="url(#coreGlowFilter)" />
-                            {/* Bright white hot core */}
-                            <circle cx={cx} cy={cy} r={2.5} fill="#ffffff" filter="url(#coreGlowFilter)" />
-                            {/* Tiny pure white center */}
-                            <circle cx={cx} cy={cy} r={1} fill="#ffffff" />
-                          </g>
-                        )
-                      }}
+                      dot={false}
+                      activeDot={false}
                       strokeWidth={2.5}
                       isAnimationActive={false}
                       strokeLinecap="round"
                       strokeLinejoin="round"
                       filter="drop-shadow(0 0 6px rgba(6,182,212,0.8))"
                     />
+                    {/* Laser head at the tip — uses Recharts' own scales for pixel-perfect positioning */}
+                    <Customized component={(props: any) => {
+                      const { xAxisMap, yAxisMap, offset } = props
+                      const xScale = xAxisMap && Object.values(xAxisMap)[0] as any
+                      const yScale = yAxisMap && Object.values(yAxisMap)[0] as any
+                      if (!xScale || !yScale || hashRateHistory.length === 0) return null
+                      const last = hashRateHistory[hashRateHistory.length - 1]
+                      const cx = (offset?.left ?? 0) + (offset?.width ?? 0)
+                      const cy = yScale.scale ? yScale.scale(last.hashrate1m) : (yScale as any)(last.hashrate1m)
+                      if (cx == null || cy == null || isNaN(cy)) return null
+                      return (
+                        <g>
+                          {/* Beam fading left from the tip */}
+                          <defs>
+                            <linearGradient id="laserBeamCustom" x1="0%" y1="0%" x2="100%" y2="0%">
+                              <stop offset="0%" stopColor="#06b6d4" stopOpacity={0} />
+                              <stop offset="70%" stopColor="#06b6d4" stopOpacity={0.6} />
+                              <stop offset="100%" stopColor="#ffffff" stopOpacity={1} />
+                            </linearGradient>
+                          </defs>
+                          <line x1={cx - 150} y1={cy} x2={cx} y2={cy} stroke="url(#laserBeamCustom)" strokeWidth={2} />
+                          <line x1={cx - 70} y1={cy} x2={cx} y2={cy} stroke="#ffffff" strokeWidth={0.7} opacity={0.6} />
+                          {/* Corona glow */}
+                          <circle cx={cx} cy={cy} r={9} fill="rgba(6,182,212,0.12)" />
+                          <circle cx={cx} cy={cy} r={5} fill="rgba(6,182,212,0.35)" />
+                          <circle cx={cx} cy={cy} r={2.5} fill="rgba(255,255,255,0.95)" />
+                          <circle cx={cx} cy={cy} r={1} fill="#ffffff" />
+                        </g>
+                      )
+                    }} />
                   </LineChart>
                 </ResponsiveContainer>
               ) : (
