@@ -1,7 +1,8 @@
 'use client'
 
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useRef, useState, useCallback } from 'react'
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts'
+import confetti from 'canvas-confetti'
 
 interface BraiinsStats {
   hashrate1m: string
@@ -58,6 +59,17 @@ function estimateBTCReward(btcPrice: number): string {
   return usd.toLocaleString('en-US', { style: 'currency', currency: 'USD', minimumFractionDigits: 2, maximumFractionDigits: 2 })
 }
 
+// Returns border/bg/glow classes based on how close a miner's bestshare is to network difficulty
+function getMinerShareStyle(bestshare: number, networkDifficulty: number): { border: string; bg: string; glow: string; dot: string; label: string } {
+  if (!bestshare || !networkDifficulty) return { border: 'border-slate-700/50', bg: 'from-slate-800/50 to-slate-900/50', glow: '', dot: 'bg-cyan-400', label: 'text-cyan-400' }
+  const ratio = bestshare / networkDifficulty
+  if (ratio >= 1)      return { border: 'border-yellow-300', bg: 'from-yellow-900/60 to-amber-950/60', glow: 'shadow-yellow-400/80', dot: 'bg-yellow-300', label: 'text-yellow-200' }
+  if (ratio >= 0.5)    return { border: 'border-orange-400', bg: 'from-orange-900/50 to-red-950/50',   glow: 'shadow-orange-400/70', dot: 'bg-orange-400 animate-pulse', label: 'text-orange-300' }
+  if (ratio >= 0.1)    return { border: 'border-amber-500/70', bg: 'from-amber-900/30 to-slate-900/50', glow: 'shadow-amber-500/40', dot: 'bg-amber-400 animate-pulse', label: 'text-amber-300' }
+  if (ratio >= 0.01)   return { border: 'border-cyan-500/60', bg: 'from-cyan-950/40 to-slate-900/50',  glow: 'shadow-cyan-500/30', dot: 'bg-cyan-400', label: 'text-cyan-300' }
+  return                      { border: 'border-blue-700/50', bg: 'from-blue-950/30 to-slate-900/50',  glow: '',                   dot: 'bg-blue-400', label: 'text-blue-300' }
+}
+
 export function BraiinsWebDashboard() {
   const defaultAddress = process.env.NEXT_PUBLIC_BRAIINS_ADDRESS || ''
   const discordWebhook = process.env.NEXT_PUBLIC_DISCORD_WEBHOOK_URL || ''
@@ -75,6 +87,8 @@ export function BraiinsWebDashboard() {
   const [hashRateHistory, setHashRateHistory] = useState<{ timestamp: number; hashrate1m: number; hashrate5m: number; hashrate1hr: number }[]>([])
   const [showSettings, setShowSettings] = useState(false)
   const [settingsAddress, setSettingsAddress] = useState(address)
+  const [blockFound, setBlockFound] = useState(false)
+  const blockFoundTimeout = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   const prevBestShare = useRef<string>('')
 
@@ -138,6 +152,16 @@ export function BraiinsWebDashboard() {
         await createAlert('best_share', message)
       }
       prevBestShare.current = currentBestShare.toString()
+
+      // Block found — share meets or exceeds network difficulty
+      if (currentBestShare > 0 && networkDifficulty > 0 && currentBestShare >= networkDifficulty) {
+        setBlockFound(true)
+        // Cannon confetti burst
+        confetti({ particleCount: 200, spread: 120, origin: { y: 0.5 }, colors: ['#06b6d4', '#a855f7', '#f97316', '#facc15', '#ffffff'] })
+        confetti({ particleCount: 150, spread: 160, origin: { y: 0.3 }, startVelocity: 45, colors: ['#06b6d4', '#a855f7', '#f97316', '#facc15'] })
+        if (blockFoundTimeout.current) clearTimeout(blockFoundTimeout.current)
+        blockFoundTimeout.current = setTimeout(() => setBlockFound(false), 8000)
+      }
 
       // Track estimated reward history every fetch
       const hr1hr = parseFloat(data.hashrate1hr?.toString() || '0')
@@ -334,40 +358,54 @@ export function BraiinsWebDashboard() {
         {/* Charts Row */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-1">
           {/* Hashrate Trend Line Chart */}
-          <div className="group relative rounded-lg border border-cyan-500/40 bg-gradient-to-br from-slate-800/40 to-slate-900/50 p-2 backdrop-blur-lg hover:border-cyan-400/70 hover:shadow-xl hover:shadow-cyan-500/40 transition-all">
+          <div className="group relative rounded-lg border border-cyan-500/40 bg-gradient-to-br from-slate-800/40 to-slate-900/50 p-2 backdrop-blur-lg hover:border-cyan-400/70 hover:shadow-xl hover:shadow-cyan-500/40 transition-all overflow-hidden">
             <div className="absolute inset-0 rounded-lg opacity-0 group-hover:opacity-15 bg-[radial-gradient(ellipse_at_50%_50%,_rgba(6,182,212,0.3),transparent_70%)] blur-lg transition-all duration-300"></div>
             <h3 className="text-xs font-bold text-cyan-300 mb-1 uppercase tracking-widest relative z-10" style={{ fontFamily: 'var(--font-orbitron), sans-serif' }}>Hashrate Trend</h3>
             <div className="h-20 relative z-10">
               {hashRateHistory.length > 0 ? (
-                <ResponsiveContainer width="100%" height="100%">
-                  <LineChart data={hashRateHistory} margin={{ top: 5, right: 5, bottom: 0, left: 0 }}>
-                    <defs>
-                      <linearGradient id="hashRateGradient" x1="0%" y1="100%" x2="100%" y2="100%">
-                        <stop offset="0%" stopColor="#06b6d4" stopOpacity={1} />
-                        <stop offset="50%" stopColor="#0891b2" stopOpacity={1} />
-                        <stop offset="100%" stopColor="#06d6d4" stopOpacity={1} />
-                      </linearGradient>
-                    </defs>
-                    <CartesianGrid strokeDasharray="3 3" stroke="rgba(6, 182, 212, 0.1)" />
-                    <Tooltip 
-                      contentStyle={{ backgroundColor: 'rgba(20, 20, 40, 0.95)', border: '1px solid rgba(6, 182, 212, 0.3)', borderRadius: '6px' }}
-                      labelStyle={{ color: '#06d6d4' }}
-                      formatter={(value: any) => formatHashrate(value as number)}
-                    />
-                    <YAxis hide domain={['dataMin * 0.95', 'dataMax * 1.05']} />
-                    <Line 
-                      type="linear" 
-                      dataKey="hashrate1m" 
-                      stroke="url(#hashRateGradient)"
-                      dot={false}
-                      strokeWidth={3}
-                      isAnimationActive={false}
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      filter="drop-shadow(0 0 6px rgba(6,182,212,0.8))"
-                    />
-                  </LineChart>
-                </ResponsiveContainer>
+                <>
+                  <ResponsiveContainer width="100%" height="100%">
+                    <LineChart data={hashRateHistory} margin={{ top: 5, right: 5, bottom: 0, left: 0 }}>
+                      <defs>
+                        <linearGradient id="hashRateGradient" x1="0%" y1="100%" x2="100%" y2="100%">
+                          <stop offset="0%" stopColor="#06b6d4" stopOpacity={1} />
+                          <stop offset="50%" stopColor="#0891b2" stopOpacity={1} />
+                          <stop offset="100%" stopColor="#06d6d4" stopOpacity={1} />
+                        </linearGradient>
+                      </defs>
+                      <CartesianGrid strokeDasharray="3 3" stroke="rgba(6, 182, 212, 0.1)" />
+                      <Tooltip 
+                        contentStyle={{ backgroundColor: 'rgba(20, 20, 40, 0.95)', border: '1px solid rgba(6, 182, 212, 0.3)', borderRadius: '6px' }}
+                        labelStyle={{ color: '#06d6d4' }}
+                        formatter={(value: any) => formatHashrate(value as number)}
+                      />
+                      <YAxis hide domain={['dataMin * 0.95', 'dataMax * 1.05']} />
+                      <Line 
+                        type="linear" 
+                        dataKey="hashrate1m" 
+                        stroke="url(#hashRateGradient)"
+                        dot={false}
+                        strokeWidth={3}
+                        isAnimationActive={false}
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        filter="drop-shadow(0 0 6px rgba(6,182,212,0.8))"
+                      />
+                    </LineChart>
+                  </ResponsiveContainer>
+                  {/* Laser etching head — rides the right edge of the chart */}
+                  <div className="pointer-events-none absolute right-[5px] top-0 bottom-0 flex flex-col items-center justify-center gap-0.5" style={{ width: '10px' }}>
+                    {/* Vertical scan beam */}
+                    <div className="absolute inset-y-0 left-1/2 -translate-x-1/2 w-px"
+                      style={{ background: 'linear-gradient(to bottom, transparent 0%, rgba(6,182,212,0.15) 30%, rgba(6,182,212,0.6) 50%, rgba(6,182,212,0.15) 70%, transparent 100%)' }} />
+                    {/* Laser head dot */}
+                    <div className="relative w-2 h-2 rounded-full bg-cyan-300"
+                      style={{ boxShadow: '0 0 6px 2px rgba(6,182,212,0.9), 0 0 14px 4px rgba(6,182,212,0.5)', animation: 'laserBounce 1.8s ease-in-out infinite' }} />
+                    {/* Horizontal etch ray */}
+                    <div className="absolute top-1/2 right-full -translate-y-1/2 h-px w-14 pointer-events-none"
+                      style={{ background: 'linear-gradient(to left, rgba(6,182,212,0.9), rgba(6,182,212,0.3), transparent)', animation: 'laserPulse 1.8s ease-in-out infinite' }} />
+                  </div>
+                </>
               ) : (
                 <div className="flex items-center justify-center h-full text-slate-500 text-xs">
                   Waiting for hashrate data...
@@ -451,25 +489,32 @@ export function BraiinsWebDashboard() {
           <div className="rounded-lg border border-cyan-500/30 bg-gradient-to-br from-slate-800/30 to-slate-900/40 p-2 backdrop-blur">
             <h2 className="text-xs font-bold text-white mb-1" style={{ fontFamily: 'var(--font-orbitron), sans-serif' }}>Active Rigs ({activeMinersList.length})</h2>
             <div className="grid grid-cols-4 sm:grid-cols-5 md:grid-cols-6 lg:grid-cols-8 xl:grid-cols-10 gap-0.5">
-              {activeMinersList.map((miner, idx) => (
-                <div key={idx} className="group relative rounded border border-slate-700/50 bg-gradient-to-br from-slate-800/50 to-slate-900/50 p-1 hover:border-cyan-500/30 hover:shadow-lg hover:shadow-cyan-500/10 transition-all duration-300 text-xs">
-                  <div className="flex items-center justify-between mb-0.5">
-                    <div className="text-cyan-400 font-bold text-xs truncate">{miner.name}</div>
-                    <div className="w-0.5 h-0.5 rounded-full bg-cyan-400 animate-pulse flex-shrink-0"></div>
-                  </div>
-                  
-                  <div className="space-y-0.5 text-xs">
-                    <div className="flex justify-between gap-0.5">
-                      <span className="text-slate-500">1m:</span>
-                      <span className="text-cyan-300 font-mono text-xs truncate">{formatHashrate(miner.hashrate1m)}</span>
+              {activeMinersList.map((miner, idx) => {
+                const style = getMinerShareStyle(miner.bestshare, networkDifficulty)
+                const ratio = miner.bestshare / networkDifficulty
+                return (
+                  <div key={idx} className={`group relative rounded border ${style.border} bg-gradient-to-br ${style.bg} p-1 shadow-lg ${style.glow} transition-all duration-700 text-xs`}>
+                    {/* Hot glow pulse for high shares */}
+                    {ratio >= 0.5 && (
+                      <div className="absolute inset-0 rounded animate-pulse bg-gradient-to-br from-orange-500/10 to-transparent pointer-events-none" />
+                    )}
+                    <div className="flex items-center justify-between mb-0.5 relative z-10">
+                      <div className={`${style.label} font-bold text-xs truncate`}>{miner.name}</div>
+                      <div className={`w-1.5 h-1.5 rounded-full ${style.dot} flex-shrink-0`}></div>
                     </div>
-                    <div className="flex justify-between gap-0.5">
-                      <span className="text-slate-500">Best:</span>
-                      <span className="text-cyan-300 font-mono text-xs">{formatNumber(miner.bestshare)}</span>
+                    <div className="space-y-0.5 text-xs relative z-10">
+                      <div className="flex justify-between gap-0.5">
+                        <span className="text-slate-500">1m:</span>
+                        <span className={`${style.label} font-mono text-xs truncate`}>{formatHashrate(miner.hashrate1m)}</span>
+                      </div>
+                      <div className="flex justify-between gap-0.5">
+                        <span className="text-slate-500">Best:</span>
+                        <span className={`${style.label} font-mono text-xs`}>{formatNumber(miner.bestshare)}</span>
+                      </div>
                     </div>
                   </div>
-                </div>
-              ))}
+                )
+              })}
             </div>
           </div>
         )}
@@ -608,6 +653,52 @@ export function BraiinsWebDashboard() {
           </div>
         </div>
       )}
+
+      {/* BLOCK FOUND overlay */}
+      {blockFound && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center pointer-events-none">
+          {/* Dark vignette flash */}
+          <div className="absolute inset-0 bg-black/60 animate-pulse" />
+          {/* Border flash ring */}
+          <div className="absolute inset-4 rounded-2xl border-4 border-yellow-300" style={{ boxShadow: '0 0 60px 10px rgba(250,204,21,0.5), inset 0 0 60px 10px rgba(250,204,21,0.15)', animation: 'blockFlash 0.6s ease-in-out infinite alternate' }} />
+          {/* Main text */}
+          <div className="relative flex flex-col items-center gap-3">
+            <div className="text-6xl md:text-8xl font-black tracking-tight"
+              style={{
+                fontFamily: 'var(--font-orbitron), sans-serif',
+                color: '#facc15',
+                textShadow: '0 0 30px rgba(250,204,21,0.9), 0 0 60px rgba(250,204,21,0.6), 0 0 100px rgba(250,204,21,0.3)',
+                animation: 'blockTextPulse 0.4s ease-in-out infinite alternate',
+              }}>
+              BLOCK FOUND!
+            </div>
+            <div className="text-lg font-bold tracking-[0.3em] text-cyan-300"
+              style={{ fontFamily: 'var(--font-orbitron), sans-serif', textShadow: '0 0 10px rgba(6,182,212,0.8)' }}>
+              YOU SOLVED THE BLOCK
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Global keyframe animations */}
+      <style>{`
+        @keyframes laserBounce {
+          0%, 100% { transform: translateY(-30px); opacity: 0.7; }
+          50%       { transform: translateY(30px);  opacity: 1;   }
+        }
+        @keyframes laserPulse {
+          0%, 100% { opacity: 0.3; width: 24px; }
+          50%       { opacity: 1;   width: 56px; }
+        }
+        @keyframes blockFlash {
+          from { opacity: 0.5; }
+          to   { opacity: 1;   }
+        }
+        @keyframes blockTextPulse {
+          from { transform: scale(0.97); }
+          to   { transform: scale(1.03); }
+        }
+      `}</style>
     </div>
   )
 }
