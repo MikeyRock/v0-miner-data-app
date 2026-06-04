@@ -59,15 +59,66 @@ function estimateBTCReward(btcPrice: number): string {
   return usd.toLocaleString('en-US', { style: 'currency', currency: 'USD', minimumFractionDigits: 2, maximumFractionDigits: 2 })
 }
 
-// Returns border/bg/glow classes based on how close a miner's bestshare is to network difficulty
-function getMinerShareStyle(bestshare: number, networkDifficulty: number): { border: string; bg: string; glow: string; dot: string; label: string } {
-  if (!bestshare || !networkDifficulty) return { border: 'border-slate-700/50', bg: 'from-slate-800/50 to-slate-900/50', glow: '', dot: 'bg-cyan-400', label: 'text-cyan-400' }
-  const ratio = bestshare / networkDifficulty
-  if (ratio >= 1)      return { border: 'border-yellow-300', bg: 'from-yellow-900/60 to-amber-950/60', glow: 'shadow-yellow-400/80', dot: 'bg-yellow-300', label: 'text-yellow-200' }
-  if (ratio >= 0.5)    return { border: 'border-orange-400', bg: 'from-orange-900/50 to-red-950/50',   glow: 'shadow-orange-400/70', dot: 'bg-orange-400 animate-pulse', label: 'text-orange-300' }
-  if (ratio >= 0.1)    return { border: 'border-amber-500/70', bg: 'from-amber-900/30 to-slate-900/50', glow: 'shadow-amber-500/40', dot: 'bg-amber-400 animate-pulse', label: 'text-amber-300' }
-  if (ratio >= 0.01)   return { border: 'border-cyan-500/60', bg: 'from-cyan-950/40 to-slate-900/50',  glow: 'shadow-cyan-500/30', dot: 'bg-cyan-400', label: 'text-cyan-300' }
-  return                      { border: 'border-blue-700/50', bg: 'from-blue-950/30 to-slate-900/50',  glow: '',                   dot: 'bg-blue-400', label: 'text-blue-300' }
+// Absolute difficulty tier coloring — 11 bands + BTC block hit
+// All colors are inline CSS so Tailwind purging never drops them
+interface TierStyle {
+  color: string        // text + dot color
+  borderColor: string
+  bgFrom: string       // gradient start (with alpha)
+  glow: string         // box-shadow string (empty = no glow)
+  pulse: boolean       // animate-pulse on the inner overlay
+  label: string        // human-readable tier name
+}
+
+function getDifficultyTier(bestshare: number, networkDifficulty: number): TierStyle {
+  const M = 1e6, G = 1e9, T = 1e12
+
+  // BTC block difficulty hit — illuminating orange
+  if (networkDifficulty > 0 && bestshare >= networkDifficulty)
+    return { color: '#ff6a00', borderColor: '#ff6a00', bgFrom: 'rgba(255,106,0,0.22)', glow: '0 0 18px 6px rgba(255,106,0,0.75), 0 0 40px 10px rgba(255,106,0,0.4)', pulse: true, label: 'BTC DIFF!' }
+
+  // Tier 11 — 121T → just under BTC diff (deep magenta/hot pink)
+  if (bestshare >= 121 * T)
+    return { color: '#f0abfc', borderColor: '#d946ef', bgFrom: 'rgba(217,70,239,0.18)', glow: '0 0 12px 4px rgba(217,70,239,0.6)', pulse: true, label: '121T+' }
+
+  // Tier 10 — 101T – 120T (violet)
+  if (bestshare >= 101 * T)
+    return { color: '#c084fc', borderColor: '#a855f7', bgFrom: 'rgba(168,85,247,0.15)', glow: '0 0 10px 3px rgba(168,85,247,0.5)', pulse: true, label: '101T-120T' }
+
+  // Tier 9 — 51T – 100T (blue-violet)
+  if (bestshare >= 51 * T)
+    return { color: '#818cf8', borderColor: '#6366f1', bgFrom: 'rgba(99,102,241,0.14)', glow: '0 0 8px 2px rgba(99,102,241,0.45)', pulse: false, label: '51T-100T' }
+
+  // Tier 8 — 2T – 50T (indigo-blue)
+  if (bestshare >= 2 * T)
+    return { color: '#60a5fa', borderColor: '#3b82f6', bgFrom: 'rgba(59,130,246,0.13)', glow: '0 0 6px 2px rgba(59,130,246,0.35)', pulse: false, label: '2T-50T' }
+
+  // Tier 7 — 500G – 1T (sky blue)
+  if (bestshare >= 500 * G)
+    return { color: '#38bdf8', borderColor: '#0ea5e9', bgFrom: 'rgba(14,165,233,0.12)', glow: '0 0 5px 1px rgba(14,165,233,0.3)', pulse: false, label: '500G-1T' }
+
+  // Tier 6 — 101G – 499G (cyan)
+  if (bestshare >= 101 * G)
+    return { color: '#22d3ee', borderColor: '#06b6d4', bgFrom: 'rgba(6,182,212,0.11)', glow: '0 0 4px 1px rgba(6,182,212,0.25)', pulse: false, label: '101G-499G' }
+
+  // Tier 5 — 51G – 100G (teal-cyan)
+  if (bestshare >= 51 * G)
+    return { color: '#2dd4bf', borderColor: '#14b8a6', bgFrom: 'rgba(20,184,166,0.10)', glow: '', pulse: false, label: '51G-100G' }
+
+  // Tier 4 — 1G – 50G (teal-green)
+  if (bestshare >= G)
+    return { color: '#34d399', borderColor: '#10b981', bgFrom: 'rgba(16,185,129,0.09)', glow: '', pulse: false, label: '1G-50G' }
+
+  // Tier 3 — 501M – 999M (lime-green)
+  if (bestshare >= 501 * M)
+    return { color: '#a3e635', borderColor: '#84cc16', bgFrom: 'rgba(132,204,22,0.09)', glow: '', pulse: false, label: '501M-999M' }
+
+  // Tier 2 — 101M – 500M (yellow-green)
+  if (bestshare >= 101 * M)
+    return { color: '#facc15', borderColor: '#eab308', bgFrom: 'rgba(234,179,8,0.08)', glow: '', pulse: false, label: '101M-500M' }
+
+  // Tier 1 — 0 – 100M (slate blue — cold/base)
+  return { color: '#94a3b8', borderColor: '#475569', bgFrom: 'rgba(71,85,105,0.10)', glow: '', pulse: false, label: '0-100M' }
 }
 
 export function BraiinsWebDashboard() {
@@ -554,26 +605,39 @@ export function BraiinsWebDashboard() {
             <h2 className="text-xs font-bold text-white mb-1" style={{ fontFamily: 'var(--font-orbitron), sans-serif' }}>Active Rigs ({activeMinersList.length})</h2>
             <div className="grid grid-cols-4 sm:grid-cols-5 md:grid-cols-6 lg:grid-cols-8 xl:grid-cols-10 gap-0.5">
               {activeMinersList.map((miner, idx) => {
-                const style = getMinerShareStyle(miner.bestshare, networkDifficulty)
-                const ratio = miner.bestshare / networkDifficulty
+                const tier = getDifficultyTier(miner.bestshare, networkDifficulty)
                 return (
-                  <div key={idx} className={`group relative rounded border ${style.border} bg-gradient-to-br ${style.bg} p-1 shadow-lg ${style.glow} transition-all duration-700 text-xs`}>
-                    {/* Hot glow pulse for high shares */}
-                    {ratio >= 0.5 && (
-                      <div className="absolute inset-0 rounded animate-pulse bg-gradient-to-br from-orange-500/10 to-transparent pointer-events-none" />
+                  <div
+                    key={idx}
+                    className="group relative rounded p-1 text-xs transition-all duration-500"
+                    style={{
+                      border: `1px solid ${tier.borderColor}`,
+                      background: `linear-gradient(135deg, ${tier.bgFrom} 0%, rgba(15,23,42,0.85) 100%)`,
+                      boxShadow: tier.glow || undefined,
+                    }}
+                  >
+                    {/* Pulse overlay for hot tiers */}
+                    {tier.pulse && (
+                      <div
+                        className="absolute inset-0 rounded animate-pulse pointer-events-none"
+                        style={{ background: `radial-gradient(ellipse at 50% 50%, ${tier.borderColor}22 0%, transparent 70%)` }}
+                      />
                     )}
                     <div className="flex items-center justify-between mb-0.5 relative z-10">
-                      <div className={`${style.label} font-bold text-xs truncate`}>{miner.name}</div>
-                      <div className={`w-1.5 h-1.5 rounded-full ${style.dot} flex-shrink-0`}></div>
+                      <div className="font-bold text-xs truncate" style={{ color: tier.color }}>{miner.name}</div>
+                      <div
+                        className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${tier.pulse ? 'animate-pulse' : ''}`}
+                        style={{ backgroundColor: tier.color, boxShadow: `0 0 4px ${tier.color}` }}
+                      />
                     </div>
-                    <div className="space-y-0.5 text-xs relative z-10">
+                    <div className="space-y-0.5 relative z-10">
                       <div className="flex justify-between gap-0.5">
                         <span className="text-slate-500">1m:</span>
-                        <span className={`${style.label} font-mono text-xs truncate`}>{formatHashrate(miner.hashrate1m)}</span>
+                        <span className="font-mono text-xs truncate" style={{ color: tier.color }}>{formatHashrate(miner.hashrate1m)}</span>
                       </div>
                       <div className="flex justify-between gap-0.5">
                         <span className="text-slate-500">Best:</span>
-                        <span className={`${style.label} font-mono text-xs`}>{formatNumber(miner.bestshare)}</span>
+                        <span className="font-mono text-xs" style={{ color: tier.color }}>{formatNumber(miner.bestshare)}</span>
                       </div>
                     </div>
                   </div>
