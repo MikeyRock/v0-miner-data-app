@@ -224,13 +224,11 @@
   }
 }
 
-@keyframes subtlePulse {
+@keyframes subtleBorderPulse {
   0%, 100% {
-    opacity: 0.2;
-    box-shadow: inset 0 0 8px currentColor;
+    box-shadow: 0 0 2px var(--pulse-color, currentColor), 0 0 4px var(--pulse-color, currentColor);
   }
   50% {
-    opacity: 0.7;
-    box-shadow: inset 0 0 20px currentColor;
+    box-shadow: 0 0 6px var(--pulse-color, currentColor), 0 0 10px var(--pulse-color, currentColor);
   }
 }

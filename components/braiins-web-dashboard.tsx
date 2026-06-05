@@ -836,10 +836,11 @@ export function BraiinsWebDashboard() {
                       style={{
                         border: `1px solid ${isTopRig ? tier.color : tier.borderColor}`,
                         background: `linear-gradient(135deg, ${tier.bgFrom} 0%, rgba(15,23,42,0.85) 100%)`,
-                        boxShadow: isTopRig 
-                          ? `0 0 6px ${tier.color}40`
-                          : tier.glow || undefined,
-                      }}
+                        boxShadow: tier.glow || undefined,
+                        // CSS variable for the pulse color
+                        '--pulse-color': tier.color,
+                        animation: isTopRig ? 'subtleBorderPulse 2s ease-in-out infinite' : undefined,
+                      } as React.CSSProperties}
                     >
                       {/* Subtle Cyberpunk Crown for best rig - positioned above without affecting layout */}
                       {isTopRig && (
@@ -861,16 +862,6 @@ export function BraiinsWebDashboard() {
                             <circle cx="12" cy="3" r="1" fill="white" opacity="0.7" />
                           </svg>
                         </div>
-                      )}
-                      {/* Subtle pulse overlay for best rig */}
-                      {isTopRig && (
-                        <div
-                          className="absolute inset-0 rounded pointer-events-none z-0"
-                          style={{ 
-                            background: `radial-gradient(ellipse at 50% 50%, ${tier.color}40 0%, transparent 60%)`,
-                            animation: 'subtlePulse 1.2s ease-in-out infinite',
-                          }}
-                        />
                       )}
                       {/* Pulse overlay for hot tiers */}
                       {tier.pulse && !isTopRig && (
