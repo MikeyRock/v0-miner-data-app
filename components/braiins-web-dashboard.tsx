@@ -834,18 +834,59 @@ export function BraiinsWebDashboard() {
                       key={idx}
                       className={`group relative rounded p-1 text-xs transition-all duration-500 ${isTopRig ? 'rockstar-pulse' : ''}`}
                       style={{
-                        border: `1px solid ${tier.borderColor}`,
+                        border: `2px solid ${isTopRig ? tier.color : tier.borderColor}`,
                         background: `linear-gradient(135deg, ${tier.bgFrom} 0%, rgba(15,23,42,0.85) 100%)`,
-                        boxShadow: tier.glow || undefined,
+                        boxShadow: isTopRig 
+                          ? `0 0 12px ${tier.color}80, 0 0 24px ${tier.color}40, inset 0 0 12px ${tier.color}20`
+                          : tier.glow || undefined,
+                        marginTop: isTopRig ? '10px' : undefined,
                       }}
                     >
+                      {/* Cyberpunk Crown for best rig */}
+                      {isTopRig && (
+                        <div className="absolute -top-3 left-1/2 -translate-x-1/2 z-20">
+                          <svg 
+                            width="24" 
+                            height="14" 
+                            viewBox="0 0 24 14" 
+                            fill="none" 
+                            className="drop-shadow-lg"
+                            style={{ filter: `drop-shadow(0 0 4px ${tier.color})` }}
+                          >
+                            {/* 3-point cyberpunk crown */}
+                            <path 
+                              d="M2 12L4 6L8 9L12 2L16 9L20 6L22 12H2Z" 
+                              fill={tier.color}
+                              stroke={tier.color}
+                              strokeWidth="1"
+                              className="animate-pulse"
+                            />
+                            {/* Glow accents on crown points */}
+                            <circle cx="12" cy="3" r="1.5" fill="white" className="animate-ping" style={{ animationDuration: '2s' }} />
+                            <circle cx="4" cy="6" r="1" fill="white" opacity="0.8" />
+                            <circle cx="20" cy="6" r="1" fill="white" opacity="0.8" />
+                          </svg>
+                        </div>
+                      )}
+                      {/* Animated border glow for best rig */}
+                      {isTopRig && (
+                        <div
+                          className="absolute -inset-0.5 rounded pointer-events-none z-0"
+                          style={{ 
+                            background: `linear-gradient(45deg, ${tier.color}, transparent, ${tier.color})`,
+                            backgroundSize: '200% 200%',
+                            animation: 'borderGlow 2s ease-in-out infinite',
+                            opacity: 0.6,
+                          }}
+                        />
+                      )}
                       {/* Rockstar pulse overlay for best rig */}
                       {isTopRig && (
                         <div
-                          className="absolute inset-0 rounded pointer-events-none"
+                          className="absolute inset-0 rounded pointer-events-none z-0"
                           style={{ 
-                            background: `radial-gradient(ellipse at 50% 50%, ${tier.borderColor}30 0%, transparent 70%)`,
-                            animation: 'rockstarPulse 2s ease-in-out infinite',
+                            background: `radial-gradient(ellipse at 50% 50%, ${tier.color}50 0%, transparent 60%)`,
+                            animation: 'rockstarPulse 1.5s ease-in-out infinite',
                           }}
                         />
                       )}
