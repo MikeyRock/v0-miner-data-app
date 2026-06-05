@@ -32,16 +32,16 @@ interface Alert {
 }
 
 function formatHashrate(value: string | number | undefined): string {
-  if (!value) return '0 TH/s'
+  if (!value) return '0 H/s'
   const num = typeof value === 'string' ? parseFloat(value) : value
-  if (isNaN(num)) return '0 TH/s'
-  // API returns hashrate in GH/s - convert to appropriate unit
-  // num is in GH/s, so: 1000 GH/s = 1 TH/s, 1000000 GH/s = 1 PH/s
-  if (num >= 1e6) return `${(num / 1e6).toFixed(2)} PH/s`
-  if (num >= 1e3) return `${(num / 1e3).toFixed(2)} TH/s`
-  if (num >= 1) return `${num.toFixed(2)} GH/s`
-  if (num >= 0.001) return `${(num * 1e3).toFixed(2)} MH/s`
-  return `${(num * 1e6).toFixed(2)} KH/s`
+  if (isNaN(num)) return '0 H/s'
+  // API returns hashrate already in TH/s
+  // 62.90 = 62.90 TH/s, 1.040 = 1.040 TH/s, 0.963 = 963 GH/s
+  if (num >= 1000) return `${(num / 1000).toFixed(2)} PH/s`
+  if (num >= 1) return `${num.toFixed(2)} TH/s`
+  if (num >= 0.001) return `${(num * 1000).toFixed(2)} GH/s`
+  if (num >= 0.000001) return `${(num * 1000000).toFixed(2)} MH/s`
+  return `${(num * 1000000000).toFixed(2)} KH/s`
 }
 
 function formatNumber(value: string | number | undefined): string {
