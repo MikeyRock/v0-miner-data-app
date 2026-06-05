@@ -867,8 +867,8 @@ export function BraiinsWebDashboard() {
                         <div
                           className="absolute inset-0 rounded pointer-events-none z-0"
                           style={{ 
-                            background: `radial-gradient(ellipse at 50% 50%, ${tier.color}20 0%, transparent 70%)`,
-                            animation: 'subtlePulse 2.5s ease-in-out infinite',
+                            background: `radial-gradient(ellipse at 50% 50%, ${tier.color}40 0%, transparent 60%)`,
+                            animation: 'subtlePulse 1.2s ease-in-out infinite',
                           }}
                         />
                       )}
