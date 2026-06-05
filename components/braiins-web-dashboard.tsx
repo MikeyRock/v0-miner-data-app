@@ -33,15 +33,39 @@ interface Alert {
 
 function formatHashrate(value: string | number | undefined): string {
   if (!value) return '0 H/s'
-  const num = typeof value === 'string' ? parseFloat(value) : value
+  
+  // Handle string values with unit suffixes from Braiins API (e.g., "5.62T", "994G", "500M")
+  if (typeof value === 'string') {
+    const match = value.match(/^([\d.]+)([TGMKPH]?)$/i)
+    if (match) {
+      const num = parseFloat(match[1])
+      const unit = match[2].toUpperCase()
+      
+      // Return with the unit that came from the API
+      if (unit === 'P') return `${num.toFixed(2)} PH/s`
+      if (unit === 'T') return `${num.toFixed(2)} TH/s`
+      if (unit === 'G') return `${num.toFixed(2)} GH/s`
+      if (unit === 'M') return `${num.toFixed(2)} MH/s`
+      if (unit === 'K') return `${num.toFixed(2)} KH/s`
+      if (unit === 'H') return `${num.toFixed(2)} H/s`
+      
+      // No unit suffix - assume it's a raw number, format based on magnitude
+      if (!isNaN(num)) {
+        if (num >= 1000) return `${(num / 1000).toFixed(2)} PH/s`
+        if (num >= 1) return `${num.toFixed(2)} TH/s`
+        if (num >= 0.001) return `${(num * 1000).toFixed(2)} GH/s`
+        return `${(num * 1000000).toFixed(2)} MH/s`
+      }
+    }
+  }
+  
+  // Handle pure numeric values - assume TH/s scale
+  const num = typeof value === 'number' ? value : parseFloat(value)
   if (isNaN(num)) return '0 H/s'
-  // API returns hashrate already in TH/s
-  // 62.90 = 62.90 TH/s, 1.040 = 1.040 TH/s, 0.963 = 963 GH/s
   if (num >= 1000) return `${(num / 1000).toFixed(2)} PH/s`
   if (num >= 1) return `${num.toFixed(2)} TH/s`
   if (num >= 0.001) return `${(num * 1000).toFixed(2)} GH/s`
-  if (num >= 0.000001) return `${(num * 1000000).toFixed(2)} MH/s`
-  return `${(num * 1000000000).toFixed(2)} KH/s`
+  return `${(num * 1000000).toFixed(2)} MH/s`
 }
 
 function formatNumber(value: string | number | undefined): string {
@@ -399,7 +423,17 @@ export function BraiinsWebDashboard() {
     }, 12000)
   }, [])
 
-  const activeMinersList = miners.filter(m => m.lastshare && (Date.now() - m.lastshare * 1000) < 300000)
+  const activeMinersList = miners
+    .filter(m => m.lastshare && (Date.now() - m.lastshare * 1000) < 300000)
+    .sort((a, b) => {
+      // Names starting with # come first
+      const aStartsWithHash = a.name.startsWith('#')
+      const bStartsWithHash = b.name.startsWith('#')
+      if (aStartsWithHash && !bStartsWithHash) return -1
+      if (!aStartsWithHash && bStartsWithHash) return 1
+      // Then sort alphabetically by name
+      return a.name.localeCompare(b.name)
+    })
   const bestShareNum = parseFloat(braiinsData?.bestshare || '0')
   const usdReward = estimateBTCReward(btcPrice)
 
