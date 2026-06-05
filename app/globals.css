@@ -226,9 +226,9 @@
 
 @keyframes subtleBorderPulse {
   0%, 100% {
-    box-shadow: 0 0 2px var(--pulse-color, currentColor), 0 0 4px var(--pulse-color, currentColor);
+    box-shadow: 0 0 4px var(--pulse-color, currentColor), 0 0 8px var(--pulse-color, currentColor);
   }
   50% {
-    box-shadow: 0 0 6px var(--pulse-color, currentColor), 0 0 10px var(--pulse-color, currentColor);
+    box-shadow: 0 0 10px var(--pulse-color, currentColor), 0 0 18px var(--pulse-color, currentColor), 0 0 24px var(--pulse-color, currentColor);
   }
 }

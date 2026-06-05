@@ -836,13 +836,15 @@ export function BraiinsWebDashboard() {
                       style={{
                         border: `1px solid ${isTopRig ? tier.color : tier.borderColor}`,
                         background: `linear-gradient(135deg, ${tier.bgFrom} 0%, rgba(15,23,42,0.85) 100%)`,
-                        boxShadow: tier.glow || undefined,
+                        boxShadow: isTopRig 
+                          ? undefined // Let the animation handle it
+                          : tier.glow || undefined,
                         // CSS variable for the pulse color
                         '--pulse-color': tier.color,
-                        animation: isTopRig ? 'subtleBorderPulse 2s ease-in-out infinite' : undefined,
+                        animation: isTopRig ? 'subtleBorderPulse 1.8s ease-in-out infinite' : undefined,
                       } as React.CSSProperties}
                     >
-                      {/* Subtle Cyberpunk Crown for best rig - positioned above without affecting layout */}
+                      {/* Gold Cyberpunk Crown for best rig - positioned above without affecting layout */}
                       {isTopRig && (
                         <div className="absolute -top-2.5 left-1/2 -translate-x-1/2 z-20 pointer-events-none">
                           <svg 
@@ -850,16 +852,15 @@ export function BraiinsWebDashboard() {
                             height="10" 
                             viewBox="0 0 24 14" 
                             fill="none"
-                            style={{ filter: `drop-shadow(0 0 2px ${tier.color}80)` }}
+                            style={{ filter: 'drop-shadow(0 0 3px #fbbf24)' }}
                           >
-                            {/* 3-point cyberpunk crown */}
+                            {/* 3-point cyberpunk crown - always gold */}
                             <path 
                               d="M2 12L4 6L8 9L12 2L16 9L20 6L22 12H2Z" 
-                              fill={tier.color}
-                              opacity="0.9"
+                              fill="#fbbf24"
                             />
                             {/* Small accent on center point */}
-                            <circle cx="12" cy="3" r="1" fill="white" opacity="0.7" />
+                            <circle cx="12" cy="3" r="1" fill="#fef3c7" />
                           </svg>
                         </div>
                       )}
