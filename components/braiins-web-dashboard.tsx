@@ -251,8 +251,9 @@ export function BraiinsWebDashboard() {
           const prevRigBest = rigBestShares.current[rigKey] ?? null
           const currentRigBest = miner.bestshare || 0
           
-          // Fire alert if: (1) we have a previous best and it's being beaten, OR (2) this is a new personal best and we haven't seen it before
-          if (currentRigBest > 0 && (prevRigBest === null || currentRigBest > prevRigBest)) {
+          // Only fire alert if we have a previous best AND the new value beats it
+          // This prevents alerts from firing on page refresh/first load
+          if (currentRigBest > 0 && prevRigBest !== null && currentRigBest > prevRigBest) {
             const message = `**${miner.name}** just hit a new personal best: ${formatNumber(currentRigBest)}`
             createAlert('braiins_rig_best', message, miner.name)
           }
