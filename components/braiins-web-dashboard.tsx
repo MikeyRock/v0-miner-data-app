@@ -566,7 +566,7 @@ export function BraiinsWebDashboard() {
               <h3 className="text-xs font-bold text-cyan-300 uppercase tracking-widest" style={{ fontFamily: 'var(--font-orbitron), sans-serif' }}>Block Progress</h3>
               <div className="text-xs text-cyan-400 font-mono">
                 {braiinsData?.bestshare && networkDifficulty > 0
-                  ? `${((braiinsData.bestshare / networkDifficulty) * 100).toFixed(2)}%`
+                  ? `${((Number(braiinsData.bestshare) / networkDifficulty) * 100).toFixed(2)}%`
                   : '0%'}
               </div>
             </div>
@@ -579,7 +579,7 @@ export function BraiinsWebDashboard() {
                   className="h-full bg-gradient-to-r from-cyan-500 via-cyan-400 to-cyan-300 rounded-lg transition-all duration-1000 ease-out"
                   style={{
                     width: braiinsData?.bestshare && networkDifficulty > 0
-                      ? `${Math.min((braiinsData.bestshare / networkDifficulty) * 100, 100)}%`
+                      ? `${Math.min((Number(braiinsData.bestshare) / networkDifficulty) * 100, 100)}%`
                       : '0%',
                   }}
                 >
@@ -601,11 +601,11 @@ export function BraiinsWebDashboard() {
             {(() => {
               // Get current 1m hashrate from the most recent entry
               const currentHashrate = hashRateHistory.length > 0 
-                ? hashRateHistory[hashRateHistory.length - 1].hashrate1m
+                ? Number(hashRateHistory[hashRateHistory.length - 1].hashrate1m)
                 : 0
               
               // Calculate remaining difficulty
-              const remaining = Math.max(networkDifficulty - (braiinsData?.bestshare || 0), 0)
+              const remaining = Math.max(networkDifficulty - (Number(braiinsData?.bestshare) || 0), 0)
               
               // Estimate time in seconds: remaining_diff / hashrate
               const estimatedSeconds = currentHashrate > 0 ? remaining / currentHashrate : Infinity
