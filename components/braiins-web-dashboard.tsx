@@ -251,8 +251,9 @@ export function BraiinsWebDashboard() {
           const prevRigBest = rigBestShares.current[rigKey] ?? null
           const currentRigBest = miner.bestshare || 0
           
-          // Fire alert if: (1) we have a previous best and it's being beaten, OR (2) this is a new personal best and we haven't seen it before
-          if (currentRigBest > 0 && (prevRigBest === null || currentRigBest > prevRigBest)) {
+          // Only fire alert if we have a previous best AND the new value beats it
+          // This prevents alerts from firing on page refresh/first load
+          if (currentRigBest > 0 && prevRigBest !== null && currentRigBest > prevRigBest) {
             const message = `**${miner.name}** just hit a new personal best: ${formatNumber(currentRigBest)}`
             createAlert('braiins_rig_best', message, miner.name)
           }
@@ -519,30 +520,55 @@ export function BraiinsWebDashboard() {
                     />
                     {/* Laser head at the tip — uses Recharts' own scales for pixel-perfect positioning */}
                     <Customized component={(props: any) => {
-                      const { xAxisMap, yAxisMap, offset } = props
-                      const xScale = xAxisMap && Object.values(xAxisMap)[0] as any
+                      const { yAxisMap, offset } = props
                       const yScale = yAxisMap && Object.values(yAxisMap)[0] as any
-                      if (!xScale || !yScale || hashRateHistory.length === 0) return null
+                      if (!yScale || hashRateHistory.length === 0) return null
                       const last = hashRateHistory[hashRateHistory.length - 1]
-                      const cx = (offset?.left ?? 0) + (offset?.width ?? 0)
+                      // Position at the right edge of the chart area
+                      const chartLeft = offset?.left ?? 0
+                      const chartWidth = offset?.width ?? 0
+                      const cx = chartLeft + chartWidth - 2
                       const cy = yScale.scale ? yScale.scale(last.hashrate1m) : (yScale as any)(last.hashrate1m)
                       if (cx == null || cy == null || isNaN(cy)) return null
+                      
+                      // Clamp beam to chart boundaries
+                      const beamStart = Math.max(chartLeft, cx - 80)
+                      
                       return (
                         <g>
-                          {/* Beam fading left from the tip */}
                           <defs>
                             <linearGradient id="laserBeamCustom" x1="0%" y1="0%" x2="100%" y2="0%">
                               <stop offset="0%" stopColor="#06b6d4" stopOpacity={0} />
-                              <stop offset="70%" stopColor="#06b6d4" stopOpacity={0.6} />
-                              <stop offset="100%" stopColor="#ffffff" stopOpacity={1} />
+                              <stop offset="60%" stopColor="#06b6d4" stopOpacity={0.4} />
+                              <stop offset="100%" stopColor="#ffffff" stopOpacity={0.9} />
                             </linearGradient>
+                            <filter id="pulseGlow">
+                              <feGaussianBlur stdDeviation="3" result="blur" />
+                              <feMerge><feMergeNode in="blur" /><feMergeNode in="SourceGraphic" /></feMerge>
+                            </filter>
                           </defs>
-                          <line x1={cx - 150} y1={cy} x2={cx} y2={cy} stroke="url(#laserBeamCustom)" strokeWidth={2} />
-                          <line x1={cx - 70} y1={cy} x2={cx} y2={cy} stroke="#ffffff" strokeWidth={0.7} opacity={0.6} />
-                          {/* Corona glow */}
-                          <circle cx={cx} cy={cy} r={9} fill="rgba(6,182,212,0.12)" />
-                          <circle cx={cx} cy={cy} r={5} fill="rgba(6,182,212,0.35)" />
-                          <circle cx={cx} cy={cy} r={2.5} fill="rgba(255,255,255,0.95)" />
+                          
+                          {/* Outer pulsing glow ring */}
+                          <circle cx={cx} cy={cy} r={12} fill="none" stroke="rgba(6,182,212,0.3)" strokeWidth={1}>
+                            <animate attributeName="r" values="8;14;8" dur="2s" repeatCount="indefinite" />
+                            <animate attributeName="opacity" values="0.5;0.2;0.5" dur="2s" repeatCount="indefinite" />
+                          </circle>
+                          
+                          {/* Beam trailing left - clamped to chart area */}
+                          <line x1={beamStart} y1={cy} x2={cx} y2={cy} stroke="url(#laserBeamCustom)" strokeWidth={2} filter="url(#pulseGlow)">
+                            <animate attributeName="opacity" values="0.6;1;0.6" dur="1.5s" repeatCount="indefinite" />
+                          </line>
+                          
+                          {/* Corona glow layers */}
+                          <circle cx={cx} cy={cy} r={8} fill="rgba(6,182,212,0.15)" filter="url(#pulseGlow)">
+                            <animate attributeName="r" values="6;10;6" dur="2s" repeatCount="indefinite" />
+                          </circle>
+                          <circle cx={cx} cy={cy} r={4} fill="rgba(6,182,212,0.4)" />
+                          
+                          {/* Bright white hot core */}
+                          <circle cx={cx} cy={cy} r={2.5} fill="#ffffff" filter="url(#pulseGlow)">
+                            <animate attributeName="r" values="2;3;2" dur="1s" repeatCount="indefinite" />
+                          </circle>
                           <circle cx={cx} cy={cy} r={1} fill="#ffffff" />
                         </g>
                       )
@@ -573,20 +599,60 @@ export function BraiinsWebDashboard() {
 
             {/* Progress Bar */}
             <div className="relative z-10">
-              <div className="h-8 rounded-lg bg-slate-900/60 border border-emerald-500/20 overflow-hidden">
-                {/* Animated fill */}
+              <div className="h-8 rounded-lg bg-slate-900/80 border border-emerald-500/20 overflow-hidden">
+                {/* Liquid fill container */}
                 <div
-                  className="h-full bg-gradient-to-r from-emerald-600 via-emerald-500 to-emerald-400 rounded-lg transition-all duration-1000 ease-out"
+                  className="h-full relative overflow-hidden rounded-lg transition-all duration-1000 ease-out"
                   style={{
                     width: braiinsData?.bestshare && networkDifficulty > 0
-                      ? `${Math.min((Number(braiinsData.bestshare) / networkDifficulty) * 100, 100)}%`
-                      : '0%',
+                      ? `${Math.max(Math.min((Number(braiinsData.bestshare) / networkDifficulty) * 100, 100), 8)}%`
+                      : '8%',
+                    minWidth: '32px',
                   }}
                 >
-                  {/* Shimmer effect */}
-                  <div
-                    className="h-full bg-gradient-to-r from-transparent via-white to-transparent opacity-30"
-                    style={{ animation: 'shimmer 2s infinite' }}
+                  {/* Base liquid gradient */}
+                  <div className="absolute inset-0 bg-gradient-to-r from-emerald-600 via-emerald-500 to-cyan-400" />
+                  
+                  {/* Animated wave layer 1 */}
+                  <div 
+                    className="absolute inset-0 opacity-60"
+                    style={{
+                      background: 'linear-gradient(90deg, transparent 0%, rgba(16,185,129,0.8) 25%, rgba(6,182,212,0.9) 50%, rgba(16,185,129,0.8) 75%, transparent 100%)',
+                      animation: 'liquidFlow 3s ease-in-out infinite',
+                    }}
+                  />
+                  
+                  {/* Animated wave layer 2 - offset */}
+                  <div 
+                    className="absolute inset-0 opacity-40"
+                    style={{
+                      background: 'linear-gradient(90deg, rgba(255,255,255,0.1) 0%, rgba(6,182,212,0.6) 30%, rgba(255,255,255,0.3) 50%, rgba(6,182,212,0.6) 70%, rgba(255,255,255,0.1) 100%)',
+                      animation: 'liquidFlow 2s ease-in-out infinite reverse',
+                    }}
+                  />
+                  
+                  {/* Bubbles */}
+                  <div className="absolute inset-0 overflow-hidden">
+                    <div className="absolute w-1 h-1 bg-white/60 rounded-full" style={{ left: '10%', animation: 'bubble 2.5s ease-in-out infinite', animationDelay: '0s' }} />
+                    <div className="absolute w-1.5 h-1.5 bg-cyan-300/50 rounded-full" style={{ left: '30%', animation: 'bubble 3s ease-in-out infinite', animationDelay: '0.5s' }} />
+                    <div className="absolute w-1 h-1 bg-white/70 rounded-full" style={{ left: '50%', animation: 'bubble 2s ease-in-out infinite', animationDelay: '1s' }} />
+                    <div className="absolute w-0.5 h-0.5 bg-emerald-200/80 rounded-full" style={{ left: '70%', animation: 'bubble 2.8s ease-in-out infinite', animationDelay: '0.3s' }} />
+                    <div className="absolute w-1 h-1 bg-white/50 rounded-full" style={{ left: '85%', animation: 'bubble 3.2s ease-in-out infinite', animationDelay: '0.8s' }} />
+                  </div>
+                  
+                  {/* Surface shimmer / glow line at top */}
+                  <div 
+                    className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-transparent via-white to-transparent opacity-70"
+                    style={{ animation: 'shimmer 1.5s ease-in-out infinite' }}
+                  />
+                  
+                  {/* Glow overlay */}
+                  <div 
+                    className="absolute inset-0"
+                    style={{
+                      background: 'radial-gradient(ellipse at 80% 50%, rgba(255,255,255,0.3) 0%, transparent 60%)',
+                      animation: 'pulse 2s ease-in-out infinite',
+                    }}
                   />
                 </div>
               </div>
