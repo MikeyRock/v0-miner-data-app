@@ -557,49 +557,80 @@ export function BraiinsWebDashboard() {
             </div>
           </div>
 
-          {/* Estimated Reward Trend */}
-          <div className="group relative rounded-lg border border-purple-500/40 bg-gradient-to-br from-slate-800/40 to-slate-900/50 p-2 backdrop-blur-lg hover:border-purple-400/70 hover:shadow-xl hover:shadow-purple-500/40 transition-all">
-            <div className="absolute inset-0 rounded-lg opacity-0 group-hover:opacity-15 bg-[radial-gradient(ellipse_at_50%_50%,_rgba(168,85,247,0.3),transparent_70%)] blur-lg transition-all duration-300"></div>
-            <h3 className="text-xs font-bold text-purple-300 mb-1 uppercase tracking-widest relative z-10" style={{ fontFamily: 'var(--font-orbitron), sans-serif' }}>Est. Reward Trend</h3>
-            <div className="h-20 relative z-10">
-              {rewardHistory.length > 1 ? (
-                <ResponsiveContainer width="100%" height="100%">
-                  <LineChart data={rewardHistory} margin={{ top: 5, right: 5, bottom: 0, left: 0 }}>
-                    <defs>
-                      <linearGradient id="rewardGradient" x1="0%" y1="0%" x2="100%" y2="0%">
-                        <stop offset="0%"   stopColor="#a855f7" stopOpacity={1} />
-                        <stop offset="50%"  stopColor="#d946ef" stopOpacity={1} />
-                        <stop offset="100%" stopColor="#06b6d4" stopOpacity={1} />
-                      </linearGradient>
-                    </defs>
-                    <CartesianGrid strokeDasharray="3 3" stroke="rgba(148, 113, 248, 0.1)" />
-                    <Tooltip
-                      contentStyle={{ backgroundColor: 'rgba(20, 20, 40, 0.95)', border: '1px solid rgba(168, 85, 247, 0.3)', borderRadius: '6px' }}
-                      labelStyle={{ color: '#c084fc' }}
-                      formatter={(value: any) =>
-                        [`$${Number(value).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 4 })}`, 'Est. Reward']
-                      }
-                    />
-                    <YAxis hide domain={['dataMin * 0.98', 'dataMax * 1.02']} />
-                    <Line
-                      type="monotone"
-                      dataKey="usd"
-                      stroke="url(#rewardGradient)"
-                      dot={false}
-                      strokeWidth={2.5}
-                      isAnimationActive={false}
-                      strokeLinecap="round"
-                      filter="drop-shadow(0 0 5px rgba(168, 85, 247, 0.7))"
-                    />
-                  </LineChart>
-                </ResponsiveContainer>
-              ) : (
-                <div className="flex flex-col items-center justify-center h-full gap-1">
-                  <div className="w-4 h-4 border-2 border-purple-500/50 border-t-purple-400 rounded-full animate-spin"></div>
-                  <span className="text-slate-500 text-xs">Collecting reward data...</span>
-                </div>
-              )}
+          {/* Block Progress Bar */}
+          <div className="group relative rounded-lg border border-emerald-500/40 bg-gradient-to-br from-slate-800/40 to-slate-900/50 p-3 backdrop-blur-lg hover:border-emerald-400/70 hover:shadow-xl hover:shadow-emerald-500/40 transition-all">
+            <div className="absolute inset-0 rounded-lg opacity-0 group-hover:opacity-15 bg-[radial-gradient(ellipse_at_50%_50%,_rgba(16,185,129,0.3),transparent_70%)] blur-lg transition-all duration-300"></div>
+            
+            {/* Header */}
+            <div className="flex items-center justify-between mb-2 relative z-10">
+              <h3 className="text-xs font-bold text-emerald-300 uppercase tracking-widest" style={{ fontFamily: 'var(--font-orbitron), sans-serif' }}>Block Progress</h3>
+              <div className="text-xs text-emerald-400 font-mono">
+                {braiinsData?.bestshare && networkDifficulty > 0
+                  ? `${((Number(braiinsData.bestshare) / networkDifficulty) * 100).toFixed(2)}%`
+                  : '0%'}
+              </div>
             </div>
+
+            {/* Progress Bar */}
+            <div className="relative z-10">
+              <div className="h-8 rounded-lg bg-slate-900/60 border border-emerald-500/20 overflow-hidden">
+                {/* Animated fill */}
+                <div
+                  className="h-full bg-gradient-to-r from-emerald-600 via-emerald-500 to-emerald-400 rounded-lg transition-all duration-1000 ease-out"
+                  style={{
+                    width: braiinsData?.bestshare && networkDifficulty > 0
+                      ? `${Math.min((Number(braiinsData.bestshare) / networkDifficulty) * 100, 100)}%`
+                      : '0%',
+                  }}
+                >
+                  {/* Shimmer effect */}
+                  <div
+                    className="h-full bg-gradient-to-r from-transparent via-white to-transparent opacity-30"
+                    style={{ animation: 'shimmer 2s infinite' }}
+                  />
+                </div>
+              </div>
+
+              {/* Progress text overlay */}
+              <div className="absolute inset-0 flex items-center justify-center text-xs font-bold text-white drop-shadow-lg">
+                {braiinsData?.bestshare ? formatNumber(braiinsData.bestshare) : '0'} / {formatNumber(networkDifficulty)}
+              </div>
+            </div>
+
+            {/* Time to block estimate in bottom right */}
+            {(() => {
+              // Get current 1m hashrate from the most recent entry
+              const currentHashrate = hashRateHistory.length > 0 
+                ? Number(hashRateHistory[hashRateHistory.length - 1].hashrate1m)
+                : 0
+              
+              // Calculate remaining difficulty
+              const remaining = Math.max(networkDifficulty - (Number(braiinsData?.bestshare) || 0), 0)
+              
+              // Estimate time in seconds: remaining_diff / hashrate
+              const estimatedSeconds = currentHashrate > 0 ? remaining / currentHashrate : Infinity
+              
+              // Convert to human-readable format
+              let timeStr = '—'
+              if (isFinite(estimatedSeconds)) {
+                if (estimatedSeconds < 60) {
+                  timeStr = `${Math.round(estimatedSeconds)}s`
+                } else if (estimatedSeconds < 3600) {
+                  timeStr = `${Math.round(estimatedSeconds / 60)}m`
+                } else if (estimatedSeconds < 86400) {
+                  timeStr = `${Math.round(estimatedSeconds / 3600)}h`
+                } else {
+                  timeStr = `${Math.round(estimatedSeconds / 86400)}d`
+                }
+              }
+              
+              return (
+                <div className="mt-2 text-right text-xs text-emerald-400 font-mono relative z-10">
+                  <div className="text-slate-500 text-xs mb-0.5">Est. Time to Block</div>
+                  <div className="text-lg font-bold text-emerald-300">{timeStr}</div>
+                </div>
+              )
+            })()}
           </div>
         </div>
 
@@ -693,13 +724,35 @@ export function BraiinsWebDashboard() {
           </div>
 
           {/* Recent Alerts */}
-          <div className="rounded-lg border border-purple-500/30 bg-gradient-to-br from-slate-800/30 to-slate-900/40 p-5 backdrop-blur hover:border-purple-400/50 transition-all">
+          <div className="rounded-lg border border-purple-500/30 bg-gradient-to-br from-slate-800/30 to-slate-900/40 p-5 backdrop-blur hover:border-purple-400/50 transition-all overflow-hidden">
             <h3 className="text-sm font-bold text-purple-400 mb-4 uppercase tracking-wider" style={{ fontFamily: 'var(--font-orbitron), sans-serif' }}>Recent Alerts</h3>
-            <div className="space-y-2 max-h-28">
+            <div 
+              className="alerts-scroll space-y-2 max-h-32 overflow-y-auto pr-2"
+              style={{
+                scrollbarWidth: 'thin',
+                scrollbarColor: 'rgba(168, 85, 247, 0.5) rgba(30, 30, 50, 0.3)',
+              }}
+            >
+              <style>{`
+                .alerts-scroll::-webkit-scrollbar {
+                  width: 4px;
+                }
+                .alerts-scroll::-webkit-scrollbar-track {
+                  background: rgba(30, 30, 50, 0.3);
+                  border-radius: 4px;
+                }
+                .alerts-scroll::-webkit-scrollbar-thumb {
+                  background: rgba(168, 85, 247, 0.5);
+                  border-radius: 4px;
+                }
+                .alerts-scroll::-webkit-scrollbar-thumb:hover {
+                  background: rgba(168, 85, 247, 0.7);
+                }
+              `}</style>
               {alerts.length === 0 ? (
                 <div className="text-slate-500 text-sm text-center py-4">No alerts yet</div>
               ) : (
-                alerts.slice(0, 5).map(alert => (
+                alerts.slice(0, 10).map(alert => (
                   <div key={alert.id} className="p-2 rounded border-l-2 border-purple-500 bg-purple-500/5 text-xs hover:bg-purple-500/10 transition-all">
                     <div className="flex items-start gap-2">
                       <span className="text-purple-400 mt-0.5">→</span>
