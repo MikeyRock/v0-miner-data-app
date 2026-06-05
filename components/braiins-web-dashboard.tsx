@@ -123,7 +123,7 @@ function getDifficultyTier(bestshare: number, networkDifficulty: number): TierSt
 
 export function BraiinsWebDashboard() {
   const defaultAddress = process.env.NEXT_PUBLIC_BRAIINS_ADDRESS || ''
-  const discordWebhook = process.env.NEXT_PUBLIC_DISCORD_WEBHOOK_URL || ''
+  const [discordWebhook, setDiscordWebhook] = useState(process.env.NEXT_PUBLIC_DISCORD_WEBHOOK_URL || '')
 
   const [address, setAddress] = useState(defaultAddress)
   const [braiinsData, setBraiinsData] = useState<BraiinsStats | null>(null)
@@ -138,6 +138,8 @@ export function BraiinsWebDashboard() {
   const [hashRateHistory, setHashRateHistory] = useState<{ timestamp: number; hashrate1m: number; hashrate5m: number; hashrate1hr: number }[]>([])
   const [showSettings, setShowSettings] = useState(false)
   const [settingsAddress, setSettingsAddress] = useState(address)
+  const [settingsWebhook, setSettingsWebhook] = useState(discordWebhook)
+  const [webhookTestStatus, setWebhookTestStatus] = useState<'idle' | 'testing' | 'success' | 'error'>('idle')
   const [refreshCountdown, setRefreshCountdown] = useState(15)
   const [blockFound, setBlockFound] = useState(false)
   const blockFoundTimeout = useRef<ReturnType<typeof setTimeout> | null>(null)
@@ -314,6 +316,34 @@ export function BraiinsWebDashboard() {
     }
     setAlerts((prev) => [alert, ...prev.slice(0, 19)])
     await sendDiscordAlert(message, type, deviceName)
+  }
+
+  const testWebhook = async (webhookUrl: string) => {
+    if (!webhookUrl) {
+      setWebhookTestStatus('error')
+      return
+    }
+    setWebhookTestStatus('testing')
+    try {
+      const res = await fetch(webhookUrl, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          embeds: [{
+            title: '🧪 Webhook Test',
+            description: 'Your Discord webhook is working correctly!',
+            color: 3066993,
+            footer: { text: 'Braiins Solo Mining Dashboard' },
+            timestamp: new Date().toISOString(),
+          }],
+        }),
+      })
+      setWebhookTestStatus(res.ok ? 'success' : 'error')
+    } catch {
+      setWebhookTestStatus('error')
+    }
+    // Reset after 3 seconds
+    setTimeout(() => setWebhookTestStatus('idle'), 3000)
   }
 
   useEffect(() => {
@@ -934,16 +964,58 @@ export function BraiinsWebDashboard() {
               <p className="text-xs text-slate-400 mt-1">Current address: {address}</p>
             </div>
 
+            <div className="mb-4">
+              <label className="block text-xs font-bold text-purple-300 mb-2 uppercase tracking-widest" style={{ fontFamily: 'var(--font-orbitron), sans-serif' }}>
+                Discord Webhook URL
+              </label>
+              <input
+                type="text"
+                value={settingsWebhook}
+                onChange={(e) => setSettingsWebhook(e.target.value)}
+                placeholder="https://discord.com/api/webhooks/..."
+                className="w-full bg-slate-800/50 border border-purple-500/30 rounded px-3 py-2 text-purple-300 placeholder-slate-500 focus:outline-none focus:border-purple-400 transition-colors text-sm"
+              />
+              <div className="flex items-center justify-between mt-2">
+                <p className="text-xs text-slate-400">{discordWebhook ? 'Webhook configured' : 'No webhook set'}</p>
+                <button
+                  onClick={() => testWebhook(settingsWebhook)}
+                  disabled={!settingsWebhook || webhookTestStatus === 'testing'}
+                  className={`text-xs px-3 py-1 rounded transition-all ${
+                    webhookTestStatus === 'success' 
+                      ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/50' 
+                      : webhookTestStatus === 'error'
+                      ? 'bg-red-500/20 text-red-400 border border-red-500/50'
+                      : webhookTestStatus === 'testing'
+                      ? 'bg-purple-500/20 text-purple-300 border border-purple-500/50'
+                      : 'bg-purple-500/20 text-purple-300 border border-purple-500/30 hover:border-purple-400 hover:bg-purple-500/30'
+                  } disabled:opacity-50 disabled:cursor-not-allowed`}
+                >
+                  {webhookTestStatus === 'testing' ? 'Testing...' 
+                    : webhookTestStatus === 'success' ? 'Success!' 
+                    : webhookTestStatus === 'error' ? 'Failed' 
+                    : 'Test Webhook'}
+                </button>
+              </div>
+            </div>
+
             <div className="flex gap-2">
               <button
-                onClick={() => setShowSettings(false)}
+                onClick={() => {
+                  setSettingsAddress(address)
+                  setSettingsWebhook(discordWebhook)
+                  setShowSettings(false)
+                }}
                 className="flex-1 px-4 py-2 rounded border border-slate-600 text-slate-300 hover:bg-slate-800 transition-colors"
               >
                 Cancel
               </button>
               <button
                 onClick={() => {
-                  if (settingsAddress.trim()) {
+                  // Save webhook (always, even if address doesn't change)
+                  setDiscordWebhook(settingsWebhook.trim())
+                  
+                  // If address changed, reset data
+                  if (settingsAddress.trim() && settingsAddress.trim() !== address) {
                     setAddress(settingsAddress.trim())
                     setBraiinsData(null)
                     setMiners([])
@@ -951,12 +1023,12 @@ export function BraiinsWebDashboard() {
                     setHashRateHistory([])
                     prevBestShare.current = ''
                     rigBestShares.current = {}
-                    setShowSettings(false)
                   }
+                  setShowSettings(false)
                 }}
                 className="flex-1 px-4 py-2 rounded bg-gradient-to-r from-cyan-600 to-cyan-500 text-white font-medium hover:from-cyan-500 hover:to-cyan-400 transition-all shadow-lg shadow-cyan-500/50"
               >
-                Save &amp; Refresh
+                Save
               </button>
             </div>
           </div>
