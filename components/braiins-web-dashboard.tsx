@@ -138,6 +138,7 @@ export function BraiinsWebDashboard() {
   const [hashRateHistory, setHashRateHistory] = useState<{ timestamp: number; hashrate1m: number; hashrate5m: number; hashrate1hr: number }[]>([])
   const [showSettings, setShowSettings] = useState(false)
   const [settingsAddress, setSettingsAddress] = useState(address)
+  const [refreshCountdown, setRefreshCountdown] = useState(15)
   const [blockFound, setBlockFound] = useState(false)
   const blockFoundTimeout = useRef<ReturnType<typeof setTimeout> | null>(null)
   const confettiRainInterval = useRef<ReturnType<typeof setInterval> | null>(null)
@@ -319,13 +320,22 @@ export function BraiinsWebDashboard() {
     fetchBraiinsStats()
     fetchBtcPrice()
     fetchNetworkDifficulty()
-    const interval = setInterval(fetchBraiinsStats, 15000)
+    setRefreshCountdown(15)
+    const interval = setInterval(() => {
+      fetchBraiinsStats()
+      setRefreshCountdown(15)
+    }, 15000)
     const priceInterval = setInterval(fetchBtcPrice, 60000)
     const difficultyInterval = setInterval(fetchNetworkDifficulty, 300000) // Every 5 minutes
+    // Countdown timer
+    const countdownInterval = setInterval(() => {
+      setRefreshCountdown(prev => prev > 0 ? prev - 1 : 15)
+    }, 1000)
     return () => {
       clearInterval(interval)
       clearInterval(priceInterval)
       clearInterval(difficultyInterval)
+      clearInterval(countdownInterval)
     }
   }, [address])
 
@@ -399,6 +409,13 @@ export function BraiinsWebDashboard() {
                 <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z" />
               </svg>
             </button>
+          </div>
+          {/* Refresh countdown timer */}
+          <div className="text-xs text-slate-500 font-mono flex items-center gap-1" title="Next refresh">
+            <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+            </svg>
+            <span className={refreshCountdown <= 3 ? 'text-cyan-400' : ''}>{refreshCountdown}s</span>
           </div>
         </div>
       </div>
