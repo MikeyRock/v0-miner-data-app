@@ -558,13 +558,13 @@ export function BraiinsWebDashboard() {
           </div>
 
           {/* Block Progress Bar */}
-          <div className="group relative rounded-lg border border-cyan-500/40 bg-gradient-to-br from-slate-800/40 to-slate-900/50 p-3 backdrop-blur-lg hover:border-cyan-400/70 hover:shadow-xl hover:shadow-cyan-500/40 transition-all">
-            <div className="absolute inset-0 rounded-lg opacity-0 group-hover:opacity-15 bg-[radial-gradient(ellipse_at_50%_50%,_rgba(6,182,212,0.3),transparent_70%)] blur-lg transition-all duration-300"></div>
+          <div className="group relative rounded-lg border border-emerald-500/40 bg-gradient-to-br from-slate-800/40 to-slate-900/50 p-3 backdrop-blur-lg hover:border-emerald-400/70 hover:shadow-xl hover:shadow-emerald-500/40 transition-all">
+            <div className="absolute inset-0 rounded-lg opacity-0 group-hover:opacity-15 bg-[radial-gradient(ellipse_at_50%_50%,_rgba(16,185,129,0.3),transparent_70%)] blur-lg transition-all duration-300"></div>
             
             {/* Header */}
             <div className="flex items-center justify-between mb-2 relative z-10">
-              <h3 className="text-xs font-bold text-cyan-300 uppercase tracking-widest" style={{ fontFamily: 'var(--font-orbitron), sans-serif' }}>Block Progress</h3>
-              <div className="text-xs text-cyan-400 font-mono">
+              <h3 className="text-xs font-bold text-emerald-300 uppercase tracking-widest" style={{ fontFamily: 'var(--font-orbitron), sans-serif' }}>Block Progress</h3>
+              <div className="text-xs text-emerald-400 font-mono">
                 {braiinsData?.bestshare && networkDifficulty > 0
                   ? `${((Number(braiinsData.bestshare) / networkDifficulty) * 100).toFixed(2)}%`
                   : '0%'}
@@ -573,10 +573,10 @@ export function BraiinsWebDashboard() {
 
             {/* Progress Bar */}
             <div className="relative z-10">
-              <div className="h-8 rounded-lg bg-slate-900/60 border border-cyan-500/20 overflow-hidden">
+              <div className="h-8 rounded-lg bg-slate-900/60 border border-emerald-500/20 overflow-hidden">
                 {/* Animated fill */}
                 <div
-                  className="h-full bg-gradient-to-r from-cyan-500 via-cyan-400 to-cyan-300 rounded-lg transition-all duration-1000 ease-out"
+                  className="h-full bg-gradient-to-r from-emerald-600 via-emerald-500 to-emerald-400 rounded-lg transition-all duration-1000 ease-out"
                   style={{
                     width: braiinsData?.bestshare && networkDifficulty > 0
                       ? `${Math.min((Number(braiinsData.bestshare) / networkDifficulty) * 100, 100)}%`
@@ -625,9 +625,9 @@ export function BraiinsWebDashboard() {
               }
               
               return (
-                <div className="mt-2 text-right text-xs text-cyan-400 font-mono relative z-10">
+                <div className="mt-2 text-right text-xs text-emerald-400 font-mono relative z-10">
                   <div className="text-slate-500 text-xs mb-0.5">Est. Time to Block</div>
-                  <div className="text-lg font-bold text-cyan-300">{timeStr}</div>
+                  <div className="text-lg font-bold text-emerald-300">{timeStr}</div>
                 </div>
               )
             })()}
@@ -724,13 +724,35 @@ export function BraiinsWebDashboard() {
           </div>
 
           {/* Recent Alerts */}
-          <div className="rounded-lg border border-purple-500/30 bg-gradient-to-br from-slate-800/30 to-slate-900/40 p-5 backdrop-blur hover:border-purple-400/50 transition-all">
+          <div className="rounded-lg border border-purple-500/30 bg-gradient-to-br from-slate-800/30 to-slate-900/40 p-5 backdrop-blur hover:border-purple-400/50 transition-all overflow-hidden">
             <h3 className="text-sm font-bold text-purple-400 mb-4 uppercase tracking-wider" style={{ fontFamily: 'var(--font-orbitron), sans-serif' }}>Recent Alerts</h3>
-            <div className="space-y-2 max-h-28">
+            <div 
+              className="alerts-scroll space-y-2 max-h-32 overflow-y-auto pr-2"
+              style={{
+                scrollbarWidth: 'thin',
+                scrollbarColor: 'rgba(168, 85, 247, 0.5) rgba(30, 30, 50, 0.3)',
+              }}
+            >
+              <style>{`
+                .alerts-scroll::-webkit-scrollbar {
+                  width: 4px;
+                }
+                .alerts-scroll::-webkit-scrollbar-track {
+                  background: rgba(30, 30, 50, 0.3);
+                  border-radius: 4px;
+                }
+                .alerts-scroll::-webkit-scrollbar-thumb {
+                  background: rgba(168, 85, 247, 0.5);
+                  border-radius: 4px;
+                }
+                .alerts-scroll::-webkit-scrollbar-thumb:hover {
+                  background: rgba(168, 85, 247, 0.7);
+                }
+              `}</style>
               {alerts.length === 0 ? (
                 <div className="text-slate-500 text-sm text-center py-4">No alerts yet</div>
               ) : (
-                alerts.slice(0, 5).map(alert => (
+                alerts.slice(0, 10).map(alert => (
                   <div key={alert.id} className="p-2 rounded border-l-2 border-purple-500 bg-purple-500/5 text-xs hover:bg-purple-500/10 transition-all">
                     <div className="flex items-start gap-2">
                       <span className="text-purple-400 mt-0.5">→</span>
