@@ -188,3 +188,47 @@
     opacity: 0.6;
   }
 }
+
+@keyframes rockstarPulse {
+  0%, 100% {
+    opacity: 0.3;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.7;
+    transform: scale(1.02);
+  }
+}
+
+.rockstar-pulse {
+  animation: rockstarBorder 2s ease-in-out infinite;
+}
+
+@keyframes rockstarBorder {
+  0%, 100% {
+    filter: brightness(1) drop-shadow(0 0 2px currentColor);
+  }
+  50% {
+    filter: brightness(1.3) drop-shadow(0 0 12px currentColor);
+  }
+}
+
+@keyframes borderGlow {
+  0%, 100% {
+    background-position: 0% 50%;
+    opacity: 0.4;
+  }
+  50% {
+    background-position: 100% 50%;
+    opacity: 0.9;
+  }
+}
+
+@keyframes subtleBorderPulse {
+  0%, 100% {
+    box-shadow: 0 0 4px var(--pulse-color, currentColor), 0 0 8px var(--pulse-color, currentColor);
+  }
+  50% {
+    box-shadow: 0 0 10px var(--pulse-color, currentColor), 0 0 18px var(--pulse-color, currentColor), 0 0 24px var(--pulse-color, currentColor);
+  }
+}

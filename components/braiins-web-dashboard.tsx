@@ -818,45 +818,80 @@ export function BraiinsWebDashboard() {
           <div className="rounded-lg border border-cyan-500/30 bg-gradient-to-br from-slate-800/30 to-slate-900/40 p-2 backdrop-blur">
             <h2 className="text-xs font-bold text-white mb-1" style={{ fontFamily: 'var(--font-orbitron), sans-serif' }}>Active Rigs ({activeMinersList.length})</h2>
             <div className="grid grid-cols-4 sm:grid-cols-5 md:grid-cols-6 lg:grid-cols-8 xl:grid-cols-10 gap-0.5">
-              {activeMinersList.map((miner, idx) => {
-                const tier = getDifficultyTier(miner.bestshare, networkDifficulty)
-                return (
-                  <div
-                    key={idx}
-                    className="group relative rounded p-1 text-xs transition-all duration-500"
-                    style={{
-                      border: `1px solid ${tier.borderColor}`,
-                      background: `linear-gradient(135deg, ${tier.bgFrom} 0%, rgba(15,23,42,0.85) 100%)`,
-                      boxShadow: tier.glow || undefined,
-                    }}
-                  >
-                    {/* Pulse overlay for hot tiers */}
-                    {tier.pulse && (
-                      <div
-                        className="absolute inset-0 rounded animate-pulse pointer-events-none"
-                        style={{ background: `radial-gradient(ellipse at 50% 50%, ${tier.borderColor}22 0%, transparent 70%)` }}
-                      />
-                    )}
-                    <div className="flex items-center justify-between mb-0.5 relative z-10">
-                      <div className="font-bold text-xs truncate" style={{ color: tier.color }}>{miner.name}</div>
-                      <div
-                        className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${tier.pulse ? 'animate-pulse' : ''}`}
-                        style={{ backgroundColor: tier.color, boxShadow: `0 0 4px ${tier.color}` }}
-                      />
-                    </div>
-                    <div className="space-y-0.5 relative z-10">
-                      <div className="flex justify-between gap-0.5">
-                        <span className="text-slate-500">1m:</span>
-                        <span className="font-mono text-xs truncate" style={{ color: tier.color }}>{formatHashrate(miner.hashrate1m)}</span>
+              {(() => {
+                // Find the rig with the best difficulty (highest bestshare)
+                const bestRigName = activeMinersList.reduce((best, miner) => {
+                  const currentBest = best ? activeMinersList.find(m => m.name === best)?.bestshare || 0 : 0
+                  return (miner.bestshare || 0) > currentBest ? miner.name : best
+                }, '' as string)
+                
+                return activeMinersList.map((miner, idx) => {
+                  const tier = getDifficultyTier(miner.bestshare, networkDifficulty)
+                  const isTopRig = miner.name === bestRigName
+                  
+                  return (
+                    <div
+                      key={idx}
+                      className="group relative rounded p-1 text-xs transition-all duration-500"
+                      style={{
+                        border: `1px solid ${isTopRig ? tier.color : tier.borderColor}`,
+                        background: `linear-gradient(135deg, ${tier.bgFrom} 0%, rgba(15,23,42,0.85) 100%)`,
+                        boxShadow: isTopRig 
+                          ? undefined // Let the animation handle it
+                          : tier.glow || undefined,
+                        // CSS variable for the pulse color
+                        '--pulse-color': tier.color,
+                        animation: isTopRig ? 'subtleBorderPulse 1.8s ease-in-out infinite' : undefined,
+                      } as React.CSSProperties}
+                    >
+                      {/* Gold Cyberpunk Crown for best rig - positioned above without affecting layout */}
+                      {isTopRig && (
+                        <div className="absolute -top-2.5 left-1/2 -translate-x-1/2 z-20 pointer-events-none">
+                          <svg 
+                            width="16" 
+                            height="10" 
+                            viewBox="0 0 24 14" 
+                            fill="none"
+                            style={{ filter: 'drop-shadow(0 0 3px #fbbf24)' }}
+                          >
+                            {/* 3-point cyberpunk crown - always gold */}
+                            <path 
+                              d="M2 12L4 6L8 9L12 2L16 9L20 6L22 12H2Z" 
+                              fill="#fbbf24"
+                            />
+                            {/* Small accent on center point */}
+                            <circle cx="12" cy="3" r="1" fill="#fef3c7" />
+                          </svg>
+                        </div>
+                      )}
+                      {/* Pulse overlay for hot tiers */}
+                      {tier.pulse && !isTopRig && (
+                        <div
+                          className="absolute inset-0 rounded animate-pulse pointer-events-none"
+                          style={{ background: `radial-gradient(ellipse at 50% 50%, ${tier.borderColor}22 0%, transparent 70%)` }}
+                        />
+                      )}
+                      <div className="flex items-center justify-between mb-0.5 relative z-10">
+                        <div className="font-bold text-xs truncate" style={{ color: tier.color }}>{miner.name}</div>
+                        <div
+                          className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${tier.pulse || isTopRig ? 'animate-pulse' : ''}`}
+                          style={{ backgroundColor: tier.color, boxShadow: `0 0 4px ${tier.color}` }}
+                        />
                       </div>
-                      <div className="flex justify-between gap-0.5">
-                        <span className="text-slate-500">Best:</span>
-                        <span className="font-mono text-xs" style={{ color: tier.color }}>{formatNumber(miner.bestshare)}</span>
+                      <div className="space-y-0.5 relative z-10">
+                        <div className="flex justify-between gap-0.5">
+                          <span className="text-slate-500">1m:</span>
+                          <span className="font-mono text-xs truncate" style={{ color: tier.color }}>{formatHashrate(miner.hashrate1m)}</span>
+                        </div>
+                        <div className="flex justify-between gap-0.5">
+                          <span className="text-slate-500">Best:</span>
+                          <span className="font-mono text-xs" style={{ color: tier.color }}>{formatNumber(miner.bestshare)}</span>
+                        </div>
                       </div>
                     </div>
-                  </div>
-                )
-              })}
+                  )
+                })
+              })()}
             </div>
           </div>
         )}
