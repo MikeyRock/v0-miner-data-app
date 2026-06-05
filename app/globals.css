@@ -188,3 +188,27 @@
     opacity: 0.6;
   }
 }
+
+@keyframes rockstarPulse {
+  0%, 100% {
+    opacity: 0.3;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.7;
+    transform: scale(1.02);
+  }
+}
+
+.rockstar-pulse {
+  animation: rockstarBorder 2s ease-in-out infinite;
+}
+
+@keyframes rockstarBorder {
+  0%, 100% {
+    filter: brightness(1) drop-shadow(0 0 2px currentColor);
+  }
+  50% {
+    filter: brightness(1.2) drop-shadow(0 0 8px currentColor);
+  }
+}
