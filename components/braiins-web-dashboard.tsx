@@ -598,20 +598,60 @@ export function BraiinsWebDashboard() {
 
             {/* Progress Bar */}
             <div className="relative z-10">
-              <div className="h-8 rounded-lg bg-slate-900/60 border border-emerald-500/20 overflow-hidden">
-                {/* Animated fill */}
+              <div className="h-8 rounded-lg bg-slate-900/80 border border-emerald-500/20 overflow-hidden">
+                {/* Liquid fill container */}
                 <div
-                  className="h-full bg-gradient-to-r from-emerald-600 via-emerald-500 to-emerald-400 rounded-lg transition-all duration-1000 ease-out"
+                  className="h-full relative overflow-hidden rounded-lg transition-all duration-1000 ease-out"
                   style={{
                     width: braiinsData?.bestshare && networkDifficulty > 0
-                      ? `${Math.min((Number(braiinsData.bestshare) / networkDifficulty) * 100, 100)}%`
-                      : '0%',
+                      ? `${Math.max(Math.min((Number(braiinsData.bestshare) / networkDifficulty) * 100, 100), 8)}%`
+                      : '8%',
+                    minWidth: '32px',
                   }}
                 >
-                  {/* Shimmer effect */}
-                  <div
-                    className="h-full bg-gradient-to-r from-transparent via-white to-transparent opacity-30"
-                    style={{ animation: 'shimmer 2s infinite' }}
+                  {/* Base liquid gradient */}
+                  <div className="absolute inset-0 bg-gradient-to-r from-emerald-600 via-emerald-500 to-cyan-400" />
+                  
+                  {/* Animated wave layer 1 */}
+                  <div 
+                    className="absolute inset-0 opacity-60"
+                    style={{
+                      background: 'linear-gradient(90deg, transparent 0%, rgba(16,185,129,0.8) 25%, rgba(6,182,212,0.9) 50%, rgba(16,185,129,0.8) 75%, transparent 100%)',
+                      animation: 'liquidFlow 3s ease-in-out infinite',
+                    }}
+                  />
+                  
+                  {/* Animated wave layer 2 - offset */}
+                  <div 
+                    className="absolute inset-0 opacity-40"
+                    style={{
+                      background: 'linear-gradient(90deg, rgba(255,255,255,0.1) 0%, rgba(6,182,212,0.6) 30%, rgba(255,255,255,0.3) 50%, rgba(6,182,212,0.6) 70%, rgba(255,255,255,0.1) 100%)',
+                      animation: 'liquidFlow 2s ease-in-out infinite reverse',
+                    }}
+                  />
+                  
+                  {/* Bubbles */}
+                  <div className="absolute inset-0 overflow-hidden">
+                    <div className="absolute w-1 h-1 bg-white/60 rounded-full" style={{ left: '10%', animation: 'bubble 2.5s ease-in-out infinite', animationDelay: '0s' }} />
+                    <div className="absolute w-1.5 h-1.5 bg-cyan-300/50 rounded-full" style={{ left: '30%', animation: 'bubble 3s ease-in-out infinite', animationDelay: '0.5s' }} />
+                    <div className="absolute w-1 h-1 bg-white/70 rounded-full" style={{ left: '50%', animation: 'bubble 2s ease-in-out infinite', animationDelay: '1s' }} />
+                    <div className="absolute w-0.5 h-0.5 bg-emerald-200/80 rounded-full" style={{ left: '70%', animation: 'bubble 2.8s ease-in-out infinite', animationDelay: '0.3s' }} />
+                    <div className="absolute w-1 h-1 bg-white/50 rounded-full" style={{ left: '85%', animation: 'bubble 3.2s ease-in-out infinite', animationDelay: '0.8s' }} />
+                  </div>
+                  
+                  {/* Surface shimmer / glow line at top */}
+                  <div 
+                    className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-transparent via-white to-transparent opacity-70"
+                    style={{ animation: 'shimmer 1.5s ease-in-out infinite' }}
+                  />
+                  
+                  {/* Glow overlay */}
+                  <div 
+                    className="absolute inset-0"
+                    style={{
+                      background: 'radial-gradient(ellipse at 80% 50%, rgba(255,255,255,0.3) 0%, transparent 60%)',
+                      animation: 'pulse 2s ease-in-out infinite',
+                    }}
                   />
                 </div>
               </div>
