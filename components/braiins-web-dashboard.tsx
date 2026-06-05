@@ -613,14 +613,19 @@ export function BraiinsWebDashboard() {
               // Convert to human-readable format
               let timeStr = '—'
               if (isFinite(estimatedSeconds)) {
+                const days = estimatedSeconds / 86400
                 if (estimatedSeconds < 60) {
                   timeStr = `${Math.round(estimatedSeconds)}s`
                 } else if (estimatedSeconds < 3600) {
                   timeStr = `${Math.round(estimatedSeconds / 60)}m`
                 } else if (estimatedSeconds < 86400) {
                   timeStr = `${Math.round(estimatedSeconds / 3600)}h`
+                } else if (days < 365) {
+                  timeStr = `${Math.round(days)}d`
+                } else if (days < 365 * 1000) {
+                  timeStr = `${(days / 365).toFixed(1)}y`
                 } else {
-                  timeStr = `${Math.round(estimatedSeconds / 86400)}d`
+                  timeStr = `${(days / 365 / 1000).toFixed(0)}k yrs`
                 }
               }
               
@@ -752,17 +757,28 @@ export function BraiinsWebDashboard() {
               {alerts.length === 0 ? (
                 <div className="text-slate-500 text-sm text-center py-4">No alerts yet</div>
               ) : (
-                alerts.slice(0, 10).map(alert => (
-                  <div key={alert.id} className="p-2 rounded border-l-2 border-purple-500 bg-purple-500/5 text-xs hover:bg-purple-500/10 transition-all">
-                    <div className="flex items-start gap-2">
-                      <span className="text-purple-400 mt-0.5">→</span>
-                      <div>
-                        <div className="text-purple-300 font-medium">{alert.message}</div>
-                        <div className="text-slate-500 text-xs mt-1">{new Date(alert.createdAt).toLocaleTimeString()}</div>
+                alerts.slice(0, 10).map(alert => {
+                  // Strip markdown bold syntax and render rig name with styling
+                  const cleanMessage = alert.message.replace(/\*\*([^*]+)\*\*/g, '$1')
+                  const rigMatch = alert.message.match(/\*\*([^*]+)\*\*/)
+                  const rigName = rigMatch ? rigMatch[1] : null
+                  const restOfMessage = rigName ? cleanMessage.replace(rigName, '').trim() : cleanMessage
+                  
+                  return (
+                    <div key={alert.id} className="p-2 rounded border-l-2 border-purple-500 bg-purple-500/5 text-xs hover:bg-purple-500/10 transition-all">
+                      <div className="flex items-start gap-2">
+                        <span className="text-purple-400 mt-0.5">→</span>
+                        <div>
+                          <div className="text-purple-300">
+                            {rigName && <span className="font-bold text-purple-200">{rigName}</span>}
+                            <span className="font-medium">{restOfMessage}</span>
+                          </div>
+                          <div className="text-slate-500 text-xs mt-1">{new Date(alert.createdAt).toLocaleTimeString()}</div>
+                        </div>
                       </div>
                     </div>
-                  </div>
-                ))
+                  )
+                })
               )}
             </div>
           </div>
