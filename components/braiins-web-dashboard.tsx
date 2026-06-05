@@ -25,7 +25,7 @@ interface Miner {
 
 interface Alert {
   id: string
-  type: 'best_share' | 'worker_offline'
+  type: 'best_share' | 'worker_offline' | 'braiins_rig_best'
   message: string
   createdAt: string
   sent?: boolean
@@ -248,10 +248,11 @@ export function BraiinsWebDashboard() {
         // Check each rig for new personal best shares
         minersList.forEach((miner) => {
           const rigKey = miner.name
-          const prevRigBest = rigBestShares.current[rigKey] || 0
+          const prevRigBest = rigBestShares.current[rigKey] ?? null
           const currentRigBest = miner.bestshare || 0
           
-          if (currentRigBest > 0 && prevRigBest > 0 && currentRigBest > prevRigBest) {
+          // Fire alert if: (1) we have a previous best and it's being beaten, OR (2) this is a new personal best and we haven't seen it before
+          if (currentRigBest > 0 && (prevRigBest === null || currentRigBest > prevRigBest)) {
             const message = `**${miner.name}** just hit a new personal best: ${formatNumber(currentRigBest)}`
             createAlert('braiins_rig_best', message, miner.name)
           }
