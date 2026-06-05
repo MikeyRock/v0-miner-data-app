@@ -143,6 +143,7 @@ export function BraiinsWebDashboard() {
   const confettiRainInterval = useRef<ReturnType<typeof setInterval> | null>(null)
 
   const prevBestShare = useRef<string>('')
+  const rigBestShares = useRef<Record<string, number>>({})
 
   const fetchBtcPrice = async () => {
     try {
@@ -243,6 +244,20 @@ export function BraiinsWebDashboard() {
           lastshare: w.lastshare || 0,
           shares: w.shares || 0,
         }))
+        
+        // Check each rig for new personal best shares
+        minersList.forEach((miner) => {
+          const rigKey = miner.name
+          const prevRigBest = rigBestShares.current[rigKey] || 0
+          const currentRigBest = miner.bestshare || 0
+          
+          if (currentRigBest > 0 && prevRigBest > 0 && currentRigBest > prevRigBest) {
+            const message = `**${miner.name}** just hit a new personal best: ${formatNumber(currentRigBest)}`
+            createAlert('braiins_rig_best', message, miner.name)
+          }
+          rigBestShares.current[rigKey] = currentRigBest
+        })
+        
         setMiners(minersList)
       }
 
@@ -255,17 +270,27 @@ export function BraiinsWebDashboard() {
     }
   }
 
-  const sendDiscordAlert = async (message: string, type: 'best_share' | 'worker_offline') => {
+  const sendDiscordAlert = async (message: string, type: 'best_share' | 'braiins_rig_best' | 'worker_offline', deviceName?: string) => {
     if (!discordWebhook) return
     try {
+      const titles: Record<string, string> = {
+        'best_share': '⚡ New Best Share!',
+        'braiins_rig_best': `🎯 ${deviceName} — New Personal Best!`,
+        'worker_offline': '⚠ Worker Offline',
+      }
+      const colors: Record<string, number> = {
+        'best_share': 3066993,      // blue
+        'braiins_rig_best': 1681177, // cyan
+        'worker_offline': 15158332,  // red
+      }
       await fetch(discordWebhook, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           embeds: [{
-            title: type === 'best_share' ? '⚡ New Best Share!' : '⚠ Worker Offline',
+            title: titles[type],
             description: message,
-            color: type === 'best_share' ? 3066993 : 15158332,
+            color: colors[type],
             footer: { text: 'Braiins Solo Mining' },
             timestamp: new Date().toISOString(),
           }],
@@ -276,7 +301,7 @@ export function BraiinsWebDashboard() {
     }
   }
 
-  const createAlert = async (type: 'best_share' | 'worker_offline', message: string) => {
+  const createAlert = async (type: 'best_share' | 'braiins_rig_best' | 'worker_offline', message: string, deviceName?: string) => {
     const alert: Alert = {
       id: Date.now().toString(),
       type,
@@ -285,7 +310,7 @@ export function BraiinsWebDashboard() {
       sent: true,
     }
     setAlerts((prev) => [alert, ...prev.slice(0, 19)])
-    await sendDiscordAlert(message, type)
+    await sendDiscordAlert(message, type, deviceName)
   }
 
   useEffect(() => {
@@ -772,6 +797,7 @@ export function BraiinsWebDashboard() {
                     setRewardHistory([])
                     setHashRateHistory([])
                     prevBestShare.current = ''
+                    rigBestShares.current = {}
                     setShowSettings(false)
                   }
                 }}
