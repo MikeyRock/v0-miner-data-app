@@ -519,30 +519,55 @@ export function BraiinsWebDashboard() {
                     />
                     {/* Laser head at the tip — uses Recharts' own scales for pixel-perfect positioning */}
                     <Customized component={(props: any) => {
-                      const { xAxisMap, yAxisMap, offset } = props
-                      const xScale = xAxisMap && Object.values(xAxisMap)[0] as any
+                      const { yAxisMap, offset } = props
                       const yScale = yAxisMap && Object.values(yAxisMap)[0] as any
-                      if (!xScale || !yScale || hashRateHistory.length === 0) return null
+                      if (!yScale || hashRateHistory.length === 0) return null
                       const last = hashRateHistory[hashRateHistory.length - 1]
-                      const cx = (offset?.left ?? 0) + (offset?.width ?? 0)
+                      // Position at the right edge of the chart area
+                      const chartLeft = offset?.left ?? 0
+                      const chartWidth = offset?.width ?? 0
+                      const cx = chartLeft + chartWidth - 2
                       const cy = yScale.scale ? yScale.scale(last.hashrate1m) : (yScale as any)(last.hashrate1m)
                       if (cx == null || cy == null || isNaN(cy)) return null
+                      
+                      // Clamp beam to chart boundaries
+                      const beamStart = Math.max(chartLeft, cx - 80)
+                      
                       return (
                         <g>
-                          {/* Beam fading left from the tip */}
                           <defs>
                             <linearGradient id="laserBeamCustom" x1="0%" y1="0%" x2="100%" y2="0%">
                               <stop offset="0%" stopColor="#06b6d4" stopOpacity={0} />
-                              <stop offset="70%" stopColor="#06b6d4" stopOpacity={0.6} />
-                              <stop offset="100%" stopColor="#ffffff" stopOpacity={1} />
+                              <stop offset="60%" stopColor="#06b6d4" stopOpacity={0.4} />
+                              <stop offset="100%" stopColor="#ffffff" stopOpacity={0.9} />
                             </linearGradient>
+                            <filter id="pulseGlow">
+                              <feGaussianBlur stdDeviation="3" result="blur" />
+                              <feMerge><feMergeNode in="blur" /><feMergeNode in="SourceGraphic" /></feMerge>
+                            </filter>
                           </defs>
-                          <line x1={cx - 150} y1={cy} x2={cx} y2={cy} stroke="url(#laserBeamCustom)" strokeWidth={2} />
-                          <line x1={cx - 70} y1={cy} x2={cx} y2={cy} stroke="#ffffff" strokeWidth={0.7} opacity={0.6} />
-                          {/* Corona glow */}
-                          <circle cx={cx} cy={cy} r={9} fill="rgba(6,182,212,0.12)" />
-                          <circle cx={cx} cy={cy} r={5} fill="rgba(6,182,212,0.35)" />
-                          <circle cx={cx} cy={cy} r={2.5} fill="rgba(255,255,255,0.95)" />
+                          
+                          {/* Outer pulsing glow ring */}
+                          <circle cx={cx} cy={cy} r={12} fill="none" stroke="rgba(6,182,212,0.3)" strokeWidth={1}>
+                            <animate attributeName="r" values="8;14;8" dur="2s" repeatCount="indefinite" />
+                            <animate attributeName="opacity" values="0.5;0.2;0.5" dur="2s" repeatCount="indefinite" />
+                          </circle>
+                          
+                          {/* Beam trailing left - clamped to chart area */}
+                          <line x1={beamStart} y1={cy} x2={cx} y2={cy} stroke="url(#laserBeamCustom)" strokeWidth={2} filter="url(#pulseGlow)">
+                            <animate attributeName="opacity" values="0.6;1;0.6" dur="1.5s" repeatCount="indefinite" />
+                          </line>
+                          
+                          {/* Corona glow layers */}
+                          <circle cx={cx} cy={cy} r={8} fill="rgba(6,182,212,0.15)" filter="url(#pulseGlow)">
+                            <animate attributeName="r" values="6;10;6" dur="2s" repeatCount="indefinite" />
+                          </circle>
+                          <circle cx={cx} cy={cy} r={4} fill="rgba(6,182,212,0.4)" />
+                          
+                          {/* Bright white hot core */}
+                          <circle cx={cx} cy={cy} r={2.5} fill="#ffffff" filter="url(#pulseGlow)">
+                            <animate attributeName="r" values="2;3;2" dur="1s" repeatCount="indefinite" />
+                          </circle>
                           <circle cx={cx} cy={cy} r={1} fill="#ffffff" />
                         </g>
                       )
