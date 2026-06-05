@@ -423,7 +423,17 @@ export function BraiinsWebDashboard() {
     }, 12000)
   }, [])
 
-  const activeMinersList = miners.filter(m => m.lastshare && (Date.now() - m.lastshare * 1000) < 300000)
+  const activeMinersList = miners
+    .filter(m => m.lastshare && (Date.now() - m.lastshare * 1000) < 300000)
+    .sort((a, b) => {
+      // Names starting with # come first
+      const aStartsWithHash = a.name.startsWith('#')
+      const bStartsWithHash = b.name.startsWith('#')
+      if (aStartsWithHash && !bStartsWithHash) return -1
+      if (!aStartsWithHash && bStartsWithHash) return 1
+      // Then sort alphabetically by name
+      return a.name.localeCompare(b.name)
+    })
   const bestShareNum = parseFloat(braiinsData?.bestshare || '0')
   const usdReward = estimateBTCReward(btcPrice)
 
