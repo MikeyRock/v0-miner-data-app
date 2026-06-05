@@ -49,23 +49,25 @@ function formatHashrate(value: string | number | undefined): string {
       if (unit === 'K') return `${num.toFixed(2)} KH/s`
       if (unit === 'H') return `${num.toFixed(2)} H/s`
       
-      // No unit suffix - assume it's a raw number, format based on magnitude
+      // No unit suffix - assume raw numbers are in GH/s (most common API format)
       if (!isNaN(num)) {
-        if (num >= 1000) return `${(num / 1000).toFixed(2)} PH/s`
-        if (num >= 1) return `${num.toFixed(2)} TH/s`
-        if (num >= 0.001) return `${(num * 1000).toFixed(2)} GH/s`
-        return `${(num * 1000000).toFixed(2)} MH/s`
+        if (num >= 1000000) return `${(num / 1000000).toFixed(2)} PH/s`
+        if (num >= 1000) return `${(num / 1000).toFixed(2)} TH/s`
+        if (num >= 1) return `${num.toFixed(2)} GH/s`
+        if (num >= 0.001) return `${(num * 1000).toFixed(2)} MH/s`
+        return `${(num * 1000000).toFixed(2)} KH/s`
       }
     }
   }
   
-  // Handle pure numeric values - assume TH/s scale
+  // Handle pure numeric values - assume GH/s scale (most common)
   const num = typeof value === 'number' ? value : parseFloat(value)
   if (isNaN(num)) return '0 H/s'
-  if (num >= 1000) return `${(num / 1000).toFixed(2)} PH/s`
-  if (num >= 1) return `${num.toFixed(2)} TH/s`
-  if (num >= 0.001) return `${(num * 1000).toFixed(2)} GH/s`
-  return `${(num * 1000000).toFixed(2)} MH/s`
+  if (num >= 1000000) return `${(num / 1000000).toFixed(2)} PH/s`
+  if (num >= 1000) return `${(num / 1000).toFixed(2)} TH/s`
+  if (num >= 1) return `${num.toFixed(2)} GH/s`
+  if (num >= 0.001) return `${(num * 1000).toFixed(2)} MH/s`
+  return `${(num * 1000000).toFixed(2)} KH/s`
 }
 
 function formatNumber(value: string | number | undefined): string {
